@@ -1,0 +1,465 @@
+/*
+Copyright (C) 2016  Prism Framework Team
+
+This file is part of the Prism Framework.
+
+The Prism Framework is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+The Prism Framework is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+
+#pragma warning disable 1998
+
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Android.App;
+using Android.Content;
+using Android.Graphics;
+using Android.Runtime;
+using Android.Views;
+using Android.Widget;
+using Prism.Native;
+using Prism.Systems;
+using Prism.UI;
+using Prism.Utilities;
+
+namespace Prism.Android.UI
+{
+    /// <summary>
+    /// Represents an Android implementation of a main <see cref="INativeWindow"/>.
+    /// </summary>
+    [Preserve(AllMembers = true)]
+    [Register(typeof(INativeWindow), Name = "main")]
+    public class MainWindow : INativeWindow
+    {
+        /// <summary>
+        /// Occurs when the window gains focus.
+        /// </summary>
+        public event EventHandler Activated;
+
+        /// <summary>
+        /// Occurs when the window is about to be closed.
+        /// </summary>
+        public event EventHandler<CancelEventArgs> Closing;
+
+        /// <summary>
+        /// Occurs when the window loses focus.
+        /// </summary>
+        public event EventHandler Deactivated;
+
+        /// <summary>
+        /// Occurs when the size of the window has changed.
+        /// </summary>
+        public event EventHandler<WindowSizeChangedEventArgs> SizeChanged;
+
+        /// <summary>
+        /// Gets or sets the object that acts as the content of the window.
+        /// This is typically an <see cref="IView"/> or <see cref="INativeViewStack"/> instance.
+        /// </summary>
+        public object Content
+        {
+            get { return content; }
+            set
+            {
+                if (value == content)
+                {
+                    return;
+                }
+
+                var view = content as global::Android.Views.View ?? Application.MainActivity.FindViewById<FrameLayout>(1);
+                if (view != null)
+                {
+                    view.LayoutChange -= OnLayoutChanged;
+                }
+
+                content = value;
+
+                view = value as global::Android.Views.View;
+                if (view != null)
+                {
+                    view.LayoutChange += OnLayoutChanged;
+                    Application.MainActivity.SetContentView(view);
+                    return;
+                }
+
+                var fragment = value as Fragment;
+                if (fragment != null)
+                {
+                    var fl = new FrameLayout(Application.MainActivity)
+                    {
+                        Id = 1,
+                        LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent)
+                    };
+                    fl.SetFitsSystemWindows(true);
+                    fl.LayoutChange += OnLayoutChanged;
+
+                    Application.MainActivity.SetContentView(fl);
+
+                    var fragmentTransaction = Application.MainActivity.FragmentManager.BeginTransaction();
+                    fragmentTransaction.Replace(1, fragment);
+                    fragmentTransaction.Commit();
+                }
+            }
+        }
+        private object content;
+
+        /// <summary>
+        /// Gets the height of the window.
+        /// </summary>
+        public double Height
+        {
+            get
+            {
+                Rect frame = new Rect();
+                Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
+                return frame.Height() / Device.Current.DisplayScale;
+            }
+            set { Logger.Warn("Setting window height is not supported on this platform.  Ignoring."); }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently visible.
+        /// </summary>
+        public bool IsVisible
+        {
+            get { return Application.MainActivity.HasWindowFocus; }
+        }
+
+        /// <summary>
+        /// Gets the width of the window.
+        /// </summary>
+        public double Width
+        {
+            get
+            {
+                Rect frame = new Rect();
+                Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
+                return frame.Width() / Device.Current.DisplayScale;
+            }
+            set { Logger.Warn("Setting window width is not supported on this platform.  Ignoring."); }
+        }
+
+        private Size currentSize;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow"/> class.
+        /// </summary>
+        public MainWindow()
+        {
+            Application.MainActivityChanged += (sender, e) =>
+            {
+                e.OldActivity.Window.Callback = null;
+                e.NewActivity.Window.Callback = new MainWindowCallback();
+            };
+
+            Application.MainActivity.Window.Callback = new MainWindowCallback();
+        }
+
+        /// <summary>
+        /// Attempts to close the window.
+        /// </summary>
+        public void Close(Animate animate)
+        {
+            var args = new CancelEventArgs();
+            Closing(this, args);
+
+            if (args.Cancel)
+                return;
+
+            Application.MainActivity.Finish();
+        }
+
+        /// <summary>
+        /// Displays the window if it is not already visible.
+        /// </summary>
+        /// <param name="animate">Does nothing on Android.</param>
+        public void Show(Animate animate)
+        {
+            var i = new Intent(Application.MainActivity, GetType());
+            Application.MainActivity.StartActivity(i);
+        }
+
+        /// <summary>
+        /// Captures the contents of the window in an image and returns the result.
+        /// </summary>
+        public async Task<Prism.UI.Media.Imaging.ImageSource> TakeScreenshotAsync()
+        {
+            var view = Application.MainActivity.Window.DecorView;
+            view.Layout(0, 0, view.LayoutParameters.Width, view.LayoutParameters.Height);
+            MemoryStream save;
+            using (var bitmap = Bitmap.CreateBitmap(view.Width, view.Height, Bitmap.Config.Argb8888))
+            {
+                var canvas = new Canvas(bitmap);
+                view.Draw(canvas);
+                save = new MemoryStream();
+                bitmap.Compress(Bitmap.CompressFormat.Png, 100, save);
+            }
+            save.Position = 0;
+            return new Prism.UI.Media.Imaging.ImageSource(save.GetBuffer());
+        }
+
+        internal void OnActivated()
+        {
+            Activated?.Invoke(this, EventArgs.Empty);
+        }
+
+        internal void OnDeactivated()
+        {
+            Deactivated?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnLayoutChanged(object sender, global::Android.Views.View.LayoutChangeEventArgs e)
+        {
+            Rect frame = new Rect();
+            Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
+
+            var newSize = new Size((frame.Right - frame.Left) / Device.Current.DisplayScale, (frame.Bottom - frame.Top) / Device.Current.DisplayScale);
+            if (currentSize != newSize)
+            {
+                SizeChanged(this, new WindowSizeChangedEventArgs(currentSize, newSize));
+                currentSize = newSize;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Provides methods for intercepting events within the application's main window.
+    /// </summary>
+    public class MainWindowCallback : Java.Lang.Object, global::Android.Views.Window.ICallback
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindowCallback"/> class.
+        /// </summary>
+        public MainWindowCallback()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindowCallback"/> class.
+        /// </summary>
+        /// <param name="handle">An <see cref="IntPtr"/> containing a Java Native Interface (JNI) object reference.</param>
+        /// <param name="transfer">A <see cref="JniHandleOwnership"/> indicating how to handle <paramref name="handle"/>.</param>
+        public MainWindowCallback(IntPtr handle, JniHandleOwnership transfer)
+            : base(handle, transfer)
+        {
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public virtual bool DispatchGenericMotionEvent(global::Android.Views.MotionEvent e)
+        {
+            return Application.MainActivity.Window.SuperDispatchGenericMotionEvent(e);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public virtual bool DispatchKeyEvent(global::Android.Views.KeyEvent e)
+        {
+            if (e.KeyCode == Keycode.Back || (e.Flags & KeyEventFlags.VirtualHardKey) != 0)
+            {
+                var stack = Prism.UI.Window.MainWindow.Content as Prism.UI.ViewStack;
+                if (stack == null)
+                {
+                    var splitView = Prism.UI.Window.MainWindow.Content as Prism.UI.SplitView;
+                    if (splitView != null)
+                    {
+                        stack = splitView.DetailContent as Prism.UI.ViewStack;
+                        if (stack == null || stack.Views.Count() < 2)
+                        {
+                            stack = splitView.MasterContent as Prism.UI.ViewStack;
+                        }
+                    }
+                    else
+                    {
+                        var tabView = Prism.UI.Window.MainWindow.Content as Prism.UI.TabView;
+                        if (tabView != null)
+                        {
+                            stack = (tabView as Prism.UI.TabbedSplitView)?.DetailContent as Prism.UI.ViewStack;
+                            if (stack == null || stack.Views.Count() < 2)
+                            {
+                                stack = tabView.TabItems[tabView.SelectedIndex].Content as Prism.UI.ViewStack;
+                            }
+                        }
+                    }
+                }
+                
+                if (stack != null && stack.Views.Count() > 1)
+                {
+                    stack.PopView(Animate.Default);
+                }
+                else
+                {
+                    Prism.UI.Window.MainWindow.Close(Animate.Default);
+                }
+            }
+        
+            return Application.MainActivity.Window.SuperDispatchKeyEvent(e);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public virtual bool DispatchKeyShortcutEvent(global::Android.Views.KeyEvent e)
+        {
+            return Application.MainActivity.Window.SuperDispatchKeyShortcutEvent(e);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public virtual bool DispatchPopulateAccessibilityEvent(global::Android.Views.Accessibility.AccessibilityEvent e)
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public virtual bool DispatchTouchEvent(global::Android.Views.MotionEvent e)
+        {
+            return Application.MainActivity.Window.SuperDispatchTouchEvent(e);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public virtual bool DispatchTrackballEvent(global::Android.Views.MotionEvent e)
+        {
+            return Application.MainActivity.Window.SuperDispatchTrackballEvent(e);
+        }
+
+        /// <summary></summary>
+        /// <param name="mode"></param>
+        public virtual void OnActionModeFinished(global::Android.Views.ActionMode mode)
+        {
+        }
+
+        /// <summary></summary>
+        /// <param name="mode"></param>
+        public virtual void OnActionModeStarted(global::Android.Views.ActionMode mode)
+        {
+        }
+
+        /// <summary></summary>
+        public virtual void OnAttachedToWindow()
+        {
+        }
+
+        /// <summary></summary>
+        public virtual void OnContentChanged()
+        {
+        }
+
+        /// <summary></summary>
+        /// <param name="featureId"></param>
+        /// <param name="menu"></param>
+        public virtual bool OnCreatePanelMenu(int featureId, global::Android.Views.IMenu menu)
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        /// <param name="featureId"></param>
+        public virtual global::Android.Views.View OnCreatePanelView(int featureId)
+        {
+            return null;
+        }
+
+        /// <summary></summary>
+        public virtual void OnDetachedFromWindow()
+        {
+        }
+
+        /// <summary></summary>
+        /// <param name="featureId"></param>
+        /// <param name="item"></param>
+        public virtual bool OnMenuItemSelected(int featureId, global::Android.Views.IMenuItem item)
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        /// <param name="featureId"></param>
+        /// <param name="menu"></param>
+        public virtual bool OnMenuOpened(int featureId, global::Android.Views.IMenu menu)
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        /// <param name="featureId"></param>
+        /// <param name="menu"></param>
+        public virtual void OnPanelClosed(int featureId, global::Android.Views.IMenu menu)
+        {
+        }
+
+        /// <summary></summary>
+        /// <param name="featureId"></param>
+        /// <param name="view"></param>
+        /// <param name="menu"></param>
+        public virtual bool OnPreparePanel(int featureId, global::Android.Views.View view, global::Android.Views.IMenu menu)
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        public virtual bool OnSearchRequested()
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        public virtual bool OnSearchRequested(global::Android.Views.SearchEvent searchEvent)
+        {
+            return true;
+        }
+
+        /// <summary></summary>
+        /// <param name="attrs"></param>
+        public virtual void OnWindowAttributesChanged(WindowManagerLayoutParams attrs)
+        {
+        }
+
+        /// <summary></summary>
+        /// <param name="hasFocus"></param>
+        public virtual void OnWindowFocusChanged(bool hasFocus)
+        {
+            var window = ObjectRetriever.GetNativeObject(Prism.UI.Window.MainWindow) as MainWindow;
+            if (window != null)
+            {
+                if (hasFocus)
+                {
+                    window.OnActivated();
+                }
+                else
+                {
+                    window.OnDeactivated();
+                }
+            }
+        }
+
+        /// <summary></summary>
+        /// <param name="callback"></param>
+        public virtual ActionMode OnWindowStartingActionMode(ActionMode.ICallback callback)
+        {
+            return null;
+        }
+
+        /// <summary></summary>
+        /// <param name="callback"></param>
+        /// <param name="type"></param>
+        public virtual ActionMode OnWindowStartingActionMode(ActionMode.ICallback callback, ActionModeType type)
+        {
+            return null;
+        }
+    }
+}
