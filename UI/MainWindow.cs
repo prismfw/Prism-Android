@@ -159,6 +159,9 @@ namespace Prism.Android.UI
         /// </summary>
         public MainWindow()
         {
+            Application.MainActivity.Window.ClearFlags(WindowManagerFlags.TranslucentStatus);
+            Application.MainActivity.Window.AddFlags(WindowManagerFlags.DrawsSystemBarBackgrounds);
+        
             Application.MainActivityChanged += (sender, e) =>
             {
                 e.OldActivity.Window.Callback = null;

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -58,11 +58,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
-    <Reference Include="System.Globalization" />
-    <Reference Include="System.IO" />
-    <Reference Include="System.Reflection" />
-    <Reference Include="System.Runtime" />
-    <Reference Include="System.Threading.Tasks" />
     <Reference Include="Xamarin.Android.Support.v4">
       <HintPath>..\packages\Xamarin.Android.Support.v4.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
     </Reference>
@@ -135,6 +130,7 @@
     <Compile Include="UI\Media\AudioPlayer.cs" />
     <Compile Include="Systems\Geolocation\Geolocator.cs" />
     <Compile Include="PermissionRequestCallback.cs" />
+    <Compile Include="UI\StatusBar.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
@@ -148,11 +144,7 @@
   </Target>
   -->
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
-  <ItemGroup>
-    <Folder Include="UI\Media\" />
-    <Folder Include="UI\Media\Imaging\" />
-    <Folder Include="Systems\Geolocation\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Prism-Core\PrismFramework.csproj">
       <Project>{BF3EDE00-0B3E-4C83-82E0-3ED08BE0E2E5}</Project>
