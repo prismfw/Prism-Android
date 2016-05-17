@@ -30,6 +30,7 @@ using Android.Util;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
+using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
@@ -59,6 +60,26 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the control loses focus.
         /// </summary>
         public event EventHandler LostFocus;
+        
+        /// <summary>
+        /// Occurs when the system loses track of the pointer for some reason.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerCanceled;
+        
+        /// <summary>
+        /// Occurs when the pointer has moved while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerMoved;
+
+        /// <summary>
+        /// Occurs when the pointer has been pressed while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerPressed;
+
+        /// <summary>
+        /// Occurs when the pointer has been released while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerReleased;
 
         /// <summary>
         /// Occurs when the value of a property is changed.
@@ -494,6 +515,42 @@ namespace Prism.Android.UI.Controls
         public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
             return !IsHitTestVisible;
+        }
+        
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool OnTouchEvent(MotionEvent e)
+        {
+            if (!isHitTestVisible)
+            {
+                return false;
+            }
+            
+            if (e.Action == MotionEventActions.Cancel)
+            {
+                PointerCanceled(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Down)
+            {
+                PointerPressed(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Move)
+            {
+                PointerMoved(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Up)
+            {
+                PointerReleased(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            return base.OnTouchEvent(e);
         }
 
         /// <summary>

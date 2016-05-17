@@ -27,12 +27,12 @@ using Android.Text;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
-using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Controls
 {
@@ -62,6 +62,26 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the control loses focus.
         /// </summary>
         public event EventHandler LostFocus;
+        
+        /// <summary>
+        /// Occurs when the system loses track of the pointer for some reason.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerCanceled;
+        
+        /// <summary>
+        /// Occurs when the pointer has moved while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerMoved;
+
+        /// <summary>
+        /// Occurs when the pointer has been pressed while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerPressed;
+
+        /// <summary>
+        /// Occurs when the pointer has been released while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerReleased;
 
         /// <summary>
         /// Occurs when the value of a property is changed.
@@ -285,8 +305,8 @@ namespace Prism.Android.UI.Controls
                 Right = (int)(value.Right * Device.Current.DisplayScale);
                 Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
 
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, global::Android.Views.MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, global::Android.Views.MeasureSpecMode.Exactly));
+                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
+                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
                 Layout(Left, Top, Right, Bottom);
             }
         }
@@ -427,7 +447,6 @@ namespace Prism.Android.UI.Controls
         {
             base.Background = backgroundDefault = new global::Android.Widget.Button(Context).Background;
             Focusable = true;
-            SetOnTouchListener(new HitTester());
 
             TextView = new TextView(Application.MainActivity)
             {
@@ -447,9 +466,9 @@ namespace Prism.Android.UI.Controls
                 LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)  
             };
 
-            AddView(layout, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent, GravityFlags.Center));
+            AddView(layout, new LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent, GravityFlags.Center));
 
-            base.Click += (o, e) =>
+            Click += (o, e) =>
             {
                 Clicked(this, EventArgs.Empty);
             };
@@ -537,6 +556,42 @@ namespace Prism.Android.UI.Controls
             return new Size(Math.Min(constraints.Width, size.Width / Device.Current.DisplayScale),
                 Math.Min(constraints.Height, size.Height / Device.Current.DisplayScale));
         }
+        
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool OnTouchEvent(MotionEvent e)
+        {
+            if (!isHitTestVisible)
+            {
+                return false;
+            }
+            
+            if (e.Action == MotionEventActions.Cancel)
+            {
+                PointerCanceled(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Down)
+            {
+                PointerPressed(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Move)
+            {
+                PointerMoved(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Up)
+            {
+                PointerReleased(this, e.GetPointerEventArgs(this));
+                base.OnTouchEvent(e);
+                return true;
+            }
+            return base.OnTouchEvent(e);
+        }
 
         /// <summary>
         /// Attempts to remove focus from the control.
@@ -593,7 +648,7 @@ namespace Prism.Android.UI.Controls
         {
             base.OnFocusChanged(gainFocus, direction, previouslyFocusedRect);
 
-            OnPropertyChanged(Prism.UI.Controls.Control.IsFocusedProperty);
+            OnPropertyChanged(Control.IsFocusedProperty);
             if (gainFocus)
             {
                 GotFocus(this, EventArgs.Empty);

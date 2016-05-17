@@ -25,11 +25,13 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using Android.Content;
+using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
@@ -54,6 +56,26 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
+        
+        /// <summary>
+        /// Occurs when the system loses track of the pointer for some reason.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerCanceled;
+        
+        /// <summary>
+        /// Occurs when the pointer has moved while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerMoved;
+
+        /// <summary>
+        /// Occurs when the pointer has been pressed while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerPressed;
+
+        /// <summary>
+        /// Occurs when the pointer has been released while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerReleased;
 
         /// <summary>
         /// Occurs when the value of a property is changed.
@@ -400,7 +422,6 @@ namespace Prism.Android.UI.Controls
             AddItemDecoration(new ListBoxItemDecoration(this));
             SetAdapter(new ListBoxAdapter(this));
             SetLayoutManager(new LinearLayoutManager(Context));
-            SetOnTouchListener(new HitTester());
         }
 
         /// <summary>
@@ -460,12 +481,54 @@ namespace Prism.Android.UI.Controls
         /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
         public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            if (!IsHitTestVisible || !CanScrollVertically)
+            if (!isHitTestVisible)
+            {
+                return true;
+            }
+        
+            return base.OnInterceptTouchEvent(ev);
+        }
+        
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool OnTouchEvent(MotionEvent e)
+        {
+            if (!isHitTestVisible)
             {
                 return false;
             }
-
-            return base.OnInterceptTouchEvent(ev);
+            
+            for (int i = 0; i < ChildCount; i++)
+            {
+                var child = GetChildAt(0);
+                if (child != null && ((child as INativeElement)?.IsHitTestVisible ?? false))
+                {
+                    var rect = new Rect();
+                    child.GetHitRect(rect);
+                    if (rect.Contains((int)e.GetX(), (int)e.GetY()))
+                    {
+                        return base.OnTouchEvent(e);
+                    }
+                }
+            }
+            
+            if (e.Action == MotionEventActions.Cancel)
+            {
+                PointerCanceled(this, e.GetPointerEventArgs(this));
+            }
+            if (e.Action == MotionEventActions.Down)
+            {
+                PointerPressed(this, e.GetPointerEventArgs(this));
+            }
+            if (e.Action == MotionEventActions.Move)
+            {
+                PointerMoved(this, e.GetPointerEventArgs(this));
+            }
+            if (e.Action == MotionEventActions.Up)
+            {
+                PointerReleased(this, e.GetPointerEventArgs(this));
+            }
+            return base.OnTouchEvent(e);
         }
 
         /// <summary></summary>

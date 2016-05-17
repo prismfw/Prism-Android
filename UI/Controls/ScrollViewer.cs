@@ -20,14 +20,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Android.Content;
-using Android.Graphics.Drawables;
+using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
@@ -46,6 +44,26 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
+        
+        /// <summary>
+        /// Occurs when the system loses track of the pointer for some reason.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerCanceled;
+        
+        /// <summary>
+        /// Occurs when the pointer has moved while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerMoved;
+
+        /// <summary>
+        /// Occurs when the pointer has been pressed while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerPressed;
+
+        /// <summary>
+        /// Occurs when the pointer has been released while over the element.
+        /// </summary>
+        public event EventHandler<PointerEventArgs> PointerReleased;
 
         /// <summary>
         /// Occurs when the value of a property is changed.
@@ -201,8 +219,8 @@ namespace Prism.Android.UI.Controls
                 Right = (int)(value.Right * Device.Current.DisplayScale);
                 Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
 
-                var widthSpec = MeasureSpec.MakeMeasureSpec(Right - Left, global::Android.Views.MeasureSpecMode.Unspecified);
-                var heightSpec = MeasureSpec.MakeMeasureSpec(Bottom - Top, global::Android.Views.MeasureSpecMode.Unspecified);
+                var widthSpec = MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Unspecified);
+                var heightSpec = MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Unspecified);
                 Measure(widthSpec, heightSpec);
                 Layout(Left, Top, Right, Bottom);
 
@@ -269,8 +287,6 @@ namespace Prism.Android.UI.Controls
         {
             AddView(horizontalScrollView = new HorizontalScrollViewer(Context, this) { FillViewport = true },
                 new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
-
-            SetOnTouchListener(new HitTester());
         }
 
         /// <summary>
@@ -316,14 +332,41 @@ namespace Prism.Android.UI.Controls
                 horizontalScrollView.SmoothScrollTo((int)(offset.X * Device.Current.DisplayScale), 0);
             }
         }
-
-        /// <summary>
-        /// Implement this method to intercept all touch screen motion events.
-        /// </summary>
-        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
-        public override bool OnInterceptTouchEvent(MotionEvent ev)
+        
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool OnTouchEvent(MotionEvent e)
         {
-            return IsHitTestVisible && base.OnInterceptTouchEvent(ev);
+            if (!isHitTestVisible)
+            {
+                return false;
+            }
+            
+            if (e.Action == MotionEventActions.Cancel)
+            {
+                OnPointerCanceled(e);
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Down)
+            {
+                OnPointerPressed(e);
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Move)
+            {
+                OnPointerMoved(e);
+                base.OnTouchEvent(e);
+                return true;
+            }
+            if (e.Action == MotionEventActions.Up)
+            {
+                OnPointerReleased(e);
+                base.OnTouchEvent(e);
+                return true;
+            }
+            return base.OnTouchEvent(e);
         }
 
         /// <summary>
@@ -411,6 +454,26 @@ namespace Prism.Android.UI.Controls
                 Loaded(this, EventArgs.Empty);
             }
         }
+        
+        private void OnPointerCanceled(MotionEvent e)
+        {
+            PointerCanceled(this, e.GetPointerEventArgs(this));
+        }
+        
+        private void OnPointerMoved(MotionEvent e)
+        {
+            PointerMoved(this, e.GetPointerEventArgs(this));
+        }
+        
+        private void OnPointerPressed(MotionEvent e)
+        {
+            PointerPressed(this, e.GetPointerEventArgs(this));
+        }
+        
+        private void OnPointerReleased(MotionEvent e)
+        {
+            PointerReleased(this, e.GetPointerEventArgs(this));
+        }
 
         private void OnScrolled()
         {
@@ -445,13 +508,48 @@ namespace Prism.Android.UI.Controls
                 : base(context)
             {
                 this.parent = parent;
-
-                SetOnTouchListener(new HitTester());
             }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
             {
                 return !parent.IsHitTestVisible;
+            }
+            
+            public override bool OnTouchEvent(MotionEvent e)
+            {
+                if (!parent.isHitTestVisible)
+                {
+                    return false;
+                }
+                
+                var child = GetChildAt(0);
+                if (child != null && ((child as INativeElement)?.IsHitTestVisible ?? false))
+                {
+                    var rect = new Rect();
+                    child.GetHitRect(rect);
+                    if (rect.Contains((int)e.GetX(), (int)e.GetY()))
+                    {
+                        return base.OnTouchEvent(e);
+                    }
+                }
+                
+                if (e.Action == MotionEventActions.Cancel)
+                {
+                    parent.OnPointerCanceled(e);
+                }
+                if (e.Action == MotionEventActions.Down)
+                {
+                    parent.OnPointerPressed(e);
+                }
+                if (e.Action == MotionEventActions.Move)
+                {
+                    parent.OnPointerMoved(e);
+                }
+                if (e.Action == MotionEventActions.Up)
+                {
+                    parent.OnPointerReleased(e);
+                }
+                return base.OnTouchEvent(e);
             }
 
             protected override void OnScrollChanged(int l, int t, int oldl, int oldt)

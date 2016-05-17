@@ -26,13 +26,13 @@ using System.Linq;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Graphics.Drawables.Shapes;
-using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
+using Prism.Input;
 using Prism.Native;
+using Prism.Systems;
 using Prism.UI;
-using Prism.UI.Controls;
 using Prism.UI.Media;
 using Prism.Utilities;
 
@@ -252,6 +252,38 @@ namespace Prism.Android
                     return ImeAction.Search;
                 default:
                     return ImeAction.Unspecified;
+            }
+        }
+        
+        /// <summary>
+        /// Generates a <see cref="PointerEventArgs"/> from a <see cref="MotionEvent"/>.
+        /// </summary>
+        /// <param name="evt">The event.</param>
+        /// <param name="source">The source of the event.</param>
+        public static PointerEventArgs GetPointerEventArgs(this MotionEvent evt, object source)
+        {
+            return new PointerEventArgs(source, evt.GetToolType(evt.ActionIndex).GetPointerType(),
+                new Point(evt.GetX() / Device.Current.DisplayScale, evt.GetY() / Device.Current.DisplayScale), evt.Pressure, evt.EventTime);
+        }
+        
+        /// <summary>
+        /// Gets a <see cref="PointerType"/> from a <see cref="MotionEventToolType"/>.
+        /// </summary>
+        /// <param name="type">The tool type.</param>
+        public static PointerType GetPointerType(this MotionEventToolType type)
+        {
+            switch (type)
+            {
+                case MotionEventToolType.Finger:
+                    return PointerType.Touch;
+                case MotionEventToolType.Stylus:
+                    return PointerType.Stylus;
+                case MotionEventToolType.Mouse:
+                    return PointerType.Mouse;
+                case MotionEventToolType.Eraser:
+                    return PointerType.Other;
+                default:
+                    return PointerType.Unknown;
             }
         }
 

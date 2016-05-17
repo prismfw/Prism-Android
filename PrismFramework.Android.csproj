@@ -96,7 +96,6 @@
     <Compile Include="UI\Controls\PasswordBox.cs" />
     <Compile Include="UI\Controls\SearchBox.cs" />
     <Compile Include="Extensions\ViewExtensions.cs" />
-    <Compile Include="UI\HitTester.cs" />
     <Compile Include="UI\Controls\ToggleSwitch.cs" />
     <Compile Include="UI\Controls\Slider.cs" />
     <Compile Include="UI\Controls\DatePicker.cs" />
