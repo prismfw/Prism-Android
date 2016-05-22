@@ -118,6 +118,11 @@ namespace Prism.Android
         /// Gets the preferred width of the border around a password box.
         /// </summary>
         public double PasswordBoxBorderWidth => 0;
+        
+        /// <summary>
+        /// Gets the size of a popup when presented with the default style.
+        /// </summary>
+        public Size PopupSize => new Size(540, 620);
 
         /// <summary>
         /// Gets the preferred amount of space between the right edge of a UI element and the right edge of its parent.

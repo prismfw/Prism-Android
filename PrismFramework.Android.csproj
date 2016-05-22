@@ -101,7 +101,7 @@
     <Compile Include="UI\Controls\DatePicker.cs" />
     <Compile Include="UI\Controls\TimePicker.cs" />
     <Compile Include="UI\Controls\WebBrowser.cs" />
-    <Compile Include="UI\ModalWindow.cs" />
+    <Compile Include="UI\Popup.cs" />
     <Compile Include="UI\Controls\ScrollViewer.cs" />
     <Compile Include="UI\Controls\SelectList.cs" />
     <Compile Include="Systems\Device.cs" />
