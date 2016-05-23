@@ -57,7 +57,7 @@ namespace Prism.Android.UI.Controls
             {
                 content = value;
 
-                var tabView = ObjectRetriever.GetNativeObject(Prism.UI.Window.MainWindow.Content) as INativeTabView;
+                var tabView = ObjectRetriever.GetNativeObject(Prism.UI.Window.Current.Content) as INativeTabView;
                 if (tabView != null)
                 {
                     var view = value as global::Android.Views.View;

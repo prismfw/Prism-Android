@@ -34,16 +34,15 @@ using Android.Widget;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
-using Prism.Utilities;
 
 namespace Prism.Android.UI
 {
     /// <summary>
-    /// Represents an Android implementation of a main <see cref="INativeWindow"/>.
+    /// Represents an Android implementation of an <see cref="INativeWindow"/>.
     /// </summary>
     [Preserve(AllMembers = true)]
-    [Register(typeof(INativeWindow), Name = "main")]
-    public class MainWindow : INativeWindow
+    [Register(typeof(INativeWindow))]
+    public class Window : INativeWindow
     {
         /// <summary>
         /// Occurs when the window gains focus.
@@ -127,7 +126,6 @@ namespace Prism.Android.UI
                 Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
                 return frame.Height() / Device.Current.DisplayScale;
             }
-            set { Logger.Warn("Setting window height is not supported on this platform.  Ignoring."); }
         }
 
         /// <summary>
@@ -137,6 +135,11 @@ namespace Prism.Android.UI
         {
             get { return Application.MainActivity.HasWindowFocus; }
         }
+        
+        /// <summary>
+        /// Gets or sets the style for the window.
+        /// </summary>
+        public WindowStyle Style { get; set; }
 
         /// <summary>
         /// Gets the width of the window.
@@ -149,15 +152,14 @@ namespace Prism.Android.UI
                 Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
                 return frame.Width() / Device.Current.DisplayScale;
             }
-            set { Logger.Warn("Setting window width is not supported on this platform.  Ignoring."); }
         }
 
         private Size currentSize;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MainWindow"/> class.
+        /// Initializes a new instance of the <see cref="Window"/> class.
         /// </summary>
-        public MainWindow()
+        public Window()
         {
             Application.MainActivity.Window.ClearFlags(WindowManagerFlags.TranslucentStatus);
             Application.MainActivity.Window.AddFlags(WindowManagerFlags.DrawsSystemBarBackgrounds);
@@ -174,7 +176,7 @@ namespace Prism.Android.UI
         /// <summary>
         /// Attempts to close the window.
         /// </summary>
-        public void Close(Animate animate)
+        public void Close()
         {
             var args = new CancelEventArgs();
             Closing(this, args);
@@ -184,12 +186,17 @@ namespace Prism.Android.UI
 
             Application.MainActivity.Finish();
         }
+        
+        /// <summary>
+        /// Sets the preferred minimum size of the window.
+        /// </summary>
+        /// <param name="minSize">The preferred minimum size.</param>
+        public void SetPreferredMinSize(Size minSize) { }
 
         /// <summary>
         /// Displays the window if it is not already visible.
         /// </summary>
-        /// <param name="animate">Does nothing on Android.</param>
-        public void Show(Animate animate)
+        public void Show()
         {
             var i = new Intent(Application.MainActivity, GetType());
             Application.MainActivity.StartActivity(i);
@@ -212,6 +219,16 @@ namespace Prism.Android.UI
             }
             save.Position = 0;
             return new Prism.UI.Media.Imaging.ImageSource(save.GetBuffer());
+        }
+        
+        /// <summary>
+        /// Attempts to resize the window to the specified size.
+        /// </summary>
+        /// <param name="newSize">The width and height at which to size the window.</param>
+        /// <returns><c>true</c> if the window was successfully resized; otherwise, <c>false</c>.</returns>
+        public bool TryResize(Size newSize)
+        {
+            return false;
         }
 
         internal void OnActivated()
@@ -273,10 +290,10 @@ namespace Prism.Android.UI
         {
             if (e.KeyCode == Keycode.Back || (e.Flags & KeyEventFlags.VirtualHardKey) != 0)
             {
-                var stack = Prism.UI.Window.MainWindow.Content as Prism.UI.ViewStack;
+                var stack = Prism.UI.Window.Current.Content as Prism.UI.ViewStack;
                 if (stack == null)
                 {
-                    var splitView = Prism.UI.Window.MainWindow.Content as Prism.UI.SplitView;
+                    var splitView = Prism.UI.Window.Current.Content as Prism.UI.SplitView;
                     if (splitView != null)
                     {
                         stack = splitView.DetailContent as Prism.UI.ViewStack;
@@ -287,7 +304,7 @@ namespace Prism.Android.UI
                     }
                     else
                     {
-                        var tabView = Prism.UI.Window.MainWindow.Content as Prism.UI.TabView;
+                        var tabView = Prism.UI.Window.Current.Content as Prism.UI.TabView;
                         if (tabView != null)
                         {
                             stack = (tabView as Prism.UI.TabbedSplitView)?.DetailContent as Prism.UI.ViewStack;
@@ -305,7 +322,7 @@ namespace Prism.Android.UI
                 }
                 else
                 {
-                    Prism.UI.Window.MainWindow.Close(Animate.Default);
+                    Prism.UI.Window.Current.Close();
                 }
             }
         
@@ -436,7 +453,7 @@ namespace Prism.Android.UI
         /// <param name="hasFocus"></param>
         public virtual void OnWindowFocusChanged(bool hasFocus)
         {
-            var window = ObjectRetriever.GetNativeObject(Prism.UI.Window.MainWindow) as MainWindow;
+            var window = ObjectRetriever.GetNativeObject(Prism.UI.Window.Current) as Window;
             if (window != null)
             {
                 if (hasFocus)

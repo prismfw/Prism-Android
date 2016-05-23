@@ -116,7 +116,7 @@ namespace Prism.Android.UI
         /// <returns>The parent.</returns>
         public object GetParent(object reference)
         {
-            var window = ObjectRetriever.GetNativeObject(Prism.UI.Window.MainWindow) as INativeWindow;
+            var window = ObjectRetriever.GetNativeObject(Prism.UI.Window.Current) as INativeWindow;
             if (window != null && window.Content == reference)
             {
                 return window;

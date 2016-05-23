@@ -117,7 +117,7 @@
     <Compile Include="UI\Views\SplitView.cs" />
     <Compile Include="UI\FragmentView.cs" />
     <Compile Include="UI\LoadIndicator.cs" />
-    <Compile Include="UI\MainWindow.cs" />
+    <Compile Include="UI\Window.cs" />
     <Compile Include="UI\Views\TabView.cs" />
     <Compile Include="UI\Controls\TabItemCollection.cs" />
     <Compile Include="UI\Controls\TabItem.cs" />
