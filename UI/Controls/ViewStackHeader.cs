@@ -181,6 +181,7 @@ namespace Prism.Android.UI.Controls
             BackButton = new ImageView(context) { Clickable = true, Focusable = true };
             BackButton.SetColorFilter(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
             BackButton.SetImageDrawable(ResourceExtractor.GetDrawable(ResourceExtractor.GetResourceId(BackButtonKey, BackButtonAltKey), BackButton));
+            BackButton.Visibility = ViewStates.Gone;
             AddView(BackButton, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent));
 
             TitleView = new TextView(context) { Typeface = Typeface.Default };
