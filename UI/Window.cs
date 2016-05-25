@@ -218,7 +218,7 @@ namespace Prism.Android.UI
                 bitmap.Compress(Bitmap.CompressFormat.Png, 100, save);
             }
             save.Position = 0;
-            return new Prism.UI.Media.Imaging.ImageSource(save.GetBuffer());
+            return new Prism.UI.Media.Imaging.BitmapImage(save.GetBuffer());
         }
         
         /// <summary>

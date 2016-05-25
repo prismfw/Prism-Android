@@ -739,13 +739,13 @@ namespace Prism.Android.UI.Controls
 
         private void SetVisuals()
         {
-            ImageView.SetImageBitmap(Image.GetImage());
+            ImageView.SetImageBitmap(Image.GetImageSource());
 
-            if (Image != null && Image.IsLoaded && ImageView.Parent == null)
+            if (Image != null && ((Image as INativeBitmapImage)?.IsLoaded ?? true) && ImageView.Parent == null)
             {
                 layout.AddView(ImageView);
             }
-            else if ((Image == null || !Image.IsLoaded) && ImageView.Parent == layout)
+            else if ((Image == null || (!(Image as INativeBitmapImage)?.IsLoaded ?? true)) && ImageView.Parent == layout)
             {
                 layout.RemoveView(ImageView);
             }

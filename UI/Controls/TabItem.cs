@@ -181,7 +181,7 @@ namespace Prism.Android.UI.Controls
                     imageSource.ClearImageHandler(OnImageLoaded);
 
                     imageSource = value;
-                    if (imageSource != null && imageSource.IsLoaded)
+                    if (imageSource != null && ((imageSource as INativeBitmapImage)?.IsLoaded ?? true))
                     {
                         OnImageLoaded(null, null);
                     }
@@ -258,8 +258,8 @@ namespace Prism.Android.UI.Controls
 
         private void OnImageLoaded(object sender, EventArgs e)
         {
-            ImageView.SetImageBitmap(imageSource.GetImage());
-            imageSource.GetImage().PrepareToDraw();
+            ImageView.SetImageBitmap(imageSource.GetImageSource());
+            imageSource.GetImageSource().PrepareToDraw();
             ImageView.Invalidate();
         }
     }

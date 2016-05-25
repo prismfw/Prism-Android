@@ -130,6 +130,7 @@
     <Compile Include="Systems\Geolocation\Geolocator.cs" />
     <Compile Include="PermissionRequestCallback.cs" />
     <Compile Include="UI\StatusBar.cs" />
+    <Compile Include="UI\Media\Imaging\BitmapImage.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>

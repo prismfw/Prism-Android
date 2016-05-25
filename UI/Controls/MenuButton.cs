@@ -88,7 +88,7 @@ namespace Prism.Android.UI.Controls
                         TextView.Visibility = ViewStates.Gone;
                         ImageView.Visibility = ViewStates.Visible;
                         
-                        var source = (INativeImageSource)ObjectRetriever.GetNativeObject(new ImageSource(imageUri));
+                        var source = (INativeImageSource)ObjectRetriever.GetNativeObject(new BitmapImage(imageUri));
                         ImageView.SetImageBitmap(source.BeginLoadingImage(OnImageLoaded));
                     }
                     
@@ -214,10 +214,10 @@ namespace Prism.Android.UI.Controls
         
         private void OnImageLoaded(object sender, EventArgs e)
         {
-            var source = sender as INativeImageSource;
+            var source = sender as INativeBitmapImage;
             if (source != null && source.SourceUri == imageUri)
             {
-                ImageView.SetImageBitmap(source.GetImage());
+                ImageView.SetImageBitmap(source.GetImageSource());
             }
         }
     }

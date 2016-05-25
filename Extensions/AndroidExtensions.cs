@@ -29,6 +29,7 @@ using Android.Graphics.Drawables.Shapes;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
+using Prism.Android.UI.Media.Imaging;
 using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
@@ -43,7 +44,7 @@ namespace Prism.Android
     /// </summary>
     public static class AndroidExtensions
     {
-        private static readonly WeakEventManager imageLoadedEventManager = new WeakEventManager("ImageLoaded", typeof(INativeImageSource));
+        private static readonly WeakEventManager imageLoadedEventManager = new WeakEventManager("ImageLoaded", typeof(INativeBitmapImage));
 
         /// <summary>
         /// Checks the state of the image brush's image.  If the image is not loaded, the specified handler
@@ -70,25 +71,31 @@ namespace Prism.Android
             {
                 return null;
             }
+            
+            var bitmapImage = source as INativeBitmapImage;
+            if (bitmapImage == null)
+            {
+                return source.GetImageSource();
+            }
 
             if (handler != null)
             {
-                imageLoadedEventManager.RemoveHandler(source, handler);
-                imageLoadedEventManager.AddHandler(source, handler);
+                imageLoadedEventManager.RemoveHandler(bitmapImage, handler);
+                imageLoadedEventManager.AddHandler(bitmapImage, handler);
             }
 
-            if (source.IsLoaded)
+            if (bitmapImage.IsLoaded)
             {
-                imageLoadedEventManager.RemoveHandler(source, handler);
-                return source.GetImage();
+                imageLoadedEventManager.RemoveHandler(bitmapImage, handler);
+                return bitmapImage.GetImageSource();
             }
-            else if (source.IsFaulted)
+            else if (bitmapImage.IsFaulted)
             {
-                imageLoadedEventManager.RemoveHandler(source, handler);
+                imageLoadedEventManager.RemoveHandler(bitmapImage, handler);
             }
             else
             {
-                (source as ILazyLoader)?.LoadInBackground();
+                (bitmapImage as ILazyLoader)?.LoadInBackground();
             }
 
             return null;
@@ -228,10 +235,10 @@ namespace Prism.Android
         /// Gets a <see cref="Bitmap"/> from an <see cref="INativeImageSource"/>.
         /// </summary>
         /// <param name="source">The image.</param>
-        public static Bitmap GetImage(this INativeImageSource source)
+        public static Bitmap GetImageSource(this INativeImageSource source)
         {
-            var image = source as Prism.Android.UI.Media.Imaging.ImageSource;
-            return image == null ? (object)source as Bitmap : image.Bitmap;
+            var image = source as IImageSource;
+            return image == null ? (object)source as Bitmap : image.Source;
         }
 
         /// <summary>

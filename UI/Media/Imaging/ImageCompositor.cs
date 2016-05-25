@@ -54,11 +54,12 @@ namespace Prism.Android.UI.Media.Imaging
         {
             if (images.Length == 0)
             {
-                return new Prism.UI.Media.Imaging.ImageSource(new byte[0]);
+                return new Prism.UI.Media.Imaging.BitmapImage(new byte[0]);
             }
 
-            Task.WaitAll(images.Select(img => Task.Run(() =>
+            Task.WaitAll(images.OfType<INativeBitmapImage>().Select(img => Task.Run(() =>
             {
+                
                 if (!img.IsLoaded)
                 {
                     img.BeginLoadingImage(null);
@@ -66,12 +67,12 @@ namespace Prism.Android.UI.Media.Imaging
                 }
             })).ToArray());
 
-            var bitmaps = images.Select(img => img.GetImage()).Where(img => img != null);
+            var bitmaps = images.Select(img => img.GetImageSource()).Where(img => img != null);
 
             var firstImage = bitmaps.FirstOrDefault();
             if (firstImage == null)
             {
-                return new Prism.UI.Media.Imaging.ImageSource(new byte[0]);
+                return new Prism.UI.Media.Imaging.BitmapImage(new byte[0]);
             }
 
             var canvasImage = Bitmap.CreateBitmap(width, height, firstImage.GetConfig());
@@ -84,7 +85,7 @@ namespace Prism.Android.UI.Media.Imaging
             var stream = new MemoryStream();
             await canvasImage.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
             stream.Position = 0;
-            return new Prism.UI.Media.Imaging.ImageSource(stream.GetBuffer());
+            return new Prism.UI.Media.Imaging.BitmapImage(stream.GetBuffer());
         }
     }
 }

@@ -159,7 +159,7 @@ namespace Prism.Android.UI.Controls
                     source.ClearImageHandler(OnImageLoaded);
 
                     source = value;
-                    if (source != null && source.IsLoaded)
+                    if (source != null && ((source as INativeBitmapImage)?.IsLoaded ?? true))
                     {
                         OnImageLoaded(null, null);
                     }
@@ -237,7 +237,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            if (source == null || !source.IsLoaded)
+            if (source == null || !((source as INativeBitmapImage)?.IsLoaded ?? true))
             {
                 return Size.Empty;
             }
@@ -335,11 +335,11 @@ namespace Prism.Android.UI.Controls
 
         private void OnImageLoaded(object sender, EventArgs e)
         {
-            SetImageBitmap(source.GetImage());
+            SetImageBitmap(source.GetImageSource());
             Right = Left + source.PixelWidth;
             Bottom = Top + source.PixelHeight;
 
-            source.GetImage().PrepareToDraw();
+            source.GetImageSource().PrepareToDraw();
             Invalidate();
         }
 

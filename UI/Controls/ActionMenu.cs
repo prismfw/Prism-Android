@@ -161,7 +161,7 @@ namespace Prism.Android.UI.Controls
                     }
                     else
                     {
-                        var source = (INativeImageSource)ObjectRetriever.GetNativeObject(new ImageSource(overflowImageUri));
+                        var source = (INativeImageSource)ObjectRetriever.GetNativeObject(new BitmapImage(overflowImageUri));
                         OverflowButton.SetImageBitmap(source.BeginLoadingImage(OnOverflowImageLoaded));
                     }
                     
@@ -312,10 +312,10 @@ namespace Prism.Android.UI.Controls
         
         private void OnOverflowImageLoaded(object sender, EventArgs e)
         {
-            var source = sender as INativeImageSource;
+            var source = sender as INativeBitmapImage;
             if (source != null && source.SourceUri == overflowImageUri)
             {
-                OverflowButton.SetImageBitmap(source.GetImage());
+                OverflowButton.SetImageBitmap(source.GetImageSource());
             }
         }
         
