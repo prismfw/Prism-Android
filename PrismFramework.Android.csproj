@@ -131,6 +131,7 @@
     <Compile Include="PermissionRequestCallback.cs" />
     <Compile Include="UI\StatusBar.cs" />
     <Compile Include="UI\Media\Imaging\BitmapImage.cs" />
+    <Compile Include="UI\Media\Imaging\RenderTargetBitmap.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>

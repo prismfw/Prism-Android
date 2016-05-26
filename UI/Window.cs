@@ -22,9 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma warning disable 1998
 
 using System;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -200,25 +198,6 @@ namespace Prism.Android.UI
         {
             var i = new Intent(Application.MainActivity, GetType());
             Application.MainActivity.StartActivity(i);
-        }
-
-        /// <summary>
-        /// Captures the contents of the window in an image and returns the result.
-        /// </summary>
-        public async Task<Prism.UI.Media.Imaging.ImageSource> TakeScreenshotAsync()
-        {
-            var view = Application.MainActivity.Window.DecorView;
-            view.Layout(0, 0, view.LayoutParameters.Width, view.LayoutParameters.Height);
-            MemoryStream save;
-            using (var bitmap = Bitmap.CreateBitmap(view.Width, view.Height, Bitmap.Config.Argb8888))
-            {
-                var canvas = new Canvas(bitmap);
-                view.Draw(canvas);
-                save = new MemoryStream();
-                bitmap.Compress(Bitmap.CompressFormat.Png, 100, save);
-            }
-            save.Position = 0;
-            return new Prism.UI.Media.Imaging.BitmapImage(save.GetBuffer());
         }
         
         /// <summary>
