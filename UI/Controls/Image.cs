@@ -243,16 +243,18 @@ namespace Prism.Android.UI.Controls
             }
 
             double scale = 1;
-            if (constraints.Width < source.PixelWidth)
+            double width = source.PixelWidth / source.Scale;
+            double height = source.PixelHeight / source.Scale;
+            if (constraints.Width < width)
             {
-                scale = constraints.Width / source.PixelWidth;
+                scale = constraints.Width / width;
             }
-            if (constraints.Height < source.PixelHeight)
+            if (constraints.Height < height)
             {
-                scale = Math.Min(scale, constraints.Height / source.PixelHeight);
+                scale = Math.Min(scale, constraints.Height / height);
             }
 
-            return new Size(source.PixelWidth * scale, source.PixelHeight * scale);
+            return new Size(width * scale, height * scale);
         }
         
         /// <summary></summary>
@@ -336,8 +338,8 @@ namespace Prism.Android.UI.Controls
         private void OnImageLoaded(object sender, EventArgs e)
         {
             SetImageBitmap(source.GetImageSource());
-            Right = Left + source.PixelWidth;
-            Bottom = Top + source.PixelHeight;
+            Right = Left + (int)(source.PixelWidth / source.Scale);
+            Bottom = Top + (int)(source.PixelHeight / source.Scale);
 
             source.GetImageSource().PrepareToDraw();
             Invalidate();

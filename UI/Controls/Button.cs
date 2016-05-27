@@ -520,7 +520,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            var imageSize = image == null ? Size.Empty : new Size(image.PixelWidth, image.PixelHeight);
+            var imageSize = image == null ? Size.Empty : new Size(image.PixelWidth, image.PixelHeight) / image.Scale;
             if (contentDirection == ContentDirection.Up || contentDirection == ContentDirection.Down)
             {
                 constraints.Height -= imageSize.Height;

@@ -44,7 +44,7 @@ namespace Prism.Android.UI.Media.Imaging
         /// </summary>
         public int PixelHeight
         {
-            get { return (int)((Source?.Height ?? 0) / Device.Current.DisplayScale); }
+            get { return Source?.Height ?? 0; }
         }
 
         /// <summary>
@@ -52,7 +52,15 @@ namespace Prism.Android.UI.Media.Imaging
         /// </summary>
         public int PixelWidth
         {
-            get { return (int)((Source?.Width ?? 0) / Device.Current.DisplayScale); }
+            get { return Source?.Width ?? 0; }
+        }
+        
+        /// <summary>
+        /// Gets the scaling factor of the image.
+        /// </summary>
+        public double Scale
+        {
+            get { return Device.Current.DisplayScale; }
         }
         
         /// <summary>

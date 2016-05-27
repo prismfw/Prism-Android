@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using Android.Graphics;
 using Android.Runtime;
 using Prism.Native;
+using Prism.Systems;
 using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Media.Imaging
@@ -60,17 +61,19 @@ namespace Prism.Android.UI.Media.Imaging
         /// <summary>
         /// Gets the number of pixels along the image's Y-axis.
         /// </summary>
-        public int PixelHeight
-        {
-            get { return Source?.Height ?? 0; }
-        }
+        public int PixelHeight { get; private set; }
 
         /// <summary>
         /// Gets the number of pixels along the image's X-axis.
         /// </summary>
-        public int PixelWidth
+        public int PixelWidth { get; private set; }
+        
+        /// <summary>
+        /// Gets the scaling factor of the image.
+        /// </summary>
+        public double Scale
         {
-            get { return Source?.Width ?? 0; }
+            get { return Source == null ? 1 : (PixelWidth / (double)Source.Width) * Device.Current.DisplayScale; }
         }
         
         /// <summary>
@@ -121,6 +124,9 @@ namespace Prism.Android.UI.Media.Imaging
             {
                 lock (this)
                 {
+                    PixelWidth = 0;
+                    PixelHeight = 0;
+                    
                     if (Source == null && !IsFaulted && (imageBytes != null || SourceUri != null))
                     {
                         try
@@ -135,9 +141,24 @@ namespace Prism.Android.UI.Media.Imaging
                                 Source = BitmapFactory.DecodeFile(SourceUri.OriginalString);
                                 if (Source == null && SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectory))
                                 {
-                                    using (var stream = Application.MainActivity.Assets.Open(SourceUri.OriginalString.Remove(0, Prism.IO.Directory.AssetDirectory.Length)))
+                                    string fileName = SourceUri.OriginalString.Remove(0, Prism.IO.Directory.AssetDirectory.Length);
+                                    int id = ResourceExtractor.GetResourceId(System.IO.Path.GetFileNameWithoutExtension(fileName));
+                                    if (id > 0)
                                     {
-                                        Source = BitmapFactory.DecodeStream(stream);
+                                        var options = new BitmapFactory.Options();
+                                        options.InJustDecodeBounds = true;
+                                        BitmapFactory.DecodeResource(Application.MainActivity.Resources, id, options);
+                                        Source = BitmapFactory.DecodeResource(Application.MainActivity.Resources, id);
+                                        
+                                        PixelWidth = options.OutWidth;
+                                        PixelHeight = options.OutHeight;
+                                    }
+                                    else
+                                    {
+                                        using (var stream = Application.MainActivity.Assets.Open(fileName))
+                                        {
+                                            Source = BitmapFactory.DecodeStream(stream);
+                                        }
                                     }
                                 }
                             }
@@ -165,6 +186,12 @@ namespace Prism.Android.UI.Media.Imaging
 
                     if (!IsLoaded)
                     {
+                        if (PixelWidth == 0 && PixelHeight == 0)
+                        {
+                            PixelWidth = Source.Width;
+                            PixelHeight = Source.Height;
+                        }
+                        
                         context.Post((obj) => OnImageLoaded(), null);
                     }
                 }
