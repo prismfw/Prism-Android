@@ -293,6 +293,16 @@ namespace Prism.Android
                     return PointerType.Unknown;
             }
         }
+        
+        /// <summary>
+        /// Gets a <see cref="Rectangle"/> from a <see cref="RectF"/>
+        /// </summary>
+        /// <param name="rect">The rectangle.</param>
+        public static Rectangle GetRectangle(this RectF rect)
+        {
+            return new Rectangle(rect.Left / Device.Current.DisplayScale, rect.Top / Device.Current.DisplayScale,
+                (rect.Right - rect.Left) / Device.Current.DisplayScale, (rect.Bottom - rect.Top) / Device.Current.DisplayScale);
+        }
 
         /// <summary>
         /// Gets an <see cref="ImageView.ScaleType"/> from a <see cref="Stretch"/>.

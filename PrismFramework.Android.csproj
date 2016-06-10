@@ -132,6 +132,8 @@
     <Compile Include="UI\StatusBar.cs" />
     <Compile Include="UI\Media\Imaging\BitmapImage.cs" />
     <Compile Include="UI\Media\Imaging\RenderTargetBitmap.cs" />
+    <Compile Include="UI\Media\Inking\InkStroke.cs" />
+    <Compile Include="UI\Controls\InkCanvas.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
@@ -154,5 +156,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="UI\Media\Inking\" />
   </ItemGroup>
 </Project>
