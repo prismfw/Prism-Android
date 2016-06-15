@@ -242,6 +242,11 @@ namespace Prism.Android.UI
             }
 
             base.OnActivityCreated(savedInstanceState);
+
+            if (views.Count > 0)
+            {
+                ChangeChild(views.Last());
+            }
         }
 
         /// <summary>
@@ -399,9 +404,9 @@ namespace Prism.Android.UI
                 return;
             }
 
-            var transaction = ChildFragmentManager.BeginTransaction();
+            var transaction = ChildFragmentManager.IsDestroyed ? null : ChildFragmentManager.BeginTransaction();
             var fragment = newChild as Fragment;
-            if (fragment != null)
+            if (transaction != null && fragment != null)
             {
                 transaction.Replace(1, fragment);
                 transaction.Commit();
