@@ -472,7 +472,16 @@ namespace Prism.Android.UI.Controls
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            return constraints;
+            int width = MeasuredWidth;
+            int height = MeasuredHeight;
+
+            base.OnMeasure(MeasureSpec.MakeMeasureSpec((int)(constraints.Width * Device.Current.DisplayScale), MeasureSpecMode.AtMost),
+                MeasureSpec.MakeMeasureSpec((int)(constraints.Height * Device.Current.DisplayScale), MeasureSpecMode.AtMost));
+
+            var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
+            SetMeasuredDimension(width, height);
+
+            return new Size(Math.Min(constraints.Width, size.Width), Math.Min(constraints.Height, size.Height));
         }
 
         /// <summary>
