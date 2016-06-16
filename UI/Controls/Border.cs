@@ -373,18 +373,30 @@ namespace Prism.Android.UI.Controls
 
             if (borderBrush != null)
             {
-                borderPaint.StrokeWidth = (float)(borderThickness.Left * Device.Current.DisplayScale);
-                canvas.DrawLine(0, Height, 0, 0, borderPaint);
+                if (borderThickness.Left > 0)
+                {
+                    borderPaint.StrokeWidth = (float)(borderThickness.Left * Device.Current.DisplayScale);
+                    canvas.DrawLine(0, Height, 0, 0, borderPaint);
+                }
 
-                borderPaint.StrokeWidth = (float)(borderThickness.Top * Device.Current.DisplayScale);
-                canvas.DrawLine(0, 0, Width, 0, borderPaint);
+                if (borderThickness.Top > 0)
+                {
+                    borderPaint.StrokeWidth = (float)(borderThickness.Top * Device.Current.DisplayScale);
+                    canvas.DrawLine(0, 0, Width, 0, borderPaint);
+                }
 
                 // the right and bottom borders seem to be drawn thinner than the left and top ones
-                borderPaint.StrokeWidth = (float)((borderThickness.Right + 1) * Device.Current.DisplayScale);
-                canvas.DrawLine(Width, 0, Width, Height, borderPaint);
+                if (borderThickness.Right > 0)
+                {
+                    borderPaint.StrokeWidth = (float)((borderThickness.Right + 1) * Device.Current.DisplayScale);
+                    canvas.DrawLine(Width, 0, Width, Height, borderPaint);
+                }
 
-                borderPaint.StrokeWidth = (float)((borderThickness.Bottom + 1) * Device.Current.DisplayScale);
-                canvas.DrawLine(0, Height, Width, Height, borderPaint);
+                if (borderThickness.Bottom > 0)
+                {
+                    borderPaint.StrokeWidth = (float)((borderThickness.Bottom + 1) * Device.Current.DisplayScale);
+                    canvas.DrawLine(0, Height, Width, Height, borderPaint);
+                }
             }
         }
 
