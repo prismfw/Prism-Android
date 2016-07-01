@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Android.Content;
@@ -48,9 +49,14 @@ namespace Prism.Android.UI.Controls
     public class ListBox : RecyclerView, INativeListBox
     {
         /// <summary>
-        /// Occurs when an accessory in a list box item is selected.
+        /// Occurs when an accessory in a list box item is clicked or tapped.
         /// </summary>
-        public event EventHandler<AccessorySelectedEventArgs> AccessorySelected;
+        public event EventHandler<AccessoryClickedEventArgs> AccessoryClicked;
+
+        /// <summary>
+        /// Occurs when an item in the list box is clicked or tapped.
+        /// </summary>
+        public event EventHandler<ItemClickedEventArgs> ItemClicked;
 
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -327,7 +333,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public IList SelectedItems
         {
-            get { return selectedIndices.Count == 0 ? null : selectedIndices.Select(i => GetItemAtPosition(i)).ToList().AsReadOnly(); }
+            get { return selectedIndices.Select(i => GetItemAtPosition(i)).ToList().AsReadOnly(); }
         }
 
         /// <summary>
@@ -432,12 +438,7 @@ namespace Prism.Android.UI.Controls
         public void DeselectItem(object item, Animate animate)
         {
             int index;
-            if (items == null || (index = GetPositionForItem(item)) < 0)
-            {
-                return;
-            }
-
-            if (selectedIndices.Remove(index))
+            if (items != null && (index = GetPositionForItem(item)) >= 0 && selectedIndices.Remove(index))
             {
                 for (int i = 0; i < ChildCount; i++)
                 {
@@ -445,8 +446,12 @@ namespace Prism.Android.UI.Controls
                     if (child != null && GetChildAdapterPosition(child) == index)
                     {
                         child.IsSelected = false;
+                        break;
                     }
                 }
+                
+                OnPropertyChanged(Prism.UI.Controls.ListBox.SelectedItemsProperty);
+                SelectionChanged(this, new SelectionChangedEventArgs(null, item));
             }
         }
 
@@ -605,27 +610,28 @@ namespace Prism.Android.UI.Controls
         public void SelectItem(object item, Animate animate)
         {
             int index;
-            if (selectionMode == SelectionMode.None || items == null || (index = GetPositionForItem(item)) < 0)
+            if (selectionMode != SelectionMode.None && items != null && (index = GetPositionForItem(item)) >= 0 && !selectedIndices.Contains(index))
             {
-                return;
-            }
-
-            if (!selectedIndices.Contains(index))
-            {
-                if (selectionMode == SelectionMode.Single)
+                object[] removedItems = null;
+                if (selectionMode == SelectionMode.Single && selectedIndices.Count > 0)
                 {
+                    for (int i = 0; i < ChildCount; i++)
+                    {
+                        var child = GetChildAt(i) as ListBoxItem;
+                        if (child != null)
+                        {
+                            child.IsSelected = GetChildAdapterPosition(child) == index;
+                        }
+                    }
+
+                    removedItems = selectedIndices.Select(i => GetItemAtPosition(i)).ToArray();
                     selectedIndices.Clear();
                 }
-                
+
                 selectedIndices.Add(index);
-                for (int i = 0; i < ChildCount; i++)
-                {
-                    var child = GetChildAt(i) as ListBoxItem;
-                    if (child != null)
-                    {
-                        child.IsSelected = selectedIndices.Contains(GetChildAdapterPosition(child));
-                    }
-                }
+                
+                OnPropertyChanged(Prism.UI.Controls.ListBox.SelectedItemsProperty);
+                SelectionChanged(this, new SelectionChangedEventArgs(new object[] { item }, removedItems));
             }
         }
 
@@ -722,9 +728,9 @@ namespace Prism.Android.UI.Controls
             return -1;
         }
 
-        private void OnAccessorySelected(int index)
+        private void OnAccessoryClicked(int index)
         {
-            AccessorySelected(this, new AccessorySelectedEventArgs(items?[index]));
+            AccessoryClicked(this, new AccessoryClickedEventArgs(items?[index]));
         }
 
         private void OnBackgroundImageLoaded(object sender, EventArgs e)
@@ -736,6 +742,26 @@ namespace Prism.Android.UI.Controls
         {
             separatorDrawable = separatorBrush.GetDrawable(null);
             InvalidateItemDecorations();
+        }
+        
+        private void OnItemClicked(global::Android.Views.View view, int position)
+        {
+            if (selectionMode == SelectionMode.None)
+            {
+                return;
+            }
+            
+            var item = GetItemAtPosition(position);
+            // this check must be done before ItemClicked is fired
+            if (selectedIndices.Contains(position))
+            {
+                ItemClicked(this, new ItemClickedEventArgs(item));
+            }
+            else
+            {
+                ItemClicked(this, new ItemClickedEventArgs(item));
+                SelectItem(item, Prism.UI.Animate.Default);
+            }
         }
 
         private void OnItemsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -921,57 +947,6 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private void OnItemSelected(global::Android.Views.View view, int position)
-        {
-            if (selectionMode == SelectionMode.None)
-            {
-                return;
-            }
-
-            var listBoxItem = view as ListBoxItem;
-            if (selectedIndices.Contains(position))
-            {
-                if (selectionMode == SelectionMode.Multiple)
-                {
-                    if (listBoxItem != null)
-                    {
-                        listBoxItem.IsSelected = false;
-                    }
-
-                    selectedIndices.Remove(position);
-                    OnPropertyChanged(Prism.UI.Controls.ListBox.SelectedItemsProperty);
-                    SelectionChanged(this, new SelectionChangedEventArgs(null, GetItemAtPosition(position)));
-                }
-            }
-            else
-            {
-                object[] removedItems = null;
-                if (selectionMode == SelectionMode.Single && selectedIndices.Count > 0)
-                {
-                    for (int i = 0; i < ChildCount; i++)
-                    {
-                        var child = GetChildAt(i) as ListBoxItem;
-                        if (child != null)
-                        {
-                            child.IsSelected = false;
-                        }
-                    }
-
-                    removedItems = selectedIndices.Select(i => GetItemAtPosition(i)).ToArray();
-                    selectedIndices.Clear();
-                }
-
-                if (listBoxItem != null)
-                {
-                    listBoxItem.IsSelected = true;
-                }
-
-                selectedIndices.Add(position);
-                OnPropertyChanged(Prism.UI.Controls.ListBox.SelectedItemsProperty);
-                SelectionChanged(this, new SelectionChangedEventArgs(new object[] { GetItemAtPosition(position) }, removedItems));
-            }
-        }
-
         private void OnLoaded()
         {
             if (!IsLoaded)
@@ -1089,7 +1064,7 @@ namespace Prism.Android.UI.Controls
                 var parent = v.GetParent<ListBox>();
                 if (parent != null && parent.IsHitTestVisible)
                 {
-                    parent.OnItemSelected(v, AdapterPosition);
+                    parent.OnItemClicked(v, AdapterPosition);
                 }
             }
         }
