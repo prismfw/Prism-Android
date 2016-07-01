@@ -82,7 +82,7 @@ namespace Prism.Android
         /// <summary>
         /// Gets the height of the horizontal scroll bar.
         /// </summary>
-        public double HorizontalScrollBarHeight => 0;
+        public double HorizontalScrollBarHeight => 4;
 
         /// <summary>
         /// Gets the preferred amount of space between the left edge of a UI element and the left edge of its parent.
@@ -178,7 +178,7 @@ namespace Prism.Android
         /// <summary>
         /// Gets the width of the vertical scroll bar.
         /// </summary>
-        public double VerticalScrollBarWidth => 0;
+        public double VerticalScrollBarWidth => 4;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SystemParameters"/> class.
