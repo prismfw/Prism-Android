@@ -55,26 +55,6 @@ namespace Prism.Android
         public Thickness ButtonPadding => new Thickness(24, 14);
 
         /// <summary>
-        /// Gets the amount that a header is inset on top of the content of a content view while in landscape orientation.
-        /// </summary>
-        public Thickness ContentViewHeaderInsetLandscape => new Thickness();
-
-        /// <summary>
-        /// Gets the amount that a header is inset on top of the content of a content view while in portrait orientation.
-        /// </summary>
-        public Thickness ContentViewHeaderInsetPortrait => new Thickness();
-
-        /// <summary>
-        /// Gets the amount that a header offsets the content of a content view while in landscape orientation.
-        /// </summary>
-        public Thickness ContentViewHeaderOffsetLandscape => new Thickness(0, Device.Current.FormFactor == FormFactor.Phone ? 48 : 64, 0, 0);
-
-        /// <summary>
-        /// Gets the amount that a header offsets the content of a content view while in portrait orientation.
-        /// </summary>
-        public Thickness ContentViewHeaderOffsetPortrait => new Thickness(0, Device.Current.FormFactor == FormFactor.Phone ? 56 : 64, 0, 0);
-
-        /// <summary>
         /// Gets the preferred width of the border around a date picker.
         /// </summary>
         public double DatePickerBorderWidth => 0;
@@ -179,6 +159,26 @@ namespace Prism.Android
         /// Gets the width of the vertical scroll bar.
         /// </summary>
         public double VerticalScrollBarWidth => 4;
+
+        /// <summary>
+        /// Gets the amount that a header is inset on top of the current view of a view stack while in landscape orientation.
+        /// </summary>
+        public Thickness ViewStackHeaderInsetLandscape => new Thickness();
+
+        /// <summary>
+        /// Gets the amount that a header is inset on top of the current view of a view stack while in portrait orientation.
+        /// </summary>
+        public Thickness ViewStackHeaderInsetPortrait => new Thickness();
+
+        /// <summary>
+        /// Gets the amount that a header offsets the current view of a view stack while in landscape orientation.
+        /// </summary>
+        public Thickness ViewStackHeaderOffsetLandscape => new Thickness(0, Device.Current.FormFactor == FormFactor.Phone ? 48 : 64, 0, 0);
+
+        /// <summary>
+        /// Gets the amount that a header offsets the current view of a view stack while in portrait orientation.
+        /// </summary>
+        public Thickness ViewStackHeaderOffsetPortrait => new Thickness(0, Device.Current.FormFactor == FormFactor.Phone ? 56 : 64, 0, 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SystemParameters"/> class.

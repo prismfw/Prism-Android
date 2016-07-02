@@ -546,7 +546,7 @@ namespace Prism.Android.UI
                 var headerView = ViewStack.Header as global::Android.Views.View;
                 headerView.Layout(0, 0, width, (int)(Device.Current.DisplayScale * (headerView.Visibility != ViewStates.Visible ?
                     0 : Resources.Configuration.Orientation == global::Android.Content.Res.Orientation.Landscape ?
-                    Prism.SystemParameters.ContentViewHeaderOffsetLandscape.Top : Prism.SystemParameters.ContentViewHeaderOffsetPortrait.Top)));
+                    Prism.SystemParameters.ViewStackHeaderOffsetLandscape.Top : Prism.SystemParameters.ViewStackHeaderOffsetPortrait.Top)));
                     
                 var content = GetChildAt(0);
                 if (content != null && content != headerView)
