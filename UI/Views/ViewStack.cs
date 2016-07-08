@@ -62,6 +62,16 @@ namespace Prism.Android.UI
         public event EventHandler Unloaded;
 
         /// <summary>
+        /// Occurs when the current view of the view stack has changed.
+        /// </summary>
+        public event EventHandler ViewChanged;
+
+        /// <summary>
+        /// Occurs when the current view of the view stack is being replaced by a different view.
+        /// </summary>
+        public event EventHandler<NativeViewStackViewChangingEventArgs> ViewChanging;
+
+        /// <summary>
         /// Gets or sets a value indicating whether animations are enabled for this instance.
         /// </summary>
         public bool AreAnimationsEnabled
@@ -191,6 +201,7 @@ namespace Prism.Android.UI
             views.Insert(index, view);
             if (views.Last() == view)
             {
+                ViewChanging(this, new NativeViewStackViewChangingEventArgs(views.Count > 1 ? views[views.Count - 2] : null, view));
                 ChangeChild(view);
             }
         }
@@ -292,6 +303,7 @@ namespace Prism.Android.UI
             }
 
             views.RemoveAt(views.Count - 1);
+            ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, views.Last()));
             ChangeChild(views.Last());
             return last;
         }
@@ -323,6 +335,8 @@ namespace Prism.Android.UI
 
             var popped = views.Skip(1);
             views.RemoveRange(1, views.Count - 2);
+
+            ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, views.Last()));
             ChangeChild(views.Last());
             return popped.ToArray();
         }
@@ -358,6 +372,7 @@ namespace Prism.Android.UI
             var popped = views.Skip(++index);
             views.RemoveRange(index, views.Count - index);
 
+            ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, view));
             ChangeChild(view);
             return popped.ToArray();
         }
@@ -370,6 +385,7 @@ namespace Prism.Android.UI
         public void PushView(object view, Animate animate)
         {
             views.Add(view);
+            ViewChanging(this, new NativeViewStackViewChangingEventArgs(views.Count > 1 ? views[views.Count - 2] : null, view));
             ChangeChild(view);
         }
 
@@ -386,6 +402,7 @@ namespace Prism.Android.UI
             views[index] = newView;
             if (index == views.Count - 1)
             {
+                ViewChanging(this, new NativeViewStackViewChangingEventArgs(oldView, newView));
                 ChangeChild(newView);
             }
         }
@@ -410,30 +427,33 @@ namespace Prism.Android.UI
             {
                 transaction.Replace(1, fragment);
                 transaction.Commit();
-                return;
             }
-
-            var view = newChild as global::Android.Views.View;
-            if (view != null)
+            else
             {
-                var oldFrag = ChildFragmentManager.FindFragmentById(1);
-                if (oldFrag != null)
+                var view = newChild as global::Android.Views.View;
+                if (view != null)
                 {
-                    transaction.Remove(oldFrag);
-                    transaction.Commit();
-                }
-
-                if (contentContainer != null)
-                {
-                    (view.Parent as ViewGroup)?.RemoveView(view);
-                    if (contentContainer.ChildCount > 2)
+                    var oldFrag = ChildFragmentManager.FindFragmentById(1);
+                    if (oldFrag != null)
                     {
-                        contentContainer.RemoveViewAt(1);
+                        transaction.Remove(oldFrag);
+                        transaction.Commit();
                     }
 
-                    contentContainer.AddView(view, 1);
+                    if (contentContainer != null)
+                    {
+                        (view.Parent as ViewGroup)?.RemoveView(view);
+                        if (contentContainer.ChildCount > 2)
+                        {
+                            contentContainer.RemoveViewAt(1);
+                        }
+
+                        contentContainer.AddView(view, 1);
+                    }
                 }
             }
+
+            ViewChanged(this, EventArgs.Empty);
         }
 
         /// <summary>
