@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using System.Linq;
+using Android.Content.PM;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Graphics.Drawables.Shapes;
@@ -166,6 +167,16 @@ namespace Prism.Android
         {
             return new Prism.UI.Color(color.A, color.R, color.G, color.B);
         }
+        
+        /// <summary>
+        /// Gets a <see cref="DisplayOrientations"/> from an <see cref="Android.Content.Res.Orientation"/>.
+        /// </summary>
+        /// <param name="orientation">The orientation.</param>
+        public static DisplayOrientations GetDisplayOrientations(this global::Android.Content.Res.Orientation orientation)
+        {
+            return orientation == global::Android.Content.Res.Orientation.Landscape ?
+                DisplayOrientations.Landscape : DisplayOrientations.Portrait;
+        }
 
         /// <summary>
         /// Gets a <see cref="Drawable"/> from a <see cref="Brush"/>
@@ -213,7 +224,7 @@ namespace Prism.Android
         }
 
         /// <summary>
-        /// Gets a <see cref="GravityFlags"/> from a <see cref="TextAlignment"/>.
+        /// Gets a <see cref="GravityFlags"/> from a <see cref="Prism.UI.TextAlignment"/>.
         /// </summary>
         /// <param name="alignment">The text alignment.</param>
         public static GravityFlags GetGravity(this Prism.UI.TextAlignment alignment)
@@ -322,6 +333,25 @@ namespace Prism.Android
                     return ImageView.ScaleType.Center;
             }
         }
+        
+        /// <summary>
+        /// Gets a <see cref="ScreenOrientation"/> from a <see cref="DisplayOrientations"/>.
+        /// </summary>
+        /// <param name="orientation">The orientation.</param>
+        public static ScreenOrientation GetScreenOrientation(this DisplayOrientations orientation)
+        {
+            if (orientation.HasFlag(DisplayOrientations.Portrait) && !orientation.HasFlag(DisplayOrientations.Landscape))
+            {
+                return ScreenOrientation.SensorPortrait;
+            }
+            
+            if (orientation.HasFlag(DisplayOrientations.Landscape) && !orientation.HasFlag(DisplayOrientations.Portrait))
+            {
+                return ScreenOrientation.SensorLandscape;
+            }
+            
+            return ScreenOrientation.Unspecified;
+        }
 
         /// <summary>
         /// Gets a <see cref="Shader"/> for the specified width and height.
@@ -402,7 +432,7 @@ namespace Prism.Android
         }
 
         /// <summary>
-        /// Gets a <see cref="TextAlignment"/> from a <see cref="GravityFlags"/>.
+        /// Gets a <see cref="Prism.UI.TextAlignment"/> from a <see cref="GravityFlags"/>.
         /// </summary>
         /// <param name="gravity">The gravity.</param>
         public static Prism.UI.TextAlignment GetTextAlignment(this GravityFlags gravity)

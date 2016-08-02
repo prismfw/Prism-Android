@@ -23,16 +23,19 @@ using System;
 using System.Collections.Generic;
 using Android.App;
 using Android.Content.PM;
+using Android.Content.Res;
 using Android.OS;
+using Prism.Native;
 
 namespace Prism.Android
 {
     /// <summary>
     /// Represents a basic activity that responds to framework-generated events.
     /// </summary>
-    [Activity(ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
+    [Activity(ConfigurationChanges = ConfigChanges.KeyboardHidden | ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class AppActivity : Activity
     {
+        private Orientation currentOrientation;
         private readonly Dictionary<int, IPermissionRequestCallback> pendingPermissionRequests = new Dictionary<int, IPermissionRequestCallback>();
         
         /// <summary>
@@ -99,9 +102,24 @@ namespace Prism.Android
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+            currentOrientation = Resources.Configuration.Orientation;
             
             Android.Application.MainActivity = this;
             AndroidInitializer.Initialize();
+        }
+        
+        /// <summary>
+        /// Called by the system when the device configuration changes while your activity is running.
+        /// </summary>
+        /// <param name="newConfig"></param>
+        public override void OnConfigurationChanged(Configuration newConfig)
+        {
+            base.OnConfigurationChanged(newConfig);
+            if (newConfig.Orientation != currentOrientation)
+            {
+                currentOrientation = newConfig.Orientation;
+                (ObjectRetriever.GetNativeObject(Prism.UI.Window.Current) as UI.Window)?.OnOrientationChanged(currentOrientation);
+            }
         }
     }
 }

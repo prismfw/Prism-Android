@@ -56,11 +56,30 @@ namespace Prism.Android.UI
         /// Occurs when the window loses focus.
         /// </summary>
         public event EventHandler Deactivated;
+        
+        /// <summary>
+        /// Occurs when the orientation of the rendered content has changed.
+        /// </summary>
+        public event EventHandler<DisplayOrientationChangedEventArgs> OrientationChanged;
 
         /// <summary>
         /// Occurs when the size of the window has changed.
         /// </summary>
         public event EventHandler<WindowSizeChangedEventArgs> SizeChanged;
+        
+        /// <summary>
+        /// Gets or sets the preferred orientations in which to automatically rotate the window in response to orientation changes of the physical device.
+        /// </summary>
+        public DisplayOrientations AutorotationPreferences
+        {
+            get { return autorotationPreferences; }
+            set
+            {
+                autorotationPreferences = value;
+                Application.MainActivity.RequestedOrientation = autorotationPreferences.GetScreenOrientation();
+            }
+        }
+        private DisplayOrientations autorotationPreferences;
 
         /// <summary>
         /// Gets or sets the object that acts as the content of the window.
@@ -135,6 +154,14 @@ namespace Prism.Android.UI
         }
         
         /// <summary>
+        /// Gets the current orientation of the rendered content within the window.
+        /// </summary>
+        public DisplayOrientations Orientation
+        {
+            get { return Application.MainActivity.Resources.Configuration.Orientation.GetDisplayOrientations(); }
+        }
+        
+        /// <summary>
         /// Gets or sets the style for the window.
         /// </summary>
         public WindowStyle Style { get; set; }
@@ -166,6 +193,8 @@ namespace Prism.Android.UI
             {
                 e.OldActivity.Window.Callback = null;
                 e.NewActivity.Window.Callback = new MainWindowCallback();
+                
+                e.NewActivity.RequestedOrientation = autorotationPreferences.GetScreenOrientation();
             };
 
             Application.MainActivity.Window.Callback = new MainWindowCallback();
@@ -196,8 +225,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void Show()
         {
-            var i = new Intent(Application.MainActivity, GetType());
-            Application.MainActivity.StartActivity(i);
+            Application.MainActivity.StartActivity(new Intent(Application.MainActivity, GetType()));
         }
         
         /// <summary>
@@ -218,6 +246,11 @@ namespace Prism.Android.UI
         internal void OnDeactivated()
         {
             Deactivated?.Invoke(this, EventArgs.Empty);
+        }
+        
+        internal void OnOrientationChanged(global::Android.Content.Res.Orientation orientation)
+        {
+            OrientationChanged(this, new DisplayOrientationChangedEventArgs(orientation.GetDisplayOrientations()));
         }
 
         private void OnLayoutChanged(object sender, global::Android.Views.View.LayoutChangeEventArgs e)
@@ -267,7 +300,7 @@ namespace Prism.Android.UI
         /// <param name="e"></param>
         public virtual bool DispatchKeyEvent(global::Android.Views.KeyEvent e)
         {
-            if (e.KeyCode == Keycode.Back || (e.Flags & KeyEventFlags.VirtualHardKey) != 0)
+            if ((e.KeyCode == Keycode.Back || (e.Flags & KeyEventFlags.VirtualHardKey) != 0) && e.Action == KeyEventActions.Up)
             {
                 var stack = Prism.UI.Window.Current.Content as Prism.UI.ViewStack;
                 if (stack == null)
