@@ -324,7 +324,7 @@ namespace Prism.Android.UI
             }
         }
 
-        private class ViewContentContainer : FrameLayout
+        private class ViewContentContainer : FrameLayout, IFragmentView
         {
             public FrameLayout DetailLayout { get; }
 
