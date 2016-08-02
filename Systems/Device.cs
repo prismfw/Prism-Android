@@ -38,7 +38,7 @@ namespace Prism.Android.Systems
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeDevice), IsSingleton = true)]
-    public class Device : OrientationEventListener, INativeDevice
+    public class Device : OrientationEventListener, INativeDevice, ISensorEventListener
     {
         /// <summary>
         /// Occurs when the battery level of the device has changed by at least 1 percent.
@@ -101,10 +101,12 @@ namespace Prism.Android.Systems
                     if (isOrientationMonitoringEnabled)
                     {
                         Enable();
+                        sensorManager.RegisterListener(this, gravitySensor, SensorDelay.Normal);
                     }
                     else
                     {
                         Disable();
+                        sensorManager.UnregisterListener(this, gravitySensor);
                     }
                 }
             }
@@ -166,6 +168,8 @@ namespace Prism.Android.Systems
         public PowerSource PowerSource { get; private set; }
 
         private readonly BatteryReceiver batteryReceiver;
+        private readonly Sensor gravitySensor;
+        private readonly SensorManager sensorManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Device"/> class.
@@ -173,9 +177,18 @@ namespace Prism.Android.Systems
         public Device() : base(global::Android.App.Application.Context, SensorDelay.Normal)
         {
             batteryReceiver = new BatteryReceiver(this);
+            sensorManager = (SensorManager)Application.MainActivity.GetSystemService(Context.SensorService);
+            gravitySensor = sensorManager.GetDefaultSensor(SensorType.Gravity);
 
             Application.MainActivityChanged += (sender, e) => SetDisplayScale();
             SetDisplayScale();
+        }
+        
+        /// <summary></summary>
+        /// <param name="sensor"></param>
+        /// <param name="status"></param>
+        public void OnAccuracyChanged(Sensor sensor, SensorStatus status)
+        {
         }
 
         /// <summary>
@@ -184,30 +197,39 @@ namespace Prism.Android.Systems
         /// <param name="orientation">The new orientation of the device.</param>
         public override void OnOrientationChanged(int orientation)
         {
-            var dOrientation = DeviceOrientation.Unknown;
-            var orient = Application.MainActivity.Resources.Configuration.Orientation;
-            var rotation = Application.MainActivity.WindowManager.DefaultDisplay.Rotation;
-
-            if (orient == global::Android.Content.Res.Orientation.Portrait)
+            var dOrientation = Orientation;
+            if (orientation == OrientationUnknown)
             {
-                if (rotation == SurfaceOrientation.Rotation0 || rotation == SurfaceOrientation.Rotation270)
-                {
-                    dOrientation = DeviceOrientation.PortraitUp;
-                }
-                else
-                {
-                    dOrientation = DeviceOrientation.PortraitDown;
-                }
+                Orientation = DeviceOrientation.Unknown;
             }
-            else if (orient == global::Android.Content.Res.Orientation.Landscape)
+            else
             {
-                if (rotation == SurfaceOrientation.Rotation0 || rotation == SurfaceOrientation.Rotation90)
+                var orient = Application.MainActivity.Resources.Configuration.Orientation;
+                var rotation = Application.MainActivity.WindowManager.DefaultDisplay.Rotation;
+                var naturalOrientation = (orient == global::Android.Content.Res.Orientation.Portrait &&
+                    (rotation == SurfaceOrientation.Rotation90 || rotation == SurfaceOrientation.Rotation270)) ||
+                    (orient == global::Android.Content.Res.Orientation.Landscape &&
+                    (rotation == SurfaceOrientation.Rotation0 || rotation == SurfaceOrientation.Rotation180)) ?
+                    DeviceOrientation.LandscapeLeft : DeviceOrientation.PortraitUp;
+                
+                if (orientation <= 45 || orientation >= 315)
                 {
-                    dOrientation = DeviceOrientation.LandscapeRight;
+                    dOrientation = naturalOrientation;
+                }
+                else if (orientation >= 45 && orientation <= 135)
+                {
+                    dOrientation = (naturalOrientation == DeviceOrientation.PortraitUp) ?
+                        DeviceOrientation.LandscapeRight : DeviceOrientation.PortraitUp;
+                }
+                else if (orientation >= 135 && orientation <= 225)
+                {
+                    dOrientation = (naturalOrientation == DeviceOrientation.PortraitUp) ?
+                        DeviceOrientation.PortraitDown : DeviceOrientation.LandscapeRight;
                 }
                 else
                 {
-                    dOrientation = DeviceOrientation.LandscapeLeft;
+                    dOrientation = (naturalOrientation == DeviceOrientation.PortraitUp) ?
+                        DeviceOrientation.LandscapeLeft : DeviceOrientation.PortraitDown;
                 }
             }
 
@@ -215,6 +237,35 @@ namespace Prism.Android.Systems
             {
                 Orientation = dOrientation;
                 OrientationChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        
+        /// <summary></summary>
+        /// <param name="evt"></param>
+        public void OnSensorChanged(SensorEvent evt)
+        {
+            var source = evt.Sensor;
+            if (source.Type == SensorType.Gravity &&
+                (Orientation == DeviceOrientation.Unknown || Orientation == DeviceOrientation.FaceUp || Orientation == DeviceOrientation.FaceDown))
+            {
+                float z = evt.Values[2];
+                float threshold = SensorManager.StandardGravity / 1.5f;
+                
+                var dOrientation = Orientation;
+                if (z >= threshold)
+                {
+                    dOrientation = DeviceOrientation.FaceUp;
+                }
+                else if (z <= -threshold)
+                {
+                    dOrientation = DeviceOrientation.FaceDown;
+                }
+                
+                if (dOrientation != Orientation)
+                {
+                    Orientation = dOrientation;
+                    OrientationChanged?.Invoke(this, EventArgs.Empty);
+                }
             }
         }
 
