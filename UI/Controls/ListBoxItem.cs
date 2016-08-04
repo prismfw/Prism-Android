@@ -231,6 +231,22 @@ namespace Prism.Android.UI.Controls
         public MeasureRequestHandler MeasureRequest { get; set; }
 
         /// <summary>
+        /// Gets or sets the level of opacity for the element.
+        /// </summary>
+        public double Opacity
+        {
+            get { return Alpha; }
+            set
+            {
+                if (value != Alpha)
+                {
+                    Alpha = (float)value;
+                    OnPropertyChanged(Element.OpacityProperty);
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets the containing <see cref="RecyclerView"/>.
         /// </summary>
         public new RecyclerView Parent { get; private set; }

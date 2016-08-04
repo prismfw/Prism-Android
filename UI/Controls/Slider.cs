@@ -371,6 +371,22 @@ namespace Prism.Android.UI.Controls
         private int minValue;
 
         /// <summary>
+        /// Gets or sets the level of opacity for the element.
+        /// </summary>
+        public double Opacity
+        {
+            get { return Alpha; }
+            set
+            {
+                if (value != Alpha)
+                {
+                    Alpha = (float)value;
+                    OnPropertyChanged(Element.OpacityProperty);
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the interval between steps along the track.
         /// </summary>
         public double StepFrequency
