@@ -331,6 +331,45 @@ namespace Prism.Android.UI.Controls
         }
 
         /// <summary>
+        /// Gets or sets the <see cref="Brush"/> to apply to the thumb of the control.
+        /// </summary>
+        public Brush ThumbBrush
+        {
+            get { return thumbBrush; }
+            set
+            {
+                if (value != thumbBrush)
+                {
+                    (thumbBrush as ImageBrush).ClearImageHandler(OnThumbImageLoaded);
+
+                    thumbBrush = value;
+                    thumbDrawable.ClearColorFilter();
+                    
+                    if (thumbBrush == null && (background != null || foreground != null))
+                    {
+                        SetColorLists();
+                    }
+                    else
+                    {
+                        var scb = thumbBrush as SolidColorBrush;
+                        if (scb == null)
+                        {
+                            ThumbDrawable = thumbBrush.GetDrawable(OnThumbImageLoaded) ?? thumbDrawable;
+                        }
+                        else
+                        {
+                            thumbDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                            ThumbDrawable = thumbDrawable;
+                        }
+                    }
+
+                    OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ThumbBrushProperty);
+                }
+            }
+        }
+        private Brush thumbBrush;
+
+        /// <summary>
         /// Gets or sets the value of the toggle switch.
         /// </summary>
         public bool Value
@@ -363,6 +402,7 @@ namespace Prism.Android.UI.Controls
         }
 
         private readonly Paint borderPaint = new Paint();
+        private readonly Drawable thumbDrawable;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ToggleSwitch"/> class.
@@ -370,6 +410,8 @@ namespace Prism.Android.UI.Controls
         public ToggleSwitch()
             : base(Application.MainActivity)
         {
+            thumbDrawable = ThumbDrawable;
+        
             Focusable = true;
             Gravity = GravityFlags.Start;
             Typeface = Typeface.Default;
@@ -585,6 +627,11 @@ namespace Prism.Android.UI.Controls
 //            TrackDrawable = foreground.GetDrawable(null);
         }
 
+        private void OnThumbImageLoaded(object sender, EventArgs e)
+        {
+            ThumbDrawable = thumbBrush.GetDrawable(null) ?? thumbDrawable;
+        }
+
         private void OnLoaded()
         {
             if (!IsLoaded)
@@ -625,7 +672,11 @@ namespace Prism.Android.UI.Controls
                 new int[] { global::Android.Resource.Attribute.StateChecked },
             };
             
-            ThumbDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, colors));
+            if (thumbBrush == null)
+            {
+                ThumbDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, colors));
+            }
+            
             TrackDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, colors));
         }
     }
