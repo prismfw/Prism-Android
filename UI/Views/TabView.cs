@@ -189,6 +189,25 @@ namespace Prism.Android.UI
         private int selectedIndex;
 
         /// <summary>
+        /// Gets the size and location of the bar that contains the tab items.
+        /// </summary>
+        public Rectangle TabBarFrame
+        {
+            get
+            {
+                if (contentContainer == null)
+                {
+                    return new Rectangle();
+                }
+
+                return new Rectangle(contentContainer.TabLayout.Left / Device.Current.DisplayScale,
+                    contentContainer.TabLayout.Top / Device.Current.DisplayScale,
+                    contentContainer.TabLayout.Width / Device.Current.DisplayScale,
+                    contentContainer.TabLayout.Height / Device.Current.DisplayScale);
+            }
+        }
+
+        /// <summary>
         /// Gets a list of the tab items that are a part of the view.
         /// </summary>
         public IList TabItems
