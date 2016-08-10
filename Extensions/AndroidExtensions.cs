@@ -272,7 +272,18 @@ namespace Prism.Android
                     return ImeAction.Unspecified;
             }
         }
-        
+
+        /// <summary>
+        /// Gets a <see cref="Android.Graphics.Matrix"/> from a <see cref="Prism.UI.Media.Matrix"/>
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        public static global::Android.Graphics.Matrix GetMatrix(this Prism.UI.Media.Matrix matrix)
+        {
+            var retVal = new global::Android.Graphics.Matrix();
+            retVal.SetValues(new[] { (float)matrix.M11, (float)matrix.M21, (float)matrix.OffsetX, (float)matrix.M12, (float)matrix.M22, (float)matrix.OffsetY, 0f, 0f, 1f });
+            return retVal;
+        }
+
         /// <summary>
         /// Generates a <see cref="PointerEventArgs"/> from a <see cref="MotionEvent"/>.
         /// </summary>
@@ -372,7 +383,7 @@ namespace Prism.Android
                 }
 
                 var shader = new BitmapShader(bitmap, Shader.TileMode.Repeat, Shader.TileMode.Repeat);
-                var matrix = new Matrix();
+                var matrix = new global::Android.Graphics.Matrix();
                 switch (imageBrush.Stretch)
                 {
                     case Stretch.Fill:

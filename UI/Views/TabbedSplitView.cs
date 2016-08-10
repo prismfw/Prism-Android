@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections;
 using Android.App;
-using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.Design.Widget;
@@ -254,6 +253,29 @@ namespace Prism.Android.UI
         private double preferredMasterWidthRatio;
         
         /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    if (contentContainer != null)
+                    {
+                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
+                    }
+                    
+                    renderTransform = value;
+                    contentContainer?.SetTransform();
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
+        
+        /// <summary>
         /// Gets or sets the zero-based index of the selected tab item.
         /// </summary>
         public int SelectedIndex
@@ -420,7 +442,7 @@ namespace Prism.Android.UI
             }
         }
         
-        private class ViewContentContainer : FrameLayout, IFragmentView
+        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher
         {
             public new Brush Background
             {
@@ -462,6 +484,8 @@ namespace Prism.Android.UI
             {
                 get { return TabbedSplitView; }
             }
+            
+            public bool IsDispatching { get; private set; }
 
             public FrameLayout MasterLayout { get; }
             
@@ -487,12 +511,37 @@ namespace Prism.Android.UI
                 AddView(MasterLayout, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
                 AddView(DetailLayout, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
                 SetFrame();
+                SetTransform();
 
                 TabLayout.TabSelected += TabbedSplitView.OnTabSelected;
                 TabbedSplitView.tabItems.TabLayout = TabLayout;
                 TabLayout.TabMode = TabLayout.TabCount > 4 ? 0 : 1;
                 TabLayout.GetTabAt(TabbedSplitView.SelectedIndex)?.Select();
                 SetDetailContent(TabbedSplitView.DetailContent);
+            }
+            
+            public override bool DispatchTouchEvent(MotionEvent e)
+            {
+                var parent = Parent as ITouchDispatcher;
+                if (parent != null && !parent.IsDispatching)
+                {
+                    return false;
+                }
+
+                if (OnInterceptTouchEvent(e))
+                {
+                    return true;
+                }
+                
+                IsDispatching = true;
+                if (this.DispatchTouchEventToChildren(e))
+                {
+                    IsDispatching = false;
+                    return true;
+                }
+                
+                IsDispatching = false;
+                return base.DispatchTouchEvent(e);
             }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
@@ -549,6 +598,19 @@ namespace Prism.Android.UI
                         transaction.Replace(1, fragment);
                         transaction.Commit();
                     }
+                }
+            }
+            
+            public void SetTransform()
+            {
+                var transform = TabbedSplitView.renderTransform as Media.Transform;
+                if (transform == null)
+                {
+                    Animation = TabbedSplitView.renderTransform as global::Android.Views.Animations.Animation;
+                }
+                else
+                {
+                    transform.AddView(this);
                 }
             }
 

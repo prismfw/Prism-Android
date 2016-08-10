@@ -168,6 +168,29 @@ namespace Prism.Android.UI
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    if (contentContainer != null)
+                    {
+                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
+                    }
+                    
+                    renderTransform = value;
+                    contentContainer?.SetTransform();
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
 
         /// <summary>
         /// Gets a collection of the views that are currently a part of the stack.
@@ -490,12 +513,14 @@ namespace Prism.Android.UI
             }
         }
 
-        private class ViewContentContainer : LinearLayout, IFragmentView
+        private class ViewContentContainer : LinearLayout, IFragmentView, ITouchDispatcher
         {
             public Fragment Fragment
             {
                 get { return ViewStack; }
             }
+            
+            public bool IsDispatching { get; private set; }
 
             public ViewStack ViewStack { get; }
 
@@ -513,6 +538,7 @@ namespace Prism.Android.UI
                 AddView(headerView, new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent));
 
                 SetFrame();
+                SetTransform();
 
                 ChildViewAdded += (sender, e) =>
                 {
@@ -530,6 +556,30 @@ namespace Prism.Android.UI
                     }
                 };
             }
+            
+            public override bool DispatchTouchEvent(MotionEvent e)
+            {
+                var parent = Parent as ITouchDispatcher;
+                if (parent != null && !parent.IsDispatching)
+                {
+                    return false;
+                }
+
+                if (OnInterceptTouchEvent(e))
+                {
+                    return true;
+                }
+                
+                IsDispatching = true;
+                if (this.DispatchTouchEventToChildren(e))
+                {
+                    IsDispatching = false;
+                    return true;
+                }
+                
+                IsDispatching = false;
+                return base.DispatchTouchEvent(e);
+            }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
             {
@@ -542,6 +592,19 @@ namespace Prism.Android.UI
                 Top = (int)(ViewStack.frame.Top * Device.Current.DisplayScale);
                 Right = (int)(ViewStack.frame.Right * Device.Current.DisplayScale);
                 Bottom = (int)(ViewStack.frame.Bottom * Device.Current.DisplayScale);
+            }
+            
+            public void SetTransform()
+            {
+                var transform = ViewStack.renderTransform as Media.Transform;
+                if (transform == null)
+                {
+                    Animation = ViewStack.renderTransform as global::Android.Views.Animations.Animation;
+                }
+                else
+                {
+                    transform.AddView(this);
+                }
             }
 
             protected override void OnAttachedToWindow()

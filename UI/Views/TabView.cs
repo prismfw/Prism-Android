@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections;
 using Android.App;
-using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.Design.Widget;
@@ -170,6 +169,29 @@ namespace Prism.Android.UI
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    if (contentContainer != null)
+                    {
+                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
+                    }
+                    
+                    renderTransform = value;
+                    contentContainer?.SetTransform();
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
         
         /// <summary>
         /// Gets or sets the zero-based index of the selected tab item.
@@ -335,7 +357,7 @@ namespace Prism.Android.UI
             }
         }
         
-        private class ViewContentContainer : LinearLayout, IFragmentView
+        private class ViewContentContainer : LinearLayout, IFragmentView, ITouchDispatcher
         {
             public new Brush Background
             {
@@ -382,6 +404,8 @@ namespace Prism.Android.UI
             
             public FrameLayout FrameLayout { get; }
             
+            public bool IsDispatching { get; private set; }
+            
             public TabLayout TabLayout { get; }
             
             public TabView TabView { get; }
@@ -403,12 +427,37 @@ namespace Prism.Android.UI
                 AddView(TabLayout, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
                 AddView(FrameLayout, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
                 SetFrame();
+                SetTransform();
 
                 TabLayout.TabSelected += TabView.OnTabSelected;
                 TabView.tabItems.TabLayout = TabLayout;
                 TabLayout.TabMode = TabLayout.TabCount > 4 ? 0 : 1;
                 TabLayout.GetTabAt(TabView.SelectedIndex)?.Select();
             }
+            
+            public override bool DispatchTouchEvent(MotionEvent e)
+            {
+                var parent = Parent as ITouchDispatcher;
+                if (parent != null && !parent.IsDispatching)
+                {
+                    return false;
+                }
+
+                if (OnInterceptTouchEvent(e))
+                {
+                    return true;
+                }
+                
+                IsDispatching = true;
+                if (this.DispatchTouchEventToChildren(e))
+                {
+                    IsDispatching = false;
+                    return true;
+                }
+                
+                IsDispatching = false;
+                return base.DispatchTouchEvent(e);
+        }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
             {
@@ -445,6 +494,19 @@ namespace Prism.Android.UI
                 Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
                     MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
                 Layout(Left, Top, Right, Bottom);
+            }
+            
+            public void SetTransform()
+            {
+                var transform = TabView.renderTransform as Media.Transform;
+                if (transform == null)
+                {
+                    Animation = TabView.renderTransform as global::Android.Views.Animations.Animation;
+                }
+                else
+                {
+                    transform.AddView(this);
+                }
             }
 
             protected override void OnAttachedToWindow()

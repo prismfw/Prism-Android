@@ -164,6 +164,29 @@ namespace Prism.Android.UI
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
         
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    if (contentContainer != null)
+                    {
+                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
+                    }
+                    
+                    renderTransform = value;
+                    contentContainer?.SetTransform();
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
+        
         private ViewContentContainer contentContainer;
 
         /// <summary>
@@ -287,7 +310,7 @@ namespace Prism.Android.UI
             }
         }
         
-        private class ViewContentContainer : FrameLayout, IFragmentView
+        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher
         {            
             public Popup Popup { get; }
 
@@ -295,6 +318,8 @@ namespace Prism.Android.UI
             {
                 get { return Popup; }
             }
+            
+            public bool IsDispatching { get; private set; }
 
             public ViewContentContainer(Popup popup)
                 : base(popup.Activity)
@@ -304,6 +329,25 @@ namespace Prism.Android.UI
                 LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
 
                 SetContent();
+            }
+            
+            public override bool DispatchTouchEvent(MotionEvent e)
+            {
+                var parent = Parent as ITouchDispatcher;
+                if (parent != null && !parent.IsDispatching)
+                {
+                    return false;
+                }
+                
+                if (OnInterceptTouchEvent(e))
+                {
+                    return true;
+                }
+                
+                IsDispatching = true;
+                this.DispatchTouchEventToChildren(e);
+                IsDispatching = false;
+                return base.DispatchTouchEvent(e);
             }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
@@ -353,6 +397,19 @@ namespace Prism.Android.UI
                 Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
                     MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
                 Layout(Left, Top, Right, Bottom);
+            }
+            
+            public void SetTransform()
+            {
+                var transform = Popup.renderTransform as Media.Transform;
+                if (transform == null)
+                {
+                    Animation = Popup.renderTransform as global::Android.Views.Animations.Animation;
+                }
+                else
+                {
+                    transform.AddView(this);
+                }
             }
 
             protected override void OnAttachedToWindow()

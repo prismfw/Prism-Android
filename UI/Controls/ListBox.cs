@@ -22,11 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Android.Content;
-using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Support.V7.Widget;
@@ -46,7 +44,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeListBox))]
-    public class ListBox : RecyclerView, INativeListBox
+    public class ListBox : RecyclerView, INativeListBox, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when an accessory in a list box item is clicked or tapped.
@@ -213,6 +211,11 @@ namespace Prism.Android.UI.Controls
                 Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
             }
         }
+        
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -333,6 +336,35 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+                    
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
 
         /// <summary>
         /// Gets or sets the method to be used for retrieving section headers in the list box.
@@ -471,6 +503,27 @@ namespace Prism.Android.UI.Controls
             }
         }
 
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent != null && !parent.IsDispatching)
+            {
+                return false;
+            }
+
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+            
+            IsDispatching = true;
+            this.DispatchTouchEventToChildren(e);
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
+        }
+
         /// <summary>
         /// Invalidates the arrangement of this instance's children.
         /// </summary>
@@ -526,20 +579,6 @@ namespace Prism.Android.UI.Controls
             if (!isHitTestVisible)
             {
                 return false;
-            }
-            
-            for (int i = 0; i < ChildCount; i++)
-            {
-                var child = GetChildAt(0);
-                if (child != null && ((child as INativeElement)?.IsHitTestVisible ?? false))
-                {
-                    var rect = new Rect();
-                    child.GetHitRect(rect);
-                    if (rect.Contains((int)e.GetX(), (int)e.GetY()))
-                    {
-                        return base.OnTouchEvent(e);
-                    }
-                }
             }
             
             if (e.Action == MotionEventActions.Cancel)
@@ -1116,7 +1155,7 @@ namespace Prism.Android.UI.Controls
                     else
                     {
                         left = child.Left;
-                        top = (int)(child.Bottom - height);
+                        top = (child.Bottom - height);
                         right = child.Right;
                         bottom = child.Bottom;
                     }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -78,6 +78,7 @@
     <Compile Include="Timer.cs" />
     <Compile Include="SystemParameters.cs" />
     <Compile Include="Extensions\AndroidExtensions.cs" />
+    <Compile Include="UI\Media\Transform.cs" />
     <Compile Include="UI\Views\ContentView.cs" />
     <Compile Include="UI\Controls\Image.cs" />
     <Compile Include="UI\VisualTreeHelper.cs" />
@@ -134,6 +135,7 @@
     <Compile Include="UI\Media\Imaging\RenderTargetBitmap.cs" />
     <Compile Include="UI\Media\Inking\InkStroke.cs" />
     <Compile Include="UI\Controls\InkCanvas.cs" />
+    <Compile Include="TouchDispatcher.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
@@ -156,8 +158,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UI\Media\Inking\" />
   </ItemGroup>
 </Project>

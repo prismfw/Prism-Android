@@ -329,6 +329,35 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+                    
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
 
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the thumb of the control.
@@ -421,6 +450,19 @@ namespace Prism.Android.UI.Controls
                 OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ValueProperty);
                 ValueChanged(this, EventArgs.Empty);
             };
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent == null || parent.IsDispatching)
+            {
+                return base.DispatchTouchEvent(e);
+            }
+
+            return false;
         }
 
         /// <summary>

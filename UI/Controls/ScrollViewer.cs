@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using Android.Content;
-using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -38,7 +37,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeScrollViewer))]
-    public class ScrollViewer : ScrollView, INativeScrollViewer
+    public class ScrollViewer : ScrollView, INativeScrollViewer, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -232,6 +231,11 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -275,6 +279,35 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+                    
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
 
         /// <summary>
         /// Gets or sets the display state of the element.
@@ -303,6 +336,27 @@ namespace Prism.Android.UI.Controls
         {
             AddView(horizontalScrollView = new HorizontalScrollViewer(Context, this) { FillViewport = true },
                 new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent != null && !parent.IsDispatching)
+            {
+                return false;
+            }
+            
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+            
+            IsDispatching = true;
+            this.DispatchTouchEventToChildren(e);
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
         }
 
         /// <summary>
@@ -506,7 +560,7 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private class HorizontalScrollViewer : HorizontalScrollView
+        private class HorizontalScrollViewer : HorizontalScrollView, ITouchDispatcher
         {
             private readonly ScrollViewer parent;
 
@@ -514,6 +568,8 @@ namespace Prism.Android.UI.Controls
             {
                 get { return ComputeHorizontalScrollRange(); }
             }
+            
+            public bool IsDispatching { get; private set; }
 
             public int VerticalScrollRange
             {
@@ -526,6 +582,27 @@ namespace Prism.Android.UI.Controls
                 this.parent = parent;
             }
 
+            /// <summary></summary>
+            /// <param name="e"></param>
+            public override bool DispatchTouchEvent(MotionEvent e)
+            {
+                var parent = Parent as ITouchDispatcher;
+                if (parent != null && !parent.IsDispatching)
+                {
+                    return false;
+                }
+                
+                if (OnInterceptTouchEvent(e))
+                {
+                    return true;
+                }
+                
+                IsDispatching = true;
+                this.DispatchTouchEventToChildren(e);
+                IsDispatching = false;
+                return base.DispatchTouchEvent(e);
+            }
+
             public override bool OnInterceptTouchEvent(MotionEvent ev)
             {
                 return !parent.IsHitTestVisible;
@@ -536,17 +613,6 @@ namespace Prism.Android.UI.Controls
                 if (!parent.isHitTestVisible)
                 {
                     return false;
-                }
-                
-                var child = GetChildAt(0);
-                if (child != null && ((child as INativeElement)?.IsHitTestVisible ?? false))
-                {
-                    var rect = new Rect();
-                    child.GetHitRect(rect);
-                    if (rect.Contains((int)e.GetX(), (int)e.GetY()))
-                    {
-                        return base.OnTouchEvent(e);
-                    }
                 }
                 
                 if (e.Action == MotionEventActions.Cancel)

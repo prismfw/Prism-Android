@@ -20,12 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.Linq;
 using Android.Content;
 using Android.Graphics;
-using Android.Graphics.Drawables;
 using Android.Runtime;
-using Android.Text;
 using Android.Util;
 using Android.Views;
 using Android.Views.InputMethods;
@@ -409,6 +406,35 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+                    
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
 
         /// <summary>
         /// Gets or sets the display state of the element.
@@ -477,6 +503,19 @@ namespace Prism.Android.UI.Controls
             {
                 QuerySubmitted(this, new QuerySubmittedEventArgs(e.Query));
             };
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent == null || parent.IsDispatching)
+            {
+                return base.DispatchTouchEvent(e);
+            }
+
+            return false;
         }
 
         /// <summary>

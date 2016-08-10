@@ -38,7 +38,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeBorder))]
-    public class Border : FrameLayout, INativeBorder
+    public class Border : FrameLayout, INativeBorder, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -199,6 +199,11 @@ namespace Prism.Android.UI.Controls
                 Layout(Left, Top, Right, Bottom);
             }
         }
+        
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -259,6 +264,35 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+                    
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
 
         /// <summary>
         /// Gets or sets the display state of the element.
@@ -286,6 +320,27 @@ namespace Prism.Android.UI.Controls
             : base(Application.MainActivity)
         {
             SetWillNotDraw(false);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent != null && !parent.IsDispatching)
+            {
+                return false;
+            }
+            
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+            
+            IsDispatching = true;
+            this.DispatchTouchEventToChildren(e);
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
         }
 
         /// <summary>
@@ -329,17 +384,6 @@ namespace Prism.Android.UI.Controls
             if (!isHitTestVisible)
             {
                 return false;
-            }
-            
-            var child = GetChildAt(0);
-            if (child != null && ((child as INativeElement)?.IsHitTestVisible ?? false))
-            {
-                var rect = new Rect();
-                child.GetHitRect(rect);
-                if (rect.Contains((int)e.GetX(), (int)e.GetY()))
-                {
-                    return base.OnTouchEvent(e);
-                }
             }
             
             if (e.Action == MotionEventActions.Cancel)
