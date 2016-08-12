@@ -101,6 +101,7 @@ namespace Prism.Android
         /// <param name="savedInstanceState">Saved instance state.</param>
         protected override void OnCreate(Bundle savedInstanceState)
         {
+            SetTheme(ResourceExtractor.GetResourceId("Theme_AppCompat"));
             base.OnCreate(savedInstanceState);
             currentOrientation = Resources.Configuration.Orientation;
             
