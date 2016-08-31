@@ -23,7 +23,7 @@ using System;
 using Android.Runtime;
 using Prism.Native;
 
-namespace Prism.Android
+namespace Prism.Android.Utilities
 {
     /// <summary>
     /// Represents an Android implementation of an <see cref="INativeTimer"/>.

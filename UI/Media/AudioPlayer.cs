@@ -95,7 +95,7 @@ namespace Prism.Android.UI.Media
                     playbackRate = value;
                     if (Build.VERSION.SdkInt < BuildVersionCodes.M)
                     {
-                        Utilities.Logger.Warn("Changing playback rate requires Android 6.0 (Marshmallow) or later.");
+                        Prism.Utilities.Logger.Warn("Changing playback rate requires Android 6.0 (Marshmallow) or later.");
                     }
                     else
                     {
