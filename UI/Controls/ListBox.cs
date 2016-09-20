@@ -525,6 +525,21 @@ namespace Prism.Android.UI.Controls
         }
 
         /// <summary>
+        /// Returns a collection of the <see cref="INativeListBoxItem"/> objects that are in the list.
+        /// </summary>
+        public IEnumerable<INativeListBoxItem> GetChildItems()
+        {
+            for (int i = 0; i < ChildCount; i++)
+            {
+                var item = GetChildAt(i) as INativeListBoxItem;
+                if (item != null)
+                {
+                    yield return item;
+                }
+            }
+        }
+
+        /// <summary>
         /// Invalidates the arrangement of this instance's children.
         /// </summary>
         public void InvalidateArrange()
