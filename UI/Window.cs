@@ -302,27 +302,29 @@ namespace Prism.Android.UI
         {
             if ((e.KeyCode == Keycode.Back || (e.Flags & KeyEventFlags.VirtualHardKey) != 0) && e.Action == KeyEventActions.Up)
             {
-                var stack = Prism.UI.Window.Current.Content as Prism.UI.ViewStack;
+                var appContent = ObjectRetriever.GetNativeObject(Prism.UI.Window.Current.Content);
+
+                var stack = appContent as INativeViewStack;
                 if (stack == null)
                 {
-                    var splitView = Prism.UI.Window.Current.Content as Prism.UI.SplitView;
+                    var splitView = appContent as INativeSplitView;
                     if (splitView != null)
                     {
-                        stack = splitView.DetailContent as Prism.UI.ViewStack;
-                        if (stack == null || stack.Views.Count() < 2)
+                        stack = splitView.DetailContent as INativeViewStack;
+                        if (stack == null || !stack.IsBackButtonEnabled || stack.Views.Count() < 2)
                         {
-                            stack = splitView.MasterContent as Prism.UI.ViewStack;
+                            stack = splitView.MasterContent as INativeViewStack;
                         }
                     }
                     else
                     {
-                        var tabView = Prism.UI.Window.Current.Content as Prism.UI.TabView;
+                        var tabView = appContent as INativeTabView;
                         if (tabView != null)
                         {
-                            stack = (tabView as Prism.UI.TabbedSplitView)?.DetailContent as Prism.UI.ViewStack;
-                            if (stack == null || stack.Views.Count() < 2)
+                            stack = (tabView as INativeTabbedSplitView)?.DetailContent as INativeViewStack;
+                            if (stack == null || !stack.IsBackButtonEnabled || stack.Views.Count() < 2)
                             {
-                                stack = tabView.TabItems[tabView.SelectedIndex].Content as Prism.UI.ViewStack;
+                                stack = (tabView.TabItems[tabView.SelectedIndex] as INativeTabItem)?.Content as INativeViewStack;
                             }
                         }
                     }

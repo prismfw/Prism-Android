@@ -126,6 +126,20 @@ namespace Prism.Android.UI
         private readonly ViewStackHeader header;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the back button is enabled.
+        /// </summary>
+        public bool IsBackButtonEnabled
+        {
+            get { return isBackButtonEnabled; }
+            set
+            {
+                isBackButtonEnabled = value;
+                header.SetBackButtonVisibility(contentContainer?.GetParent<INativeSplitView>()?.DetailContent == this || !value ? ViewStates.Gone : ViewStates.Visible);
+            }
+        }
+        private bool isBackButtonEnabled;
+
+        /// <summary>
         /// Gets or sets a value indicating whether the header is hidden.
         /// </summary>
         public bool IsHeaderHidden
@@ -436,9 +450,6 @@ namespace Prism.Android.UI
         /// <param name="newChild">The new child.</param>
         protected void ChangeChild(object newChild)
         {
-            header.SetBackButtonVisibility(views.Count < 2 || (contentContainer?.GetParent<INativeSplitView>()?.DetailContent == this) ||
-                !((newChild as INativeContentView)?.IsBackButtonEnabled).GetValueOrDefault() ? ViewStates.Gone : ViewStates.Visible);
-        
             if (Activity == null)
             {
                 return;

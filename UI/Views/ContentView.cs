@@ -135,30 +135,6 @@ namespace Prism.Android.UI
             }
         }
         private Rectangle frame;
-        
-        /// <summary>
-        /// Gets or sets a value indicating whether the back button of an <see cref="INativeViewStack"/>
-        /// is enabled when this view is the visible view of the stack.
-        /// </summary>
-        public bool IsBackButtonEnabled
-        {
-            get { return isBackButtonEnabled; }
-            set
-            {
-                if (value != isBackButtonEnabled)
-                {
-                    isBackButtonEnabled = value;
-                    OnPropertyChanged(Prism.UI.ContentView.IsBackButtonEnabledProperty);
-                    
-                    var stack = contentContainer?.GetParent<INativeViewStack>();
-                    if (stack != null && stack.CurrentView == this && contentContainer?.GetParent<INativeSplitView>()?.DetailContent != stack)
-                    {
-                        (stack.Header as Controls.ViewStackHeader)?.SetBackButtonVisibility(isBackButtonEnabled ? ViewStates.Visible : ViewStates.Gone);
-                    }
-                }
-            }
-        }
-        private bool isBackButtonEnabled;
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -380,8 +356,7 @@ namespace Prism.Android.UI
                     (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
 
                     background = value;
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded) ??
-                        ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.WindowBackground);
+                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
                 }
             }
             private Brush background;
@@ -496,8 +471,7 @@ namespace Prism.Android.UI
 
             private void OnBackgroundImageLoaded(object sender, EventArgs e)
             {
-                base.Background = background.GetDrawable(null) ??
-                    ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.Background);
+                base.Background = background.GetDrawable(null);
             }
         }
     }
