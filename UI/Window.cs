@@ -330,7 +330,7 @@ namespace Prism.Android.UI
                     }
                 }
                 
-                if (stack != null && stack.Views.Count() > 1)
+                if (stack != null && stack.IsBackButtonEnabled && stack.Views.Count() > 1)
                 {
                     stack.PopView(Animate.Default);
                 }
