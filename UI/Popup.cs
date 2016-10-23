@@ -95,12 +95,8 @@ namespace Prism.Android.UI
             get { return content; }
             set
             {
-                if (value != content)
-                {
-                    content = value;
-                    contentContainer?.SetContent();
-                    OnPropertyChanged(Prism.UI.Popup.ContentProperty);
-                }
+                content = value;
+                contentContainer?.SetContent();
             }
         }
         private object content;
