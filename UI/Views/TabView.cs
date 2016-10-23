@@ -192,7 +192,12 @@ namespace Prism.Android.UI
             }
         }
         private INativeTransform renderTransform;
-        
+
+        /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
+
         /// <summary>
         /// Gets or sets the zero-based index of the selected tab item.
         /// </summary>

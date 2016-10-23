@@ -203,8 +203,8 @@ namespace Prism.Android.UI
                 if (value != maxMasterWidth)
                 {
                     maxMasterWidth = value;
-                    SetMasterWidth();
                     OnPropertyChanged(Prism.UI.TabbedSplitView.MaxMasterWidthProperty);
+                    SetMasterWidth();
                 }
             }
         }
@@ -226,8 +226,8 @@ namespace Prism.Android.UI
                 if (value != minMasterWidth)
                 {
                     minMasterWidth = value;
-                    SetMasterWidth();
                     OnPropertyChanged(Prism.UI.TabbedSplitView.MinMasterWidthProperty);
+                    SetMasterWidth();
                 }
             }
         }
@@ -245,8 +245,8 @@ namespace Prism.Android.UI
                 if (value != preferredMasterWidthRatio)
                 {
                     preferredMasterWidthRatio = value;
-                    SetMasterWidth();
                     OnPropertyChanged(Prism.UI.TabbedSplitView.PreferredMasterWidthRatioProperty);
+                    SetMasterWidth();
                 }
             }
         }
@@ -274,7 +274,12 @@ namespace Prism.Android.UI
             }
         }
         private INativeTransform renderTransform;
-        
+
+        /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
+
         /// <summary>
         /// Gets or sets the zero-based index of the selected tab item.
         /// </summary>

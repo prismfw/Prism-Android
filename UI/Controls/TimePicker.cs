@@ -404,6 +404,11 @@ namespace Prism.Android.UI.Controls
         private INativeTransform renderTransform;
 
         /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
+
+        /// <summary>
         /// Gets or sets the selected time.
         /// </summary>
         public TimeSpan? SelectedTime
@@ -415,13 +420,14 @@ namespace Prism.Android.UI.Controls
                 {
                     var oldValue = selectedTime;
                     selectedTime = value;
+                    OnPropertyChanged(Prism.UI.Controls.TimePicker.SelectedTimeProperty);
+
                     if (selectedTime.HasValue)
                     {
                         pickerDialog.UpdateTime(selectedTime.Value.Hours, selectedTime.Value.Minutes);
                     }
 
                     TimeChanged(this, new TimeChangedEventArgs(oldValue, selectedTime));
-                    OnPropertyChanged(Prism.UI.Controls.TimePicker.SelectedTimeProperty);
                     SetTitle();
                 }
             }

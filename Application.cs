@@ -29,6 +29,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Prism.Native;
+using Prism.UI;
 
 namespace Prism.Android
 {
@@ -96,6 +97,14 @@ namespace Prism.Android
             }
         }
         private static Activity mainActivity;
+
+        /// <summary>
+        /// Gets the default theme that is used by the application.
+        /// </summary>
+        public Theme DefaultTheme
+        {
+            get { return Theme.Light; }
+        }
 
         /// <summary>
         /// Gets the platform on which the application is running.

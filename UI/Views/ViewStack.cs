@@ -207,6 +207,11 @@ namespace Prism.Android.UI
         private INativeTransform renderTransform;
 
         /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
+
+        /// <summary>
         /// Gets a collection of the views that are currently a part of the stack.
         /// </summary>
         public IEnumerable<object> Views

@@ -167,8 +167,8 @@ namespace Prism.Android.UI
                 if (value != maxMasterWidth)
                 {
                     maxMasterWidth = value;
-                    SetMasterWidth();
                     OnPropertyChanged(Prism.UI.SplitView.MaxMasterWidthProperty);
+                    SetMasterWidth();
                 }
             }
         }
@@ -190,8 +190,8 @@ namespace Prism.Android.UI
                 if (value != minMasterWidth)
                 {
                     minMasterWidth = value;
-                    SetMasterWidth();
                     OnPropertyChanged(Prism.UI.SplitView.MinMasterWidthProperty);
+                    SetMasterWidth();
                 }
             }
         }
@@ -209,8 +209,8 @@ namespace Prism.Android.UI
                 if (value != preferredMasterWidthRatio)
                 {
                     preferredMasterWidthRatio = value;
-                    SetMasterWidth();
                     OnPropertyChanged(Prism.UI.SplitView.PreferredMasterWidthRatioProperty);
+                    SetMasterWidth();
                 }
             }
         }
@@ -238,6 +238,11 @@ namespace Prism.Android.UI
             }
         }
         private INativeTransform renderTransform;
+
+        /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
 
         private ViewContentContainer contentContainer;
 

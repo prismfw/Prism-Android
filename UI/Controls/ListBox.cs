@@ -128,14 +128,11 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    if (value != background)
-                {
                     (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
 
                     background = value;
                     base.Background = background.GetDrawable(OnBackgroundImageLoaded);
-                        OnPropertyChanged(Prism.UI.Controls.ListBox.BackgroundProperty);
-                }
+                    OnPropertyChanged(Prism.UI.Controls.ListBox.BackgroundProperty);
                 }
             }
         }
@@ -365,6 +362,11 @@ namespace Prism.Android.UI.Controls
             }
         }
         private INativeTransform renderTransform;
+
+        /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
 
         /// <summary>
         /// Gets or sets the method to be used for retrieving section headers in the list box.
