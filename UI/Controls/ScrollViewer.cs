@@ -489,10 +489,10 @@ namespace Prism.Android.UI.Controls
 
             horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
 
-            content.Measure(MeasureSpec.MakeMeasureSpec(right, MeasureSpecMode.Exactly),
+            content?.Measure(MeasureSpec.MakeMeasureSpec(right, MeasureSpecMode.Exactly),
                 MeasureSpec.MakeMeasureSpec(bottom, MeasureSpecMode.Exactly));
 
-            content.Layout(0, 0, right, bottom);
+            content?.Layout(0, 0, right, bottom);
 
             ContentSize = new Size(horizontalScrollView.HorizontalScrollRange, ComputeVerticalScrollRange()) / Device.Current.DisplayScale;
         }
