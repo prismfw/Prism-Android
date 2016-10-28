@@ -485,6 +485,7 @@ namespace Prism.Android.UI
                         if (contentContainer.ChildCount > 2)
                         {
                             contentContainer.RemoveViewAt(1);
+                            (Header as ViewStackHeader)?.SetMenuButtons(null);
                         }
 
                         contentContainer.AddView(view, 1);
@@ -641,11 +642,8 @@ namespace Prism.Android.UI
                 ViewStack.ArrangeRequest(false, null);
 
                 int width = (int)(ViewStack.frame.Width * Device.Current.DisplayScale);
-
                 var headerView = ViewStack.Header as global::Android.Views.View;
-                headerView.Layout(0, 0, width, (int)(Device.Current.DisplayScale * (headerView.Visibility != ViewStates.Visible ?
-                    0 : Resources.Configuration.Orientation == global::Android.Content.Res.Orientation.Landscape ?
-                    Prism.SystemParameters.ViewStackHeaderOffsetLandscape.Top : Prism.SystemParameters.ViewStackHeaderOffsetPortrait.Top)));
+                headerView.Layout(0, 0, width, headerView.Height);
                     
                 var content = GetChildAt(0);
                 if (content != null && content != headerView)

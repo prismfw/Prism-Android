@@ -28,6 +28,7 @@ using Android.Views;
 using Android.Widget;
 using Prism.Native;
 using Prism.Systems;
+using Prism.UI;
 using Prism.UI.Media;
 
 namespace Prism.Android.UI.Controls
@@ -40,11 +41,43 @@ namespace Prism.Android.UI.Controls
     {
         private const string BackButtonKey = "abc_ic_ab_back_mtrl_am_alpha";
         private const string BackButtonAltKey = "abc_ic_ab_back_material";
-    
+
+        /// <summary>
+        /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
+        /// </summary>
+        public event EventHandler Loaded;
+
         /// <summary>
         /// Occurs when the value of a property is changed.
         /// </summary>
         public event EventHandler<FrameworkPropertyChangedEventArgs> PropertyChanged;
+
+        /// <summary>
+        /// Occurs when this instance has been detached from the visual tree.
+        /// </summary>
+        public event EventHandler Unloaded;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether animations are enabled for this instance.
+        /// </summary>
+        public bool AreAnimationsEnabled
+        {
+            get { return areAnimationsEnabled; }
+            set
+            {
+                if (value != areAnimationsEnabled)
+                {
+                    areAnimationsEnabled = value;
+                    OnPropertyChanged(Visual.AreAnimationsEnabledProperty);
+                }
+            }
+        }
+        private bool areAnimationsEnabled;
+
+        /// <summary>
+        /// Gets or sets the method to invoke when this instance requests an arrangement of its children.
+        /// </summary>
+        public ArrangeRequestHandler ArrangeRequest { get; set; }
 
         /// <summary>
         /// Gets or sets the background for the header.
@@ -151,6 +184,99 @@ namespace Prism.Android.UI.Controls
         private Brush foreground;
 
         /// <summary>
+        /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
+        /// </summary>
+        public Rectangle Frame
+        {
+            get
+            {
+                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
+                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
+            }
+            set
+            {
+                Left = (int)(value.Left * Device.Current.DisplayScale);
+                Top = (int)(value.Top * Device.Current.DisplayScale);
+                Right = (int)(value.Right * Device.Current.DisplayScale);
+                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
+
+                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
+                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
+                Layout(Left, Top, Right, Bottom);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
+        /// </summary>
+        public bool IsHitTestVisible
+        {
+            get { return isHitTestVisible; }
+            set
+            {
+                if (value != isHitTestVisible)
+                {
+                    isHitTestVisible = value;
+                    OnPropertyChanged(Visual.IsHitTestVisibleProperty);
+                }
+            }
+        }
+        private bool isHitTestVisible = true;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has been loaded and is ready for rendering.
+        /// </summary>
+        public bool IsLoaded { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the header is inset on top of the view stack content.
+        /// A value of <c>false</c> indicates that the header offsets the view stack content.
+        /// </summary>
+        public bool IsInset
+        {
+            get { return false; }
+        }
+
+        /// <summary>
+        /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
+        /// </summary>
+        public MeasureRequestHandler MeasureRequest { get; set; }
+
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
+                    OnPropertyChanged(Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
+
+        /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Theme RequestedTheme { get; set; }
+
+        /// <summary>
         /// Gets or sets the title for the header.
         /// </summary>
         public string Title
@@ -193,7 +319,53 @@ namespace Prism.Android.UI.Controls
                 this.GetParent<INativeViewStack>()?.PopView(Prism.UI.Animate.Default);
             };
         }
-        
+
+        /// <summary>
+        /// Invalidates the arrangement of this instance's children.
+        /// </summary>
+        public void InvalidateArrange()
+        {
+            RequestLayout();
+        }
+
+        /// <summary>
+        /// Invalidates the measurement of this instance and its children.
+        /// </summary>
+        public void InvalidateMeasure()
+        {
+            RequestLayout();
+        }
+
+        /// <summary>
+        /// Measures the element and returns its desired size.
+        /// </summary>
+        /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
+        public Size Measure(Size constraints)
+        {
+            int height = 0;
+            if (Visibility == ViewStates.Visible)
+            {
+                if (Device.Current.FormFactor == FormFactor.Phone)
+                {
+                    height = Resources.Configuration.Orientation == global::Android.Content.Res.Orientation.Landscape ? 48 : 56;
+                }
+                else
+                {
+                    height = 64;
+                }
+            }
+            return new Size(constraints.Width, height);
+        }
+
+        /// <summary>
+        /// Implement this method to intercept all touch screen motion events.
+        /// </summary>
+        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
+        {
+            return !IsHitTestVisible;
+        }
+
         /// <summary>
         /// Sets the visibility of the header's back button.
         /// </summary>
@@ -227,7 +399,25 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
+        /// <summary>
+        /// This is called when the view is attached to a window.
+        /// </summary>
+        protected override void OnAttachedToWindow()
+        {
+            base.OnAttachedToWindow();
+            OnLoaded();
+        }
+
+        /// <summary>
+        /// This is called when the view is detached from a window.
+        /// </summary>
+        protected override void OnDetachedFromWindow()
+        {
+            base.OnDetachedFromWindow();
+            OnUnloaded();
+        }
+
         /// <summary>
         /// Called from layout when this view should assign a size and position to each of its children.
         /// </summary>
@@ -238,7 +428,10 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout (bool changed, int left, int top, int right, int bottom)
         {
-            base.OnLayout (changed, left, top, right, bottom);
+            MeasureRequest(false, null);
+            ArrangeRequest(false, null);
+
+            base.OnLayout(changed, left, top, right, bottom);
             SetItemPositions();
             for (int i = 0; i < ChildCount; i++)
             {
@@ -273,11 +466,31 @@ namespace Prism.Android.UI.Controls
             TitleView.Paint.SetShader(foreground.GetShader(Width, Height, null));
         }
 
+        private void OnLoaded()
+        {
+            if (!IsLoaded)
+            {
+                IsLoaded = true;
+                OnPropertyChanged(Visual.IsLoadedProperty);
+                Loaded(this, EventArgs.Empty);
+            }
+        }
+
         private void OnPropertyChanged(PropertyDescriptor pd)
         {
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
-        
+
+        private void OnUnloaded()
+        {
+            if (IsLoaded)
+            {
+                IsLoaded = false;
+                OnPropertyChanged(Visual.IsLoadedProperty);
+                Unloaded(this, EventArgs.Empty);
+            }
+        }
+
         private void SetItemPositions()
         {
             double scale = Device.Current.DisplayScale;

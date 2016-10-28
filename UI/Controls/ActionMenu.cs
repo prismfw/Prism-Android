@@ -259,11 +259,6 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public void Attach(ViewStackHeader parent)
         {
-            if (attachedParent != null)
-            {
-                Detach();
-            }
-            
             attachedParent = parent;
             SetButtons();
         }
@@ -273,6 +268,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public void Detach()
         {
+            attachedParent?.SetMenuButtons(null);
             attachedParent = null;
         }
 
