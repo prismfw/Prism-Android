@@ -10,11 +10,10 @@
     <AssemblyName>PrismFramework.Android</AssemblyName>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <FileAlignment>512</FileAlignment>
-    <AndroidResgenFile>Resources\Resource.Designer.cs</AndroidResgenFile>
     <DeployExternal>false</DeployExternal>
     <AndroidSupportedAbis>armeabi,armeabi-v7a,x86</AndroidSupportedAbis>
     <MandroidI18n>West</MandroidI18n>
-    <TargetFrameworkVersion>v6.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v7.0</TargetFrameworkVersion>
     <AndroidStoreUncompressedFileExtensions />
     <JavaOptions />
     <AndroidUseLatestPlatformSdk>True</AndroidUseLatestPlatformSdk>
@@ -75,7 +74,9 @@
     <Compile Include="IO\Directory.cs" />
     <Compile Include="IO\File.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utilities\Timer.cs" />
+    <Compile Include="Utilities\Timer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="SystemParameters.cs" />
     <Compile Include="Extensions\AndroidExtensions.cs" />
     <Compile Include="UI\Media\Transform.cs" />

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma warning disable 1998
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content;
@@ -443,6 +444,14 @@ namespace Prism.Android.UI
         public virtual bool OnPreparePanel(int featureId, global::Android.Views.View view, global::Android.Views.IMenu menu)
         {
             return true;
+        }
+
+        /// <summary></summary>
+        /// <param name="data"></param>
+        /// <param name="menu"></param>
+        /// <param name="deviceId"></param>
+        public void OnProvideKeyboardShortcuts(IList<KeyboardShortcutGroup> data, IMenu menu, int deviceId)
+        {
         }
 
         /// <summary></summary>
