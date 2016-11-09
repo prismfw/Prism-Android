@@ -60,12 +60,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -208,7 +208,7 @@ namespace Prism.Android.UI.Controls
                 Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
             }
         }
-        
+
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
         /// </summary>
@@ -333,7 +333,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -346,7 +346,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -499,7 +499,7 @@ namespace Prism.Android.UI.Controls
                         break;
                     }
                 }
-                
+
                 OnPropertyChanged(Prism.UI.Controls.ListBox.SelectedItemsProperty);
                 SelectionChanged(this, new SelectionChangedEventArgs(null, item));
             }
@@ -519,7 +519,7 @@ namespace Prism.Android.UI.Controls
             {
                 return true;
             }
-            
+
             IsDispatching = true;
             this.DispatchTouchEventToChildren(e);
             IsDispatching = false;
@@ -566,8 +566,10 @@ namespace Prism.Android.UI.Controls
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
-            base.OnMeasure(MeasureSpec.MakeMeasureSpec((int)(constraints.Width * Device.Current.DisplayScale), MeasureSpecMode.AtMost),
-                MeasureSpec.MakeMeasureSpec((int)(constraints.Height * Device.Current.DisplayScale), MeasureSpecMode.AtMost));
+            var widthSpec = (int)Math.Min(int.MaxValue, constraints.Width * Device.Current.DisplayScale);
+            var heightSpec = (int)Math.Min(int.MaxValue, constraints.Height * Device.Current.DisplayScale);
+            base.OnMeasure(MeasureSpec.MakeMeasureSpec(widthSpec, widthSpec == int.MaxValue ? MeasureSpecMode.AtMost : MeasureSpecMode.Exactly),
+                MeasureSpec.MakeMeasureSpec(heightSpec,MeasureSpecMode.AtMost));
 
             var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
             SetMeasuredDimension(width, height);
@@ -585,10 +587,10 @@ namespace Prism.Android.UI.Controls
             {
                 return true;
             }
-        
+
             return base.OnInterceptTouchEvent(ev);
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -597,7 +599,7 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (e.Action == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
@@ -701,7 +703,7 @@ namespace Prism.Android.UI.Controls
                 }
 
                 selectedIndices.Add(index);
-                
+
                 OnPropertyChanged(Prism.UI.Controls.ListBox.SelectedItemsProperty);
                 SelectionChanged(this, new SelectionChangedEventArgs(new object[] { item }, removedItems));
             }
@@ -815,14 +817,14 @@ namespace Prism.Android.UI.Controls
             separatorDrawable = separatorBrush.GetDrawable(null);
             InvalidateItemDecorations();
         }
-        
+
         private void OnItemClicked(global::Android.Views.View view, int position)
         {
             if (selectionMode == SelectionMode.None)
             {
                 return;
             }
-            
+
             var item = GetItemAtPosition(position);
             // this check must be done before ItemClicked is fired
             if (selectedIndices.Contains(position))
