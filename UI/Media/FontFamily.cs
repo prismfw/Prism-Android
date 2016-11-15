@@ -74,7 +74,8 @@ namespace Prism.Android.UI.Media
         public Typeface GetTypeface()
         {
             string family;
-            return Typeface.CreateFromFile(Fonts.FontFamilies.TryGetValue(Name, out family) ? family : Prism.UI.Media.Fonts.DefaultFontFamily.Name);
+            return Typeface.CreateFromFile(Resources.FontFamilies.TryGetValue(Name, out family) ? family :
+                ((Prism.UI.Media.FontFamily)Prism.Application.Current.Resources[SystemResources.BaseFontFamilyKey]).Name);
         }
     }
 }

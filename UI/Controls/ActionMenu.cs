@@ -24,6 +24,8 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Text;
 using Android.Text.Style;
@@ -42,7 +44,7 @@ namespace Prism.Android.UI.Controls
     [Register(typeof(INativeActionMenu))]
     public class ActionMenu : INativeActionMenu
     {
-        private const string OverflowButtonKey = "abc_ic_menu_moreoverflow_mtrl_alpha";
+        private const string OverflowButtonKey = "drawable/abc_ic_menu_moreoverflow_mtrl_alpha";
     
         /// <summary>
         /// Occurs when the value of a property is changed.
@@ -165,7 +167,7 @@ namespace Prism.Android.UI.Controls
                     overflowImageUri = value;
                     if (overflowImageUri == null)
                     {
-                        OverflowButton.SetImageDrawable(ResourceExtractor.GetDrawable(ResourceExtractor.GetResourceId(OverflowButtonKey), OverflowButton));
+                        OverflowButton.SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
                     }
                     else
                     {
@@ -189,8 +191,8 @@ namespace Prism.Android.UI.Controls
         public ActionMenu()
         {
             OverflowButton = new ImageView(Application.MainActivity);
-            OverflowButton.SetColorFilter(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
-            OverflowButton.SetImageDrawable(ResourceExtractor.GetDrawable(ResourceExtractor.GetResourceId(OverflowButtonKey), OverflowButton));
+            OverflowButton.SetColorFilter((Color)Prism.Application.Current.Resources[global::Android.Resource.Attribute.TextColorPrimary]);
+            OverflowButton.SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
 
             OverflowButton.Click += OnOverflowButtonClicked;
             
