@@ -376,7 +376,7 @@ namespace Prism.Android.UI
             }
 
             var popped = views.Skip(1);
-            views.RemoveRange(1, views.Count - 2);
+            views.RemoveRange(1, views.Count - 1);
 
             ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, views.Last()));
             ChangeChild(views.Last());
