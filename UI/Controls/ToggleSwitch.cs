@@ -20,8 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
+using Android;
 using Android.Graphics;
-using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Util;
@@ -33,6 +33,8 @@ using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
+
+using Color = Android.Graphics.Color;
 
 namespace Prism.Android.UI.Controls
 {
@@ -125,10 +127,17 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
-
                     background = value;
-                    SetColorLists();
+                    
+                    if (background is SolidColorBrush)
+                    {
+                        SetColorLists();
+                    }
+                    else
+                    {
+                        Prism.Utilities.Logger.Warn("ToggleSwitch.Background on Android only supports instances of SolidColorBrush.");
+                    }
+                    
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -238,10 +247,17 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
-
                     foreground = value;
-                    SetColorLists();
+                    
+                    if (foreground is SolidColorBrush)
+                    {
+                        SetColorLists();
+                    }
+                    else
+                    {
+                        Prism.Utilities.Logger.Warn("ToggleSwitch.Foreground on Android only supports instances of SolidColorBrush.");
+                    }
+                    
                     OnPropertyChanged(Control.ForegroundProperty);
                 }
             }
@@ -365,43 +381,58 @@ namespace Prism.Android.UI.Controls
         public Theme RequestedTheme { get; set; }
 
         /// <summary>
-        /// Gets or sets the <see cref="Brush"/> to apply to the thumb of the control.
+        /// Gets or sets the <see cref="Brush"/> to apply to the thumb of the control when the control's value is false.
         /// </summary>
-        public Brush ThumbBrush
+        public Brush ThumbOffBrush
         {
-            get { return thumbBrush; }
+            get { return thumbOffBrush; }
             set
             {
-                if (value != thumbBrush)
+                if (value != thumbOffBrush)
                 {
-                    (thumbBrush as ImageBrush).ClearImageHandler(OnThumbImageLoaded);
-
-                    thumbBrush = value;
-                    thumbDrawable.ClearColorFilter();
+                    thumbOffBrush = value;
                     
-                    if (thumbBrush == null && (background != null || foreground != null))
+                    if (thumbOffBrush is SolidColorBrush)
                     {
                         SetColorLists();
                     }
                     else
                     {
-                        var scb = thumbBrush as SolidColorBrush;
-                        if (scb == null)
-                        {
-                            ThumbDrawable = thumbBrush.GetDrawable(OnThumbImageLoaded) ?? thumbDrawable;
-                        }
-                        else
-                        {
-                            thumbDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
-                            ThumbDrawable = thumbDrawable;
-                        }
+                        Prism.Utilities.Logger.Warn("ToggleSwitch.ThumbOffBrush on Android only supports instances of SolidColorBrush.");
                     }
-
-                    OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ThumbBrushProperty);
+                    
+                    OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ThumbOffBrushProperty);
                 }
             }
         }
-        private Brush thumbBrush;
+        private Brush thumbOffBrush;
+        
+        /// <summary>
+        /// Gets or sets the <see cref="Brush"/> to apply to the thumb of the control when the control's value is false.
+        /// </summary>
+        public Brush ThumbOnBrush
+        {
+            get { return thumbOnBrush; }
+            set
+            {
+                if (value != thumbOnBrush)
+                {
+                    thumbOnBrush = value;
+                    
+                    if (thumbOffBrush is SolidColorBrush)
+                    {
+                        SetColorLists();
+                    }
+                    else
+                    {
+                        Prism.Utilities.Logger.Warn("ToggleSwitch.ThumbOnBrush on Android only supports instances of SolidColorBrush.");
+                    }
+                    
+                    OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ThumbOnBrushProperty);
+                }
+            }
+        }
+        private Brush thumbOnBrush;
 
         /// <summary>
         /// Gets or sets the value of the toggle switch.
@@ -436,7 +467,6 @@ namespace Prism.Android.UI.Controls
         }
 
         private readonly Paint borderPaint = new Paint();
-        private readonly Drawable thumbDrawable;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ToggleSwitch"/> class.
@@ -444,8 +474,6 @@ namespace Prism.Android.UI.Controls
         public ToggleSwitch()
             : base(Application.MainActivity)
         {
-            thumbDrawable = ThumbDrawable;
-        
             Focusable = true;
             Gravity = GravityFlags.Start;
             Typeface = Typeface.Default;
@@ -659,24 +687,9 @@ namespace Prism.Android.UI.Controls
             Paint.SetBrush(foreground, w, h, null);
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
-        {
-//            TrackDrawable = background.GetDrawable(null);
-        }
-
         private void OnBorderImageLoaded(object sender, EventArgs e)
         {
             Invalidate();
-        }
-
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
-        {
-//            TrackDrawable = foreground.GetDrawable(null);
-        }
-
-        private void OnThumbImageLoaded(object sender, EventArgs e)
-        {
-            ThumbDrawable = thumbBrush.GetDrawable(null) ?? thumbDrawable;
         }
 
         private void OnLoaded()
@@ -709,20 +722,21 @@ namespace Prism.Android.UI.Controls
         
             int[] colors =
             {
-                (background as SolidColorBrush)?.Color.GetHashCode() ?? ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary),
-                (foreground as SolidColorBrush)?.Color.GetHashCode() ?? ResourceExtractor.GetColor(global::Android.Resource.Attribute.ColorAccent)
+                (background as SolidColorBrush)?.Color.GetHashCode() ?? (Color)Prism.Application.Current.Resources[Resource.Attribute.TextColorPrimary],
+                (foreground as SolidColorBrush)?.Color.GetHashCode() ?? (Color)Prism.Application.Current.Resources[Resource.Attribute.ColorAccent]
             };
             
             int[][] states =
             {
-                new int[] { -global::Android.Resource.Attribute.StateChecked },
-                new int[] { global::Android.Resource.Attribute.StateChecked },
+                new int[] { -Resource.Attribute.StateChecked },
+                new int[] { Resource.Attribute.StateChecked },
             };
             
-            if (thumbBrush == null)
+            ThumbDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, new int[]
             {
-                ThumbDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, colors));
-            }
+                (thumbOffBrush as SolidColorBrush)?.Color.GetHashCode() ?? colors[0],
+                (thumbOnBrush as SolidColorBrush)?.Color.GetHashCode() ?? colors[1]
+            }));
             
             TrackDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, colors));
         }
