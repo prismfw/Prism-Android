@@ -120,7 +120,6 @@
     <Compile Include="UI\Controls\ViewStackHeader.cs" />
     <Compile Include="UI\Views\SplitView.cs" />
     <Compile Include="UI\FragmentView.cs" />
-    <Compile Include="UI\LoadIndicator.cs" />
     <Compile Include="UI\Window.cs" />
     <Compile Include="UI\Views\TabView.cs" />
     <Compile Include="UI\Controls\TabItemCollection.cs" />
@@ -139,6 +138,7 @@
     <Compile Include="UI\Media\Inking\InkStroke.cs" />
     <Compile Include="UI\Controls\InkCanvas.cs" />
     <Compile Include="TouchDispatcher.cs" />
+    <Compile Include="UI\Controls\LoadIndicator.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
