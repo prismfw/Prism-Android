@@ -156,7 +156,10 @@ namespace Prism.Android
         /// </summary>
         public void BeginIgnoringUserInput()
         {
-            MainActivity.Window.SetFlags(WindowManagerFlags.NotTouchable, WindowManagerFlags.NotTouchable);
+            if (MainActivity.Window.IsActive)
+            {
+                MainActivity.Window.SetFlags(WindowManagerFlags.NotTouchable, WindowManagerFlags.NotTouchable);
+            }
         }
 
         /// <summary>
