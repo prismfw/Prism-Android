@@ -56,7 +56,7 @@ namespace Prism.Android.UI.Media
                     }
                     else
                     {
-                        view.Animation = new TransformAnimation(view, matrix);
+                        SetAnimation(view);
                         view.RequestLayout();
                         view.Invalidate();
                     }
@@ -74,7 +74,7 @@ namespace Prism.Android.UI.Media
         public void AddView(View view)
         {
             views.Add(new WeakReference(view));
-            view.Animation = new TransformAnimation(view, matrix);
+            SetAnimation(view);
             view.RequestLayout();
             view.Invalidate();
         }
@@ -85,10 +85,49 @@ namespace Prism.Android.UI.Media
         /// <param name="view">The view to be removed.</param>
         public void RemoveView(View view)
         {
-            views.RemoveAll(r => r.Target == view);
-            view.Animation = null;
-            view.RequestLayout();
-            view.Invalidate();
+            if (views.RemoveAll(r => r.Target == view) > 0)
+            {
+                var currentSet = view.Animation as AnimationSet;
+                if (currentSet != null)
+                {
+                    var newSet = new AnimationSet(true);
+                    foreach (var anim in currentSet.Animations)
+                    {
+                        if (!(anim is TransformAnimation))
+                        {
+                            newSet.AddAnimation(anim);
+                        }
+                    }
+                    
+                    view.Animation = newSet.Animations.Count > 0 ? newSet : null;
+                }
+                
+                view.RequestLayout();
+                view.Invalidate();
+            }
+        }
+        
+        private void SetAnimation(View view)
+        {
+            var newSet = new AnimationSet(true);
+            var currentSet = view.Animation as AnimationSet;
+            if (currentSet != null)
+            {
+                foreach (var anim in currentSet.Animations)
+                {
+                    if (!(anim is TransformAnimation))
+                    {
+                        newSet.AddAnimation(anim);
+                    }
+                }
+            }
+            else if (view.Animation != null)
+            {
+                newSet.AddAnimation(view.Animation);
+            }
+            
+            newSet.AddAnimation(new TransformAnimation(view, matrix));
+            view.Animation = newSet;
         }
     }
     
@@ -118,6 +157,8 @@ namespace Prism.Android.UI.Media
             View = view;
             Duration = 0;
             FillAfter = true;
+            RepeatCount = Infinite;
+            RepeatMode = RepeatMode.Restart;
         }
     
         /// <summary></summary>
