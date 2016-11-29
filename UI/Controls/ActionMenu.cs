@@ -32,6 +32,7 @@ using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
+using Prism.Systems;
 using Prism.UI.Media;
 using Prism.UI.Media.Imaging;
 
@@ -44,12 +45,42 @@ namespace Prism.Android.UI.Controls
     [Register(typeof(INativeActionMenu))]
     public class ActionMenu : INativeActionMenu
     {
-        private const string OverflowButtonKey = "drawable/abc_ic_menu_moreoverflow_mtrl_alpha";
-    
+        /// <summary>
+        /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
+        /// </summary>
+        public event EventHandler Loaded;
+        
         /// <summary>
         /// Occurs when the value of a property is changed.
         /// </summary>
         public event EventHandler<FrameworkPropertyChangedEventArgs> PropertyChanged;
+        
+        /// <summary>
+        /// Occurs when this instance has been detached from the visual tree.
+        /// </summary>
+        public event EventHandler Unloaded;
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether animations are enabled for this instance.
+        /// </summary>
+        public bool AreAnimationsEnabled
+        {
+            get { return areAnimationsEnabled; }
+            set
+            {
+                if (value != areAnimationsEnabled)
+                {
+                    areAnimationsEnabled = value;
+                    OnPropertyChanged(Prism.UI.Visual.AreAnimationsEnabledProperty);
+                }
+            }
+        }
+        private bool areAnimationsEnabled;
+
+        /// <summary>
+        /// Gets or sets the method to invoke when this instance requests an arrangement of its children.
+        /// </summary>
+        public ArrangeRequestHandler ArrangeRequest { get; set; }
         
         /// <summary>
         /// Gets or sets the background for the menu.
@@ -117,6 +148,11 @@ namespace Prism.Android.UI.Controls
             }
         }
         private Brush foreground;
+        
+        /// <summary>
+        /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
+        /// </summary>
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets the amount that the menu is inset on top of its parent view.
@@ -125,6 +161,35 @@ namespace Prism.Android.UI.Controls
         {
             get { return new Thickness(); }
         }
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
+        /// </summary>
+        public bool IsHitTestVisible
+        {
+            get { return isHitTestVisible; }
+            set
+            {
+                if (value != isHitTestVisible)
+                {
+                    isHitTestVisible = value;
+                    
+                    OverflowButton.Clickable = isHitTestVisible;
+                    foreach (var button in Items.OfType<View>())
+                    {
+                        button.Clickable = isHitTestVisible;
+                    }
+
+                    OnPropertyChanged(Prism.UI.Visual.IsHitTestVisibleProperty);
+                }
+            }
+        }
+        private bool isHitTestVisible = true;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance has been loaded and is ready for rendering.
+        /// </summary>
+        public bool IsLoaded { get; private set; }
 
         /// <summary>
         /// Gets a collection of the items within the menu.
@@ -143,7 +208,7 @@ namespace Prism.Android.UI.Controls
                 {
                     int oldValue = maxDisplayItems;
                     maxDisplayItems = value;
-                    if (attachedParent != null && (oldValue < Items.Count || maxDisplayItems < Items.Count))
+                    if (Parent != null && (oldValue < Items.Count || maxDisplayItems < Items.Count))
                     {
                         SetButtons();
                     }
@@ -153,6 +218,11 @@ namespace Prism.Android.UI.Controls
             }
         }
         private int maxDisplayItems;
+        
+        /// <summary>
+        /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
+        /// </summary>
+        public MeasureRequestHandler MeasureRequest { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Uri"/> of the image to use for representing the overflow menu when one is present.
@@ -167,7 +237,7 @@ namespace Prism.Android.UI.Controls
                     overflowImageUri = value;
                     if (overflowImageUri == null)
                     {
-                        OverflowButton.SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
+                        OverflowButton.SetImageDrawable(null);
                     }
                     else
                     {
@@ -181,19 +251,62 @@ namespace Prism.Android.UI.Controls
         }
         private Uri overflowImageUri;
         
-        private ImageView OverflowButton { get; }
+        /// <summary>
+        /// Gets the parent object for this instance.
+        /// </summary>
+        public IViewParent Parent { get; private set; }
         
-        private ViewStackHeader attachedParent;
+        /// <summary>
+        /// Gets or sets transformation information that affects the rendering position of this instance.
+        /// </summary>
+        public INativeTransform RenderTransform
+        {
+            get { return renderTransform; }
+            set
+            {
+                if (value != renderTransform)
+                {
+                    var transform = renderTransform as Media.Transform;
+                    if (transform != null)
+                    {
+                        transform.RemoveView(OverflowButton);
+                        foreach (var button in Items.OfType<View>())
+                        {
+                            transform.RemoveView(button);
+                        }
+                    }
+                    
+                    renderTransform = value;
+                    
+                    transform = renderTransform as Media.Transform;
+                    if (transform != null)
+                    {
+                        transform.AddView(OverflowButton);
+                        foreach (var button in Items.OfType<View>())
+                        {
+                            transform.AddView(button);
+                        }
+                    }
+
+                    OnPropertyChanged(Prism.UI.Visual.RenderTransformProperty);
+                }
+            }
+        }
+        private INativeTransform renderTransform;
+
+        /// <summary>
+        /// Gets or sets the visual theme that should be used by this instance.
+        /// </summary>
+        public Prism.UI.Theme RequestedTheme { get; set; }
+        
+        internal ImageView OverflowButton { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ActionMenu"/> class.
         /// </summary>
         public ActionMenu()
         {
-            OverflowButton = new ImageView(Application.MainActivity);
-            OverflowButton.SetColorFilter((Color)Prism.Application.Current.Resources[global::Android.Resource.Attribute.TextColorPrimary]);
-            OverflowButton.SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
-
+            OverflowButton = new ActionMenuOverflowButton(Application.MainActivity);
             OverflowButton.Click += OnOverflowButtonClicked;
             
             Items = new ObservableCollection<INativeMenuItem>();
@@ -218,7 +331,7 @@ namespace Prism.Android.UI.Controls
                     }
                 }
             
-                if (attachedParent == null)
+                if (Parent == null)
                 {
                     return;
                 }
@@ -250,7 +363,7 @@ namespace Prism.Android.UI.Controls
                         }
                         break;
                     case NotifyCollectionChangedAction.Reset:
-                        attachedParent.SetMenuButtons(null);
+                        SetButtons(null);
                         break;
                 }
             };
@@ -259,10 +372,26 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Attaches the menu to the specified parent.
         /// </summary>
-        public void Attach(ViewStackHeader parent)
+        public void Attach(IViewParent parent)
         {
-            attachedParent = parent;
-            SetButtons();
+            if (Parent != null && parent != null && Parent != parent)
+            {
+                throw new InvalidOperationException("Menu instance is already assigned to another object.");
+            }
+        
+            Parent = parent;
+            if (Parent == null)
+            {
+                Detach();
+            }
+            else
+            {
+                SetButtons();
+                if ((parent as INativeVisual)?.IsLoaded ?? (parent.Parent != null))
+                {
+                    OnLoaded();
+                }
+            }
         }
         
         /// <summary>
@@ -270,10 +399,94 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public void Detach()
         {
-            attachedParent?.SetMenuButtons(null);
-            attachedParent = null;
+            SetButtons(null);
+            Parent = null;
+            
+            OnUnloaded();
+        }
+        
+        /// <summary>
+        /// Invalidates the arrangement of this instance's children.
+        /// </summary>
+        public void InvalidateArrange()
+        {
+            ArrangeRequest(false, null);
         }
 
+        /// <summary>
+        /// Invalidates the measurement of this instance and its children.
+        /// </summary>
+        public void InvalidateMeasure()
+        {
+            MeasureRequest(false, null);
+        }
+        
+        /// <summary>
+        /// Measures the element and returns its desired size.
+        /// </summary>
+        /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
+        public Size Measure(Size constraints)
+        {
+            var viewGroup = Parent as ViewGroup;
+            if (viewGroup == null)
+            {
+                return Size.Empty;
+            }
+            
+            var size = new Size();
+            for (int i = 0; i < viewGroup.ChildCount; i++)
+            {
+                var child = viewGroup.GetChildAt(i);
+                if (child == OverflowButton || Items.Contains(child))
+                {
+                    child.Measure(View.MeasureSpec.MakeMeasureSpec(-1, MeasureSpecMode.Unspecified),
+                        View.MeasureSpec.MakeMeasureSpec(-1, MeasureSpecMode.Unspecified));
+                        
+                    size.Width += child.MeasuredWidth;
+                    size.Height = Math.Max(size.Height, child.MeasuredHeight);
+                }
+            }
+
+            return size / Device.Current.DisplayScale;
+        }
+
+        /// <summary>
+        /// Called when a property value is changed.
+        /// </summary>
+        /// <param name="pd">A property descriptor describing the property whose value has been changed.</param>
+        protected virtual void OnPropertyChanged(PropertyDescriptor pd)
+        {
+            PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
+        }
+        
+        internal void OnLoaded()
+        {
+            if (!IsLoaded)
+            {
+                IsLoaded = true;
+                OnPropertyChanged(Prism.UI.Visual.IsLoadedProperty);
+                Loaded(this, EventArgs.Empty);
+            }
+        }
+
+        internal void OnUnloaded()
+        {
+            if (IsLoaded)
+            {
+                IsLoaded = false;
+                OnPropertyChanged(Prism.UI.Visual.IsLoadedProperty);
+                Unloaded(this, EventArgs.Empty);
+            }
+        }
+        
+        private void OnItemPropertyChanged(object sender, FrameworkPropertyChangedEventArgs e)
+        {
+            if (e.Property == Prism.UI.Controls.MenuItem.ForegroundProperty)
+            {
+                SetItemForeground(sender as INativeMenuItem);
+            }
+        }
+        
         private void OnOverflowButtonClicked(object sender, EventArgs e)
         {
             var popup = new PopupMenu(OverflowButton.Context, OverflowButton);
@@ -284,7 +497,7 @@ namespace Prism.Android.UI.Controls
                 {
                     var item = popup.Menu.Add(new Java.Lang.String(button.Title));
                     item.SetEnabled(button.IsEnabled);
-                    item.SetOnMenuItemClickListener(new PopupMenuItemClickListener(button));
+                    item.SetOnMenuItemClickListener(new PopupMenuItemClickListener(this, button));
                     
                     var scb = (button.Foreground as SolidColorBrush) ?? Foreground as SolidColorBrush;
                     if (scb != null)
@@ -297,23 +510,6 @@ namespace Prism.Android.UI.Controls
             }
 
             popup.Show();
-        }
-
-        /// <summary>
-        /// Called when a property value is changed.
-        /// </summary>
-        /// <param name="pd">A property descriptor describing the property whose value has been changed.</param>
-        protected virtual void OnPropertyChanged(PropertyDescriptor pd)
-        {
-            PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
-        }
-        
-        private void OnItemPropertyChanged(object sender, FrameworkPropertyChangedEventArgs e)
-        {
-            if (e.Property == Prism.UI.Controls.MenuItem.ForegroundProperty)
-            {
-                SetItemForeground(sender as INativeMenuItem);
-            }
         }
         
         private void OnOverflowImageLoaded(object sender, EventArgs e)
@@ -328,10 +524,10 @@ namespace Prism.Android.UI.Controls
         private void SetButtons()
         {
             bool hasOverflow = maxDisplayItems < Items.Count;
-            var items = ((ObservableCollection<INativeMenuItem>)Items).Take(hasOverflow ? maxDisplayItems : Items.Count).OfType<global::Android.Views.View>();
+            var items = ((ObservableCollection<INativeMenuItem>)Items).Take(hasOverflow ? maxDisplayItems : Items.Count).OfType<View>();
             var itemsEnumerator = items.GetEnumerator();
             
-            var buttons = new global::Android.Views.View[items.Count() + (hasOverflow ? 1 : 0)];
+            var buttons = new View[items.Count() + (hasOverflow ? 1 : 0)];
             for (int i = 0; i < buttons.Length; i++)
             {
                 if (i == buttons.Length - 1 && hasOverflow)
@@ -344,7 +540,39 @@ namespace Prism.Android.UI.Controls
                 }
             }
             
-            attachedParent.SetMenuButtons(buttons);
+            SetButtons(buttons);
+            
+            MeasureRequest(false, null);
+            ArrangeRequest(false, null);
+        }
+        
+        private void SetButtons(View[] buttons)
+        {
+            var viewGroup = Parent as ViewGroup;
+            if (viewGroup == null)
+            {
+                return;
+            }
+            
+            for (int i = viewGroup.ChildCount - 1; i >= 0; i--)
+            {
+                var child = viewGroup.GetChildAt(i);
+                if (child == OverflowButton || Items.Contains(child))
+                {
+                    viewGroup.RemoveView(child);
+                    (renderTransform as Media.Transform)?.RemoveView(child);
+                }
+            }
+            
+            if (buttons != null)
+            {
+                foreach (var button in buttons)
+                {
+                    viewGroup.AddView(button, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent));
+                    button.Clickable = isHitTestVisible;
+                    (renderTransform as Media.Transform)?.AddView(button);
+                }
+            }
         }
         
         private void SetItemForeground(INativeMenuItem item)
@@ -362,16 +590,43 @@ namespace Prism.Android.UI.Controls
         private class PopupMenuItemClickListener : Java.Lang.Object, IMenuItemOnMenuItemClickListener
         {
             private readonly WeakReference buttonRef;
+            private readonly WeakReference menuRef;
             
-            public PopupMenuItemClickListener(object button)
+            public PopupMenuItemClickListener(ActionMenu menu, object button)
             {
                 buttonRef = new WeakReference(button);
+                menuRef = new WeakReference(menu);
             }
         
             public bool OnMenuItemClick(IMenuItem item)
             {
-                var button = buttonRef.Target as global::Android.Views.View;
-                return (button?.CallOnClick()).GetValueOrDefault();
+                var menu = menuRef.Target as ActionMenu;
+                var button = buttonRef.Target as View;
+                return menu != null && menu.IsHitTestVisible && button != null && button.CallOnClick();
+            }
+        }
+    }
+    
+    internal sealed class ActionMenuOverflowButton : ImageView
+    {
+        private const string OverflowButtonKey = "drawable/abc_ic_menu_moreoverflow_mtrl_alpha";
+        
+        public ActionMenuOverflowButton(global::Android.Content.Context context)
+            : base(context)
+        {
+            SetColorFilter((Color)Prism.Application.Current.Resources[global::Android.Resource.Attribute.TextColorPrimary]);
+            SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
+        }
+        
+        public override void SetImageDrawable(Drawable drawable)
+        {
+            if (drawable == null)
+            {
+                base.SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
+            }
+            else
+            {
+                base.SetImageDrawable(drawable);
             }
         }
     }

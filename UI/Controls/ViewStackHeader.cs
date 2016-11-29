@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
+using System.Collections.Generic;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -295,12 +296,25 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        internal ActionMenu Menu
+        {
+            get { return menu; }
+            set
+            {
+                if (value != menu)
+                {
+                    menu?.Detach();
+                    menu = value;
+                    menu?.Attach(this);
+                }
+            }
+        }
+        private ActionMenu menu;
 
         private ImageView BackButton { get; }
         
         private TextView TitleView { get; }
-        
-        private global::Android.Views.View[] menuButtons;
 
         internal ViewStackHeader(Context context)
             : base(context)
@@ -378,30 +392,6 @@ namespace Prism.Android.UI.Controls
             BackButton.Visibility = visibility;
             SetItemPositions();
         }
-        
-        /// <summary>
-        /// Sets the views to use for the menu buttons.
-        /// </summary>
-        /// <param name="buttons">The buttons that make up the menu.</param>
-        public void SetMenuButtons(global::Android.Views.View[] buttons)
-        {
-            if (menuButtons != null)
-            {
-                foreach (var button in menuButtons)
-                {
-                    RemoveView(button);
-                }
-            }
-            
-            menuButtons = buttons;
-            if (menuButtons != null)
-            {
-                foreach (var button in menuButtons)
-                {
-                    AddView(button, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent));
-                }
-            }
-        }
 
         /// <summary>
         /// This is called when the view is attached to a window.
@@ -477,6 +467,8 @@ namespace Prism.Android.UI.Controls
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Loaded(this, EventArgs.Empty);
             }
+            
+            menu?.OnLoaded();
         }
 
         private void OnPropertyChanged(PropertyDescriptor pd)
@@ -492,10 +484,22 @@ namespace Prism.Android.UI.Controls
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Unloaded(this, EventArgs.Empty);
             }
+            
+            menu?.OnUnloaded();
         }
 
         private void SetItemPositions()
         {
+            List<global::Android.Views.View> menuButtons = null;
+            for (int i = 0; i < ChildCount; i++)
+            {
+                var child = GetChildAt(i);
+                if (child is INativeMenuItem || child is ActionMenuOverflowButton)
+                {
+                    (menuButtons ?? (menuButtons = new List<global::Android.Views.View>())).Add(child);
+                }
+            }
+            
             double scale = Device.Current.DisplayScale;
             if (Height >= (int)(64 * scale))
             {

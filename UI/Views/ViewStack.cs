@@ -485,7 +485,14 @@ namespace Prism.Android.UI
                         if (contentContainer.ChildCount > 2)
                         {
                             contentContainer.RemoveViewAt(1);
-                            (Header as ViewStackHeader)?.SetMenuButtons(null);
+                            
+                            var vsh = Header as ViewStackHeader;
+                            if (vsh != null)
+                            {
+                                var menu = vsh.Menu as ActionMenu;
+                                vsh.Menu = null;
+                                menu?.OnUnloaded();
+                            }
                         }
 
                         contentContainer.AddView(view, 1);
@@ -530,7 +537,7 @@ namespace Prism.Android.UI
             }
         }
 
-        private class ViewContentContainer : LinearLayout, IFragmentView, ITouchDispatcher
+        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher
         {
             public Fragment Fragment
             {
@@ -548,7 +555,6 @@ namespace Prism.Android.UI
 
                 Id = 1;
                 LayoutParameters = new LinearLayout.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent);
-                Orientation = global::Android.Widget.Orientation.Vertical;
 
                 var headerView = viewStack.Header as global::Android.Views.View;
                 (headerView.Parent as ViewGroup)?.RemoveView(headerView);

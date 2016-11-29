@@ -173,15 +173,14 @@ namespace Prism.Android.UI
             {
                 if (value != menu)
                 {
-                    (menu as Controls.ActionMenu)?.Detach();
-                    
                     menu = value;
                     
                     var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
                     if (header != null)
                     {
-                        (menu as Controls.ActionMenu)?.Attach(header);
+                        header.Menu = menu as Controls.ActionMenu;
                     }
+                    
                     OnPropertyChanged(Prism.UI.ContentView.MenuProperty);
                 }
             }
@@ -325,24 +324,22 @@ namespace Prism.Android.UI
 
         private void OnLoaded()
         {
-            var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
-            if (header != null)
-            {
-                (menu as Controls.ActionMenu)?.Attach(header);
-            }
-        
             if (!IsLoaded)
             {
                 IsLoaded = true;
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Loaded.Invoke(this, EventArgs.Empty);
             }
+            
+            var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
+            if (header != null)
+            {
+                header.Menu = menu as Controls.ActionMenu;
+            }
         }
 
         private void OnUnloaded()
         {
-            (menu as Controls.ActionMenu)?.Detach();
-            
             if (IsLoaded)
             {
                 IsLoaded = false;

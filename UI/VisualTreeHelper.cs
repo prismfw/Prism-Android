@@ -20,12 +20,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.Linq;
 using Android.App;
 using Android.Runtime;
 using Android.Support.V7.Widget;
 using Android.Views;
-using Android.Widget;
 using Prism.Native;
 
 namespace Prism.Android.UI
@@ -64,6 +62,12 @@ namespace Prism.Android.UI
 
                     return id - 1 + (fragment.View == null ? 0 : 1);
                 }
+            }
+            
+            var vsh = reference as Controls.ViewStackHeader;
+            if (vsh != null)
+            {
+                return vsh.ChildCount + (vsh.Menu == null ? 0 : 1);
             }
 
             return view == null ? 0 : view.ChildCount;
@@ -104,6 +108,12 @@ namespace Prism.Android.UI
                 {
                     view = (reference as RecyclerView.ViewHolder)?.ItemView as ViewGroup;
                 }
+            }
+            
+            var vsh = reference as Controls.ViewStackHeader;
+            if (vsh != null)
+            {
+                return childIndex == vsh.ChildCount ? (object)vsh.Menu : vsh.GetChildAt(childIndex);
             }
 
             return view == null ? null : view.GetChildAt(childIndex);
@@ -155,7 +165,7 @@ namespace Prism.Android.UI
                 return frag.ParentFragment ?? (object)frag.Activity?.FindViewById(frag.Id);
             }
 
-            return null;
+            return (reference as Controls.ActionMenu)?.Parent;
         }
     }
 }
