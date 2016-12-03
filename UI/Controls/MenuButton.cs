@@ -38,15 +38,15 @@ namespace Prism.Android.UI.Controls
     public class MenuButton : FrameLayout, INativeMenuButton
     {
         /// <summary>
-        /// Occurs when the button is clicked.
-        /// </summary>
-        public event EventHandler Clicked;
-    
-        /// <summary>
         /// Occurs when the value of a property is changed.
         /// </summary>
         public event EventHandler<FrameworkPropertyChangedEventArgs> PropertyChanged;
-        
+
+        /// <summary>
+        /// Gets or sets the action to perform when the button is pressed by the user.
+        /// </summary>
+        public Action Action { get; set; }
+
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the foreground content of the menu item.
         /// </summary>
@@ -171,7 +171,7 @@ namespace Prism.Android.UI.Controls
             TextView = new TextView(Context);
             AddView(TextView, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent, GravityFlags.CenterVertical | GravityFlags.CenterHorizontal));
         
-            Click += (o, e) => Clicked(this, EventArgs.Empty);
+            Click += (o, e) => Action();
         }
 
         /// <summary>
