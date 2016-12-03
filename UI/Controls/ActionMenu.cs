@@ -153,14 +153,6 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
         public Rectangle Frame { get; set; }
-
-        /// <summary>
-        /// Gets the amount that the menu is inset on top of its parent view.
-        /// </summary>
-        public Thickness Insets
-        {
-            get { return new Thickness(); }
-        }
         
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
