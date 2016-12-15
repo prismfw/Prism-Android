@@ -305,8 +305,10 @@ namespace Prism.Android.UI.Controls
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
-            base.OnMeasure(MeasureSpec.MakeMeasureSpec((int)(constraints.Width * Device.Current.DisplayScale), MeasureSpecMode.AtMost),
-                MeasureSpec.MakeMeasureSpec((int)(constraints.Height * Device.Current.DisplayScale), MeasureSpecMode.AtMost));
+            var widthSpec = (int)Math.Min(int.MaxValue, constraints.Width * Device.Current.DisplayScale);
+            var heightSpec = (int)Math.Min(int.MaxValue, constraints.Height * Device.Current.DisplayScale);
+            base.OnMeasure(MeasureSpec.MakeMeasureSpec(widthSpec, MeasureSpecMode.AtMost),
+                MeasureSpec.MakeMeasureSpec(heightSpec, MeasureSpecMode.AtMost));
 
             var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
             SetMeasuredDimension(width, height);
