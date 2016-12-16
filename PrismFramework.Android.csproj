@@ -93,7 +93,6 @@
     <Compile Include="Application.cs" />
     <Compile Include="AndroidInitializer.cs" />
     <Compile Include="AppActivity.cs" />
-    <Compile Include="ResourceExtractor.cs" />
     <Compile Include="UI\Controls\TextBox.cs" />
     <Compile Include="UI\Controls\Border.cs" />
     <Compile Include="UI\Controls\TextEntryBase.cs" />
