@@ -128,21 +128,26 @@ namespace Prism.Android.UI.Controls
                     (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
 
                     background = value;
-                    backgroundDefault.ClearColorFilter();
                     if (background is ImageBrush || background is LinearGradientBrush)
                     {
                         base.Background = background.GetDrawable(OnBackgroundImageLoaded);
                     }
                     else
                     {
-                        base.Background = backgroundDefault;
+                        base.Background = (background as DataBrush).GetDrawable(null) ??
+                            Android.Resources.GetDrawable(this, SystemResources.DateTimePickerBackgroundBrushKey);
                         
                         var scb = background as SolidColorBrush;
                         if (scb != null)
                         {
                             base.Background.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
                         }
+                        else
+                        {
+                            base.Background.ClearColorFilter();
+                        }
                     }
+                    
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -256,7 +261,7 @@ namespace Prism.Android.UI.Controls
                     if (foreground == null)
                     {
                         Paint.SetShader(null);
-                        SetTextColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary)); 
+                        SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary)); 
                     }
                     else
                     {
@@ -470,7 +475,6 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private readonly Drawable backgroundDefault;
         private readonly Paint borderPaint = new Paint();
         private readonly TimePickerDialog pickerDialog;
 
@@ -480,7 +484,6 @@ namespace Prism.Android.UI.Controls
         public TimePicker()
             : base(Application.MainActivity)
         {
-            backgroundDefault = base.Background;
             pickerDialog = new TimePickerDialog(Context, OnTimeChanged, DateTime.Now.Hour,
                 DateTime.Now.Minute, DateFormat.Is24HourFormat(Context));
 
@@ -696,7 +699,7 @@ namespace Prism.Android.UI.Controls
 
         private void OnBackgroundImageLoaded(object sender, EventArgs e)
         {
-            base.Background = background.GetDrawable(null) ?? backgroundDefault;
+            base.Background = background.GetDrawable(null) ?? Android.Resources.GetDrawable(this, SystemResources.DateTimePickerBackgroundBrushKey);
         }
 
         private void OnBorderImageLoaded(object sender, EventArgs e)

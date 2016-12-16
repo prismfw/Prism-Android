@@ -724,8 +724,8 @@ namespace Prism.Android.UI.Controls
         
             int[] colors =
             {
-                (background as SolidColorBrush)?.Color.GetHashCode() ?? (Color)Prism.Application.Current.Resources[Resource.Attribute.TextColorPrimary],
-                (foreground as SolidColorBrush)?.Color.GetHashCode() ?? (Color)Prism.Application.Current.Resources[Resource.Attribute.ColorAccent]
+                (background as SolidColorBrush)?.Color.GetHashCode() ?? Android.Resources.GetColor(this, Resource.Attribute.TextColorPrimary),
+                (foreground as SolidColorBrush)?.Color.GetHashCode() ?? Android.Resources.GetColor(this, Resource.Attribute.ColorAccent)
             };
             
             int[][] states =

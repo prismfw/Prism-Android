@@ -436,7 +436,7 @@ namespace Prism.Android.UI.Controls
 
                     separatorBrush = value;
                     separatorDrawable = separatorBrush.GetDrawable(OnSeparatorImageLoaded) ??
-                        ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.TextColorPrimary);
+                        Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.TextColorPrimary);
 
                     OnPropertyChanged(Prism.UI.Controls.ListBox.SeparatorBrushProperty);
                     InvalidateItemDecorations();
@@ -472,7 +472,6 @@ namespace Prism.Android.UI.Controls
             : base(Application.MainActivity)
         {
             selectedIndices = new List<int>();
-            separatorDrawable = ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.TextColorPrimary);
             DescendantFocusability = DescendantFocusability.BeforeDescendants;
 
             AddItemDecoration(new ListBoxItemDecoration(this));

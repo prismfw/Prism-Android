@@ -128,21 +128,26 @@ namespace Prism.Android.UI.Controls
                     (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
 
                     background = value;
-                    backgroundDefault.ClearColorFilter();
                     if (background is ImageBrush || background is LinearGradientBrush)
                     {
                         base.Background = background.GetDrawable(OnBackgroundImageLoaded);
                     }
                     else
                     {
-                        base.Background = backgroundDefault;
+                        base.Background = (background as DataBrush).GetDrawable(null) ??
+                            Android.Resources.GetDrawable(this, SystemResources.ButtonBackgroundBrushKey);
                         
                         var scb = background as SolidColorBrush;
                         if (scb != null)
                         {
                             base.Background.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
                         }
+                        else
+                        {
+                            base.Background.ClearColorFilter();
+                        }
                     }
+                    
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -274,7 +279,7 @@ namespace Prism.Android.UI.Controls
                     if (foreground == null)
                     {
                         TextView.Paint.SetShader(null);
-                        TextView.SetTextColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary)); 
+                        TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary)); 
                     }
                     else
                     {
@@ -485,7 +490,6 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         protected TextView TextView { get; }
 
-        private readonly Drawable backgroundDefault;
         private readonly Paint borderPaint = new Paint();
         private readonly LinearLayout layout;
 
@@ -495,7 +499,6 @@ namespace Prism.Android.UI.Controls
         public Button()
             : base(Application.MainActivity)
         {
-            base.Background = backgroundDefault = new global::Android.Widget.Button(Context).Background;
             Focusable = true;
 
             TextView = new TextView(Application.MainActivity)
@@ -504,7 +507,7 @@ namespace Prism.Android.UI.Controls
                 LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent),
                 Typeface = Typeface.Default
             };
-            TextView.SetTextColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
+            TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
 
             ImageView = new ImageView(Application.MainActivity)
             {
@@ -762,7 +765,7 @@ namespace Prism.Android.UI.Controls
 
         private void OnBackgroundImageLoaded(object sender, EventArgs e)
         {
-            base.Background = background.GetDrawable(null) ?? backgroundDefault;
+            base.Background = background.GetDrawable(null) ?? Android.Resources.GetDrawable(this, SystemResources.ButtonBackgroundBrushKey);
         }
 
         private void OnBorderImageLoaded(object sender, EventArgs e)

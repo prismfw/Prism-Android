@@ -352,7 +352,6 @@ namespace Prism.Android.UI.Controls
         public ListBoxItem()
             : base(Application.MainActivity)
         {
-            SetBackground();
         }
 
         /// <summary></summary>

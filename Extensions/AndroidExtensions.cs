@@ -151,7 +151,7 @@ namespace Prism.Android
         }
 
         /// <summary>
-        /// Gets a <see cref="Android.Graphics.Color"/> from a <see cref="Prism.UI.Color"/>
+        /// Gets a <see cref="Android.Graphics.Color"/> from a <see cref="Prism.UI.Color"/>.
         /// </summary>
         /// <param name="color">The color.</param>
         public static global::Android.Graphics.Color GetColor(this Prism.UI.Color color)
@@ -160,7 +160,7 @@ namespace Prism.Android
         }
 
         /// <summary>
-        /// Gets a <see cref="Prism.UI.Color"/> from a <see cref="Android.Graphics.Color"/>
+        /// Gets a <see cref="Prism.UI.Color"/> from a <see cref="Android.Graphics.Color"/>.
         /// </summary>
         /// <param name="color">The color.</param>
         public static Prism.UI.Color GetColor(this global::Android.Graphics.Color color)
@@ -179,12 +179,22 @@ namespace Prism.Android
         }
 
         /// <summary>
-        /// Gets a <see cref="Drawable"/> from a <see cref="Brush"/>
+        /// Gets a <see cref="Drawable"/> from a <see cref="Brush"/>.
         /// </summary>
         /// <param name="brush">The brush.</param>
         /// <param name="handler">The event handler to invoke when an image brush's image has loaded.</param>
         public static Drawable GetDrawable(this Brush brush, EventHandler handler)
         {
+            var dataBrush = brush as DataBrush;
+            if (dataBrush != null)
+            {
+                if (dataBrush.Data is global::Android.Graphics.Color)
+                {
+                    return new ColorDrawable((global::Android.Graphics.Color)dataBrush.Data);
+                }
+                return dataBrush.Data as Drawable;
+            }
+            
             var solidColor = brush as SolidColorBrush;
             if (solidColor != null)
             {
@@ -274,7 +284,7 @@ namespace Prism.Android
         }
 
         /// <summary>
-        /// Gets a <see cref="Android.Graphics.Matrix"/> from a <see cref="Prism.UI.Media.Matrix"/>
+        /// Gets a <see cref="Android.Graphics.Matrix"/> from a <see cref="Prism.UI.Media.Matrix"/>.
         /// </summary>
         /// <param name="matrix">The matrix.</param>
         public static global::Android.Graphics.Matrix GetMatrix(this Prism.UI.Media.Matrix matrix)
@@ -317,7 +327,7 @@ namespace Prism.Android
         }
         
         /// <summary>
-        /// Gets a <see cref="Rectangle"/> from a <see cref="RectF"/>
+        /// Gets a <see cref="Rectangle"/> from a <see cref="RectF"/>.
         /// </summary>
         /// <param name="rect">The rectangle.</param>
         public static Rectangle GetRectangle(this RectF rect)
@@ -506,6 +516,22 @@ namespace Prism.Android
         /// <param name="handler">The event handler to invoke when an image brush's image has loaded.</param>
         public static void SetBrush(this Paint paint, Brush brush, float width, float height, EventHandler handler)
         {
+            var dataBrush = brush as DataBrush;
+            if (dataBrush != null)
+            {
+                if (dataBrush.Data is global::Android.Graphics.Color)
+                {
+                    paint.SetShader(null);
+                    paint.Color = ((global::Android.Graphics.Color)dataBrush.Data);
+                }
+                else
+                {
+                    paint.Color = global::Android.Graphics.Color.Black;
+                    paint.SetShader(dataBrush.Data as Shader);
+                }
+                return;
+            }
+            
             var solidColor = brush as SolidColorBrush;
             if (solidColor != null)
             {

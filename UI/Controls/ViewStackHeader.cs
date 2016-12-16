@@ -96,7 +96,7 @@ namespace Prism.Android.UI.Controls
                     (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
 
                     background = value;
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded) ?? ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.HeaderBackground);
+                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
                     OnPropertyChanged(Prism.UI.Controls.ViewStackHeader.BackgroundProperty);
                 }
             }
@@ -171,8 +171,8 @@ namespace Prism.Android.UI.Controls
                     if (foreground == null)
                     {
                         TitleView.Paint.SetShader(null);
-                        TitleView.SetTextColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
-                        BackButton.SetColorFilter(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
+                        TitleView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
+                        BackButton.SetColorFilter(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
                     }
                     else
                     {
@@ -322,13 +322,13 @@ namespace Prism.Android.UI.Controls
             Focusable = true;
             
             BackButton = new ImageView(context) { Clickable = true, Focusable = true };
-            BackButton.SetColorFilter((Color)Prism.Application.Current.Resources[global::Android.Resource.Attribute.TextColorPrimary]);
-            BackButton.SetImageDrawable((Drawable)Prism.Application.Current.Resources[BackButtonKey + "|" + BackButtonAltKey]);
+            BackButton.SetColorFilter(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
+            BackButton.SetImageDrawable(Android.Resources.GetDrawable(this, BackButtonKey + "|" + BackButtonAltKey));
             BackButton.Visibility = ViewStates.Gone;
             AddView(BackButton, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent));
 
             TitleView = new TextView(context) { Typeface = Typeface.Default };
-            TitleView.SetTextColor((Color)Prism.Application.Current.Resources[global::Android.Resource.Attribute.TextColorPrimary]);
+            TitleView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
             AddView(TitleView, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent));
             
             BackButton.Click += (o, e) =>

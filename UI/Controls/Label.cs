@@ -520,7 +520,7 @@ namespace Prism.Android.UI.Controls
             else if (foreground == null)
             {
                 Paint.SetShader(null);
-                SetTextColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
+                SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
             }
             else
             {

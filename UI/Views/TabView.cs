@@ -373,7 +373,7 @@ namespace Prism.Android.UI
 
                     background = value;
                     TabLayout.Background = background.GetDrawable(OnBackgroundImageLoaded) ??
-                        ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.Background);
+                        Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
                 }
             }
             private Brush background;
@@ -392,7 +392,7 @@ namespace Prism.Android.UI
                     }
                     else
                     {
-                        TabLayout.SetSelectedTabIndicatorColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.ColorAccent));
+                        TabLayout.SetSelectedTabIndicatorColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.ColorAccent));
                         if (foreground != null)
                         {
                             Prism.Utilities.Logger.Warn("TabView.Foreground on Android only supports instances of SolidColorBrush.");
@@ -537,7 +537,7 @@ namespace Prism.Android.UI
             private void OnBackgroundImageLoaded(object sender, EventArgs e)
             {
                 TabLayout.Background = background.GetDrawable(null) ??
-                    ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.Background);
+                    Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
             }
         }
     }

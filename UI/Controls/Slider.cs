@@ -454,15 +454,16 @@ namespace Prism.Android.UI.Controls
                     (thumbBrush as ImageBrush).ClearImageHandler(OnThumbImageLoaded);
 
                     thumbBrush = value;
-                    thumbDrawable.ClearColorFilter();
                     
                     var scb = thumbBrush as SolidColorBrush;
                     if (scb == null)
                     {
-                        SetThumb(thumbBrush.GetDrawable(OnThumbImageLoaded) ?? thumbDrawable);
+                        SetThumb(thumbBrush.GetDrawable(OnThumbImageLoaded) ?? Android.Resources.GetDrawable(this, SystemResources.SliderThumbBrushKey));
+                        Thumb.ClearColorFilter();
                     }
                     else
                     {
+                        var thumbDrawable = Android.Resources.GetDrawable(this, SystemResources.SliderThumbBrushKey);
                         thumbDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
                         SetThumb(thumbDrawable);
                     }
@@ -507,7 +508,6 @@ namespace Prism.Android.UI.Controls
 
         private readonly Paint borderPaint = new Paint();
         private double currentValue;
-        private readonly Drawable thumbDrawable;
         private readonly TrackDrawable trackDrawable;
 
         /// <summary>
@@ -516,7 +516,6 @@ namespace Prism.Android.UI.Controls
         public Slider()
             : base(Application.MainActivity)
         {
-            thumbDrawable = Thumb;
             trackDrawable = new TrackDrawable(this);
 
             Focusable = true;
@@ -758,7 +757,7 @@ namespace Prism.Android.UI.Controls
 
         private void OnThumbImageLoaded(object sender, EventArgs e)
         {
-            SetThumb(thumbBrush.GetDrawable(null) ?? thumbDrawable);
+            SetThumb(thumbBrush.GetDrawable(null) ?? Android.Resources.GetDrawable(this, SystemResources.SliderThumbBrushKey));
         }
 
         private void OnLoaded()

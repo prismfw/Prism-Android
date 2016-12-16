@@ -25,7 +25,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Android;
+using Android.App;
 using Android.Content;
+using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Prism.Native;
@@ -39,27 +42,34 @@ namespace Prism.Android
     [Register(typeof(INativeResources), IsSingleton = true)]
     public class Resources : INativeResources
     {
-        private readonly Dictionary<object, object> resourceValues = new Dictionary<object, object>()
+        private static readonly Drawable buttonBackground = new global::Android.Widget.Button(Application.MainActivity).Background;
+        private static readonly Drawable sliderThumb = new global::Android.Widget.SeekBar(Application.MainActivity).Thumb;
+        private static readonly Drawable textBoxBackground = new global::Android.Widget.EditText(Application.MainActivity).Background;
+
+        /// <summary>
+        /// Gets the color associated with the specified key.
+        /// </summary>
+        /// <param name="owner">The object that owns the resource, or <c>null</c> if the resource is not owned by a specified object.</param>
+        /// <param name="key">The key associated with the color resource to get.</param>
+        public static Color GetColor(object owner, object key)
         {
-            { SystemResources.BaseFontFamilyKey, new FontFamily("Roboto") },
-            { SystemResources.BaseFontSizeKey, 14.0 },
-            { SystemResources.ButtonPaddingKey, new Thickness(24, 14) },
-            { SystemResources.HorizontalScrollBarHeightKey, 4.0 },
-            { SystemResources.ListBoxItemDetailHeightKey, 52.0 },
-            { SystemResources.ListBoxItemIndicatorSizeKey, new Size() },
-            { SystemResources.ListBoxItemInfoButtonSizeKey, new Size() },
-            { SystemResources.ListBoxItemInfoIndicatorSizeKey, new Size() },
-            { SystemResources.ListBoxItemStandardHeightKey, 44.0 },
-            { SystemResources.PopupSizeKey, new Size(540, 620) },
-            { SystemResources.SearchBoxBorderWidthKey, 1.0 },
-            { SystemResources.SelectListDisplayItemPaddingKey, new Thickness(3, 4, 20, 4) },
-            { SystemResources.SelectListListItemPaddingKey, new Thickness(4, 10, 16, 10) },
-            { SystemResources.TabItemFontSizeKey, 10.0 },
-            { SystemResources.VerticalScrollBarWidthKey, 4.0 },
-            { SystemResources.ViewHeaderFontSizeKey, 16.0 },
-            { SystemResources.ViewHeaderFontStyleKey, FontStyle.Bold },
-        };
-        
+            object retval;
+            TryGetResource(owner, key, out retval, false);
+            return retval is Color ? (Color)retval : new Color(0);
+        }
+
+        /// <summary>
+        /// Gets the drawable associated with the specified key.
+        /// </summary>
+        /// <param name="owner">The object that owns the resource, or <c>null</c> if the resource is not owned by a specified object.</param>
+        /// <param name="key">The key associated with the drawable resource to get.</param>
+        public static Drawable GetDrawable(object owner, object key)
+        {
+            object retval;
+            TryGetResource(owner, key, out retval, false);
+            return retval is Color ? new ColorDrawable((Color)retval) : retval as Drawable;
+        }
+
         /// <summary>
         /// Gets the names of all available fonts.
         /// </summary>
@@ -77,31 +87,189 @@ namespace Prism.Android
         /// <returns><c>true</c> if the system resources contain a resource with the specified key; otherwise, <c>false</c>.</returns>
         public bool TryGetResource(object owner, object key, out object value)
         {
-            if (resourceValues.TryGetValue(key, out value))
-            {
-                return true;
-            }
+            return TryGetResource(owner, key, out value, true);
+        }
 
+        private static bool TryGetResource(object owner, object key, out object value, bool convert)
+        {
             int resourceId = 0;
-            var context = owner as Context ?? (owner as View)?.Context ?? Application.MainActivity;
-            
+            var context = owner as Context ?? (owner as View)?.Context ?? (owner as Fragment)?.Activity ?? Application.MainActivity;
+
             if (key is int)
             {
                 resourceId = (int)key;
             }
             else
             {
-                string resourceName = (key as ResourceKey)?.Id ?? key.ToString();
-                if (!int.TryParse(resourceName, out resourceId))
+                var resourceKey = key as ResourceKey;
+                if (resourceKey != null)
                 {
-                    string[] names = resourceName.Split('|');
-                    foreach (var name in names)
+                    switch ((SystemResourceKeyId)resourceKey.Id)
                     {
-                        resourceId = context.Resources.GetIdentifier(name, null, context.PackageName);
-                        if (resourceId != 0)
-                        {
-                            resourceName = name;
+                        case SystemResourceKeyId.ActionMenuMaxDisplayItems:
+                            value = 2;
+                            return true;
+                        case SystemResourceKeyId.ButtonBorderWidth:
+                        case SystemResourceKeyId.DateTimePickerBorderWidth:
+                        case SystemResourceKeyId.SelectListBorderWidth:
+                        case SystemResourceKeyId.TextBoxBorderWidth:
+                            value = 0.0;
+                            return true;
+                        case SystemResourceKeyId.SearchBoxBorderWidth:
+                            value = 1.0;
+                            return true;
+                        case SystemResourceKeyId.ButtonPadding:
+                            value = new Thickness(24, 14);
+                            return true;
+                        case SystemResourceKeyId.ListBoxItemDetailHeight:
+                            value = 52.0;
+                            return true;
+                        case SystemResourceKeyId.ListBoxItemStandardHeight:
+                            value = 44.0;
+                            return true;
+                        case SystemResourceKeyId.ListBoxItemIndicatorSize:
+                        case SystemResourceKeyId.ListBoxItemInfoButtonSize:
+                        case SystemResourceKeyId.ListBoxItemInfoIndicatorSize:
+                            value = new Size();
+                            return true;
+                        case SystemResourceKeyId.PopupSize:
+                            value = new Size(540, 620);
+                            return true;
+                        case SystemResourceKeyId.SelectListDisplayItemPadding:
+                            value = new Thickness(3, 4, 20, 4);
+                            return true;
+                        case SystemResourceKeyId.SelectListListItemPadding:
+                            value = new Thickness(4, 10, 16, 10);
+                            return true;
+                        case SystemResourceKeyId.ShouldAutomaticallyIndentSeparators:
+                            value = true;
+                            return true;
+                        case SystemResourceKeyId.HorizontalScrollBarHeight:
+                        case SystemResourceKeyId.VerticalScrollBarWidth:
+                            value = 4.0;
+                            return true;
+                        case SystemResourceKeyId.BaseFontFamily:
+                            value = new FontFamily("Roboto");
+                            return true;
+                        case SystemResourceKeyId.ButtonFontSize:
+                        case SystemResourceKeyId.DateTimePickerFontSize:
+                        case SystemResourceKeyId.DetailLabelFontSize:
+                        case SystemResourceKeyId.GroupedSectionHeaderFontSize:
+                        case SystemResourceKeyId.LabelFontSize:
+                        case SystemResourceKeyId.LoadIndicatorFontSize:
+                        case SystemResourceKeyId.SearchBoxFontSize:
+                        case SystemResourceKeyId.SectionHeaderFontSize:
+                        case SystemResourceKeyId.SelectListFontSize:
+                        case SystemResourceKeyId.TextBoxFontSize:
+                        case SystemResourceKeyId.ValueLabelFontSize:
+                            value = 14.0;
+                            return true;
+                        case SystemResourceKeyId.TabItemFontSize:
+                            value = 10.0;
+                            return true;
+                        case SystemResourceKeyId.ViewHeaderFontSize:
+                            value = 16.0;
+                            return true;
+                        case SystemResourceKeyId.ButtonFontStyle:
+                        case SystemResourceKeyId.DateTimePickerFontStyle:
+                        case SystemResourceKeyId.DetailLabelFontStyle:
+                        case SystemResourceKeyId.GroupedSectionHeaderFontStyle:
+                        case SystemResourceKeyId.LabelFontStyle:
+                        case SystemResourceKeyId.LoadIndicatorFontStyle:
+                        case SystemResourceKeyId.SearchBoxFontStyle:
+                        case SystemResourceKeyId.SectionHeaderFontStyle:
+                        case SystemResourceKeyId.SelectListFontStyle:
+                        case SystemResourceKeyId.TabItemFontStyle:
+                        case SystemResourceKeyId.TextBoxFontStyle:
+                        case SystemResourceKeyId.ValueLabelFontStyle:
+                            value = FontStyle.Normal;
+                            return true;
+                        case SystemResourceKeyId.ViewHeaderFontStyle:
+                            value = FontStyle.Bold;
+                            return true;
+                        case SystemResourceKeyId.AccentBrush:
+                        case SystemResourceKeyId.ActivityIndicatorForegroundBrush:
+                        case SystemResourceKeyId.TabViewForegroundBrush:
+                        case SystemResourceKeyId.ToggleSwitchForegroundBrush:
+                        case SystemResourceKeyId.ToggleSwitchThumbOnBrush:
+                            resourceId = Resource.Attribute.ColorAccent;
                             break;
+                        case SystemResourceKeyId.ActionMenuBackgroundBrush:
+                        case SystemResourceKeyId.ButtonBorderBrush:
+                        case SystemResourceKeyId.DateTimePickerBorderBrush:
+                        case SystemResourceKeyId.GroupedSectionHeaderBackgroundBrush:
+                        case SystemResourceKeyId.ListBoxBackgroundBrush:
+                        case SystemResourceKeyId.ListBoxItemBackgroundBrush:
+                        case SystemResourceKeyId.ListBoxItemSelectedBackgroundBrush:
+                        case SystemResourceKeyId.SearchBoxBackgroundBrush:
+                        case SystemResourceKeyId.SearchBoxBorderBrush:
+                        case SystemResourceKeyId.SectionHeaderBackgroundBrush:
+                        case SystemResourceKeyId.SelectListBackgroundBrush:
+                        case SystemResourceKeyId.SelectListBorderBrush:
+                        case SystemResourceKeyId.TabViewBackgroundBrush:
+                        case SystemResourceKeyId.TextBoxBorderBrush:
+                        case SystemResourceKeyId.ToggleSwitchBorderBrush:
+                        case SystemResourceKeyId.ViewBackgroundBrush:
+                        case SystemResourceKeyId.ViewHeaderBackgroundBrush:
+                            value = null;
+                            return true;
+                        case SystemResourceKeyId.ActionMenuForegroundBrush:
+                        case SystemResourceKeyId.ButtonForegroundBrush:
+                        case SystemResourceKeyId.DateTimePickerForegroundBrush:
+                        case SystemResourceKeyId.GroupedSectionHeaderForegroundBrush:
+                        case SystemResourceKeyId.LabelForegroundBrush:
+                        case SystemResourceKeyId.ListBoxSeparatorBrush:
+                        case SystemResourceKeyId.LoadIndicatorForegroundBrush:
+                        case SystemResourceKeyId.SearchBoxForegroundBrush:
+                        case SystemResourceKeyId.SectionHeaderForegroundBrush:
+                        case SystemResourceKeyId.SelectListForegroundBrush:
+                        case SystemResourceKeyId.TabItemForegroundBrush:
+                        case SystemResourceKeyId.TextBoxForegroundBrush:
+                        case SystemResourceKeyId.ToggleSwitchBackgroundBrush:
+                        case SystemResourceKeyId.ToggleSwitchThumbOffBrush:
+                        case SystemResourceKeyId.ViewHeaderForegroundBrush:
+                            resourceId = Resource.Attribute.TextColorPrimary;
+                            break;
+                        case SystemResourceKeyId.ButtonBackgroundBrush:
+                        case SystemResourceKeyId.DateTimePickerBackgroundBrush:
+                            value = convert ? (object)new DataBrush(buttonBackground.GetConstantState().NewDrawable()) : buttonBackground.GetConstantState().NewDrawable();
+                            return true;
+                        case SystemResourceKeyId.DetailLabelForegroundBrush:
+                        case SystemResourceKeyId.ValueLabelForegroundBrush:
+                            resourceId = Resource.Attribute.TextColorSecondary;
+                            break;
+                        case SystemResourceKeyId.LoadIndicatorBackgroundBrush:
+                            resourceId = Resource.Attribute.PanelColorBackground;
+                            break;
+                        case SystemResourceKeyId.SliderBackgroundBrush:
+                            value = new SolidColorBrush(new Prism.UI.Color(33, 36, 40));
+                            return true;
+                        case SystemResourceKeyId.SliderForegroundBrush:
+                            value = new SolidColorBrush(new Prism.UI.Color(38, 169, 216));
+                            return true;
+                        case SystemResourceKeyId.SliderThumbBrush:
+                            value = convert ? (object)new DataBrush(sliderThumb.GetConstantState().NewDrawable()) : sliderThumb.GetConstantState().NewDrawable();
+                            return true;
+                        case SystemResourceKeyId.TextBoxBackgroundBrush:
+                            value = convert ? (object)new DataBrush(textBoxBackground.GetConstantState().NewDrawable()) : textBoxBackground.GetConstantState().NewDrawable();
+                            return true;
+                    }
+                }
+
+                if (resourceId == 0)
+                {
+                    string resourceName = key.ToString();
+                    if (!int.TryParse(resourceName, out resourceId))
+                    {
+                        string[] names = resourceName.Split('|');
+                        foreach (var name in names)
+                        {
+                            resourceId = context.Resources.GetIdentifier(name, null, context.PackageName);
+                            if (resourceId != 0)
+                            {
+                                resourceName = name;
+                                break;
+                            }
                         }
                     }
                 }
@@ -109,9 +277,10 @@ namespace Prism.Android
 
             if (resourceId == 0)
             {
+                value = null;
                 return false;
             }
-            
+
             try
             {
                 switch (context.Resources.GetResourceTypeName(resourceId))
@@ -121,25 +290,34 @@ namespace Prism.Android
                         return true;
                     case "attr":
                         var array = context.ObtainStyledAttributes(Resource.Style.Theme, new int[] { resourceId });
-                        var typeValue = array?.PeekValue(0);
-                        if (typeValue == null)
-                        {
-                            return false;
-                        }
-                        
+
                         try
                         {
-                            value = array.GetColor(0, 0);
+                            value = array.GetDrawable(0);
                         }
                         catch
                         {
                             try
                             {
-                                value = array.GetDrawable(0);
+                                value = array.GetColor(0, 0);
                             }
                             catch
                             {
+                                value = null;
                                 return false;
+                            }
+                        }
+
+                        if (convert)
+                        {
+                            if (value is Color)
+                            {
+                                value = new SolidColorBrush(((Color)value).GetColor());
+                            }
+                            else
+                            {
+                                var drawable = value as ColorDrawable;
+                                value = drawable != null ? (Brush)new SolidColorBrush(drawable.Color.GetColor()) : new DataBrush(value);
                             }
                         }
                         return true;
@@ -151,6 +329,11 @@ namespace Prism.Android
                         value = Build.VERSION.SdkInt >= BuildVersionCodes.M ?
                             context.Resources.GetColor(resourceId, context.Theme) : context.Resources.GetColor(resourceId);
 #pragma warning restore 0618
+
+                        if (convert && value is Color)
+                        {
+                            value = new SolidColorBrush(((Color)value).GetColor());
+                        }
                         return true;
                     case "dimen":
                         value = context.Resources.GetDimension(resourceId);
@@ -160,6 +343,12 @@ namespace Prism.Android
                         value = Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop ?
                             context.Resources.GetDrawable(resourceId, context.Theme) : context.Resources.GetDrawable(resourceId);
 #pragma warning restore 0618
+
+                        if (convert)
+                        {
+                            var drawable = value as ColorDrawable;
+                            value = drawable != null ? (Brush)new SolidColorBrush(drawable.Color.GetColor()) : new DataBrush(value);
+                        }
                         return true;
                     case "integer":
                         value = context.Resources.GetInteger(resourceId);
@@ -177,9 +366,10 @@ namespace Prism.Android
             }
             catch { }
 
+            value = null;
             return false;
         }
-        
+
         /// <summary>
         /// Gets a collection of the available font families and the paths to their font files.
         /// </summary>

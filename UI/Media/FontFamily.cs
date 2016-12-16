@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.Collections.Generic;
 using Android.Graphics;
 using Android.Runtime;
 using Prism.Native;
@@ -60,7 +59,7 @@ namespace Prism.Android.UI.Media
                 for (int i = 0; i < traitArray.Length; i++)
                 {
                     PaintFlags trait;
-                    if (Enum.TryParse<PaintFlags>(traitArray[i], true, out trait))
+                    if (Enum.TryParse(traitArray[i], true, out trait))
                     {
                         Traits |= trait;
                     }
@@ -74,8 +73,7 @@ namespace Prism.Android.UI.Media
         public Typeface GetTypeface()
         {
             string family;
-            return Typeface.CreateFromFile(Resources.FontFamilies.TryGetValue(Name, out family) ? family :
-                ((Prism.UI.Media.FontFamily)Prism.Application.Current.Resources[SystemResources.BaseFontFamilyKey]).Name);
+            return Resources.FontFamilies.TryGetValue(Name, out family) ? Typeface.CreateFromFile(family) : Typeface.Default;
         }
     }
 }

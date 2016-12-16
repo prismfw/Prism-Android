@@ -458,7 +458,7 @@ namespace Prism.Android.UI
 
                     background = value;
                     TabLayout.Background = background.GetDrawable(OnBackgroundImageLoaded) ??
-                        ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.ColorAccent);
+                        Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.ColorAccent);
                 }
             }
             private Brush background;
@@ -652,7 +652,7 @@ namespace Prism.Android.UI
             private void OnBackgroundImageLoaded(object sender, EventArgs e)
             {
                 TabLayout.Background = background.GetDrawable(null) ??
-                    ResourceExtractor.GetDrawable(global::Android.Resource.Attribute.ColorAccent);
+                    Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.ColorAccent);
             }
         }
     }

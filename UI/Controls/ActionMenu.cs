@@ -131,7 +131,7 @@ namespace Prism.Android.UI.Controls
                     var scb = foreground as SolidColorBrush;
                     if (scb == null)
                     {
-                        OverflowButton.SetColorFilter(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary));
+                        OverflowButton.SetColorFilter(Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
                     }
                     else
                     {
@@ -606,15 +606,15 @@ namespace Prism.Android.UI.Controls
         public ActionMenuOverflowButton(global::Android.Content.Context context)
             : base(context)
         {
-            SetColorFilter((Color)Prism.Application.Current.Resources[global::Android.Resource.Attribute.TextColorPrimary]);
-            SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
+            SetColorFilter(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
+            SetImageDrawable(Android.Resources.GetDrawable(this, OverflowButtonKey));
         }
         
         public override void SetImageDrawable(Drawable drawable)
         {
             if (drawable == null)
             {
-                base.SetImageDrawable((Drawable)Prism.Application.Current.Resources[OverflowButtonKey]);
+                base.SetImageDrawable(Android.Resources.GetDrawable(this, OverflowButtonKey));
             }
             else
             {

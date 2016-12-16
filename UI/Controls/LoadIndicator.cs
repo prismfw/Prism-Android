@@ -90,7 +90,7 @@ namespace Prism.Android.UI.Controls
 
                     background = value;
                     base.Background = (background.GetDrawable(OnBackgroundImageLoaded) ??
-                        (Drawable)Prism.Application.Current.Resources[global::Android.Resource.Attribute.Background]);
+                        Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background));
                     
                     OnPropertyChanged(Prism.UI.Controls.LoadIndicator.BackgroundProperty);
                 }
@@ -330,7 +330,7 @@ namespace Prism.Android.UI.Controls
         private void OnBackgroundImageLoaded(object sender, EventArgs e)
         {
             base.Background = (background.GetDrawable(null) ??
-                (Drawable)Prism.Application.Current.Resources[global::Android.Resource.Attribute.Background]);
+                Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background));
         }
         
         private void OnLoaded()

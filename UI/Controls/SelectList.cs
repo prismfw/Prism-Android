@@ -279,14 +279,17 @@ namespace Prism.Android.UI.Controls
                     }
                 
                     foreground = value;
-                    var scb = foreground as SolidColorBrush;
-                    if (scb == null)
+                    if (glyphForeground == null)
                     {
-                        foregroundDrawable.ClearColorFilter();
-                    }
-                    else
-                    {
-                        foregroundDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                        var scb = foreground as SolidColorBrush;
+                        if (scb == null)
+                        {
+                            foregroundDrawable.ClearColorFilter();
+                        }
+                        else
+                        {
+                            foregroundDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                        }
                     }
                     
                     OnPropertyChanged(Control.ForegroundProperty);
@@ -318,6 +321,30 @@ namespace Prism.Android.UI.Controls
                 Layout(Left, Top, Right, Bottom);
             }
         }
+        
+        /// <summary>
+        /// Gets or sets the <see cref="Brush"/> to apply to the drop down glyph.
+        /// </summary>
+        public Brush GlyphForeground
+        {
+            get { return glyphForeground; }
+            set
+            {
+                glyphForeground = value;
+                
+                var scb = glyphForeground as SolidColorBrush ?? foreground as SolidColorBrush;
+                if (scb == null)
+                {
+                    foregroundDrawable.ClearColorFilter();
+                }
+                else
+                {
+                    foregroundDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                }
+                          
+            }
+        }
+        private Brush glyphForeground;
 
         /// <summary>
         /// Gets or sets a value indicating whether the user can interact with the control.
@@ -484,7 +511,7 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private readonly Drawable foregroundDrawable;
+        private readonly Drawable foregroundDrawable; // this controls the drop down glyph
         private readonly Paint borderPaint = new Paint();
         private int currentIndex;
 

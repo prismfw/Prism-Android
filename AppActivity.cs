@@ -96,12 +96,25 @@ namespace Prism.Android
         }
         
         /// <summary>
+        /// Sets the activity content to an explicit view.
+        /// </summary>
+        /// <param name="view">The desired content to display.</param>
+        public override void SetContentView(global::Android.Views.View view)
+        {
+            base.SetContentView(view);
+            if ((view as INativeContentView)?.Background == null)
+            {
+                view.Background = Android.Resources.GetDrawable(null, global::Android.Resource.Attribute.WindowBackground);
+            }
+        }
+        
+        /// <summary>
         /// Called on creation of the activity.
         /// </summary>
         /// <param name="savedInstanceState">Saved instance state.</param>
         protected override void OnCreate(Bundle savedInstanceState)
         {
-            SetTheme(ResourceExtractor.GetResourceId("Theme_AppCompat"));
+            SetTheme(Resources.GetIdentifier("Theme_AppCompat", "style", PackageName));
             base.OnCreate(savedInstanceState);
             currentOrientation = Resources.Configuration.Orientation;
             

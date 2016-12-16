@@ -126,18 +126,26 @@ namespace Prism.Android.UI.Controls
                     (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
 
                     background = value;
-                    backgroundDefault.ClearColorFilter();
-                    
-                    var scb = background as SolidColorBrush;
-                    if (scb == null || !IsBackgroundColorOverlayed)
+                    if (background is ImageBrush || background is LinearGradientBrush || !IsBackgroundColorOverlayed)
                     {
-                        base.Background = background.GetDrawable(OnBackgroundImageLoaded) ?? backgroundDefault;
+                        base.Background = background.GetDrawable(OnBackgroundImageLoaded);
                     }
                     else
                     {
-                        base.Background = backgroundDefault;
-                        base.Background.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                        base.Background = (background as DataBrush).GetDrawable(null) ??
+                            Android.Resources.GetDrawable(this, SystemResources.TextBoxBackgroundBrushKey);
+
+                        var scb = background as SolidColorBrush;
+                        if (scb != null)
+                        {
+                            base.Background.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                        }
+                        else
+                        {
+                            base.Background.ClearColorFilter();
+                        }
                     }
+
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -251,7 +259,7 @@ namespace Prism.Android.UI.Controls
                     if (foreground == null)
                     {
                         Paint.SetShader(null);
-                        SetTextColor(ResourceExtractor.GetColor(global::Android.Resource.Attribute.TextColorPrimary)); 
+                        SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary)); 
                     }
                     else
                     {
@@ -405,7 +413,6 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private readonly Drawable backgroundDefault;
         private readonly Paint borderPaint = new Paint();
 
         /// <summary>
@@ -414,8 +421,6 @@ namespace Prism.Android.UI.Controls
         public TextEntryBase()
             : base(Application.MainActivity)
         {
-            backgroundDefault = base.Background;
-            
             Gravity = GravityFlags.Left;
             Typeface = Typeface.Default;
         }
@@ -640,7 +645,7 @@ namespace Prism.Android.UI.Controls
 
         private void OnBackgroundImageLoaded(object sender, EventArgs e)
         {
-            base.Background = background.GetDrawable(null) ?? backgroundDefault;
+            base.Background = background.GetDrawable(null) ?? Android.Resources.GetDrawable(this, SystemResources.TextBoxBackgroundBrushKey);
         }
 
         private void OnBorderImageLoaded(object sender, EventArgs e)
