@@ -460,6 +460,12 @@ namespace Prism.Android.UI
                 return;
             }
 
+            var contentView = newChild as INativeContentView;
+            if (contentView != null)
+            {
+                Header.Title = contentView.Title;
+            }
+
             var transaction = ChildFragmentManager.IsDestroyed ? null : ChildFragmentManager.BeginTransaction();
             var fragment = newChild as Fragment;
             if (transaction != null && fragment != null)
@@ -566,17 +572,6 @@ namespace Prism.Android.UI
                 ChildViewAdded += (sender, e) =>
                 {
                     BringChildToFront(ViewStack.Header as global::Android.Views.View);
-
-                    var view = e.Child as INativeContentView;
-                    if (view == null)
-                    {
-                        view = ViewStack.ChildFragmentManager.FindFragmentById(Id) as INativeContentView;
-                    }
-
-                    if (view != null)
-                    {
-                        ViewStack.Header.Title = view.Title;
-                    }
                 };
             }
             
