@@ -582,12 +582,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
         public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            if (!isHitTestVisible)
-            {
-                return true;
-            }
-
-            return base.OnInterceptTouchEvent(ev);
+            return !isHitTestVisible;
         }
 
         /// <summary></summary>

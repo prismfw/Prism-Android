@@ -407,7 +407,16 @@ namespace Prism.Android.UI.Controls
                 horizontalScrollView.SmoothScrollTo((int)(offset.X * Device.Current.DisplayScale), 0);
             }
         }
-        
+
+        /// <summary>
+        /// Implement this method to intercept all touch screen motion events.
+        /// </summary>
+        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
+        {
+            return !isHitTestVisible;
+        }
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
