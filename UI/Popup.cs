@@ -325,6 +325,7 @@ namespace Prism.Android.UI
             public ViewContentContainer(Popup popup)
                 : base(popup.Activity)
             {
+                Background = Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.WindowBackground);
                 Popup = popup;
                 Id = 1;
                 LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
