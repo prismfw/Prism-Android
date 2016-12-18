@@ -197,6 +197,7 @@ namespace Prism.Android
                         case SystemResourceKeyId.ActionMenuBackgroundBrush:
                         case SystemResourceKeyId.ButtonBorderBrush:
                         case SystemResourceKeyId.DateTimePickerBorderBrush:
+                        case SystemResourceKeyId.GroupedListBoxItemBackgroundBrush:
                         case SystemResourceKeyId.GroupedSectionHeaderBackgroundBrush:
                         case SystemResourceKeyId.ListBoxBackgroundBrush:
                         case SystemResourceKeyId.ListBoxItemBackgroundBrush:
