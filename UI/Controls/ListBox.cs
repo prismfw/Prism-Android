@@ -824,6 +824,10 @@ namespace Prism.Android.UI.Controls
             if (selectedIndices.Contains(position))
             {
                 ItemClicked(this, new ItemClickedEventArgs(item));
+                if (selectionMode == SelectionMode.Multiple)
+                {
+                    DeselectItem(item, Prism.UI.Animate.Default);
+                }
             }
             else
             {
