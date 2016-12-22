@@ -40,7 +40,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeSelectList))]
-    public class SelectList : Spinner, INativeSelectList, AdapterView.IOnItemSelectedListener
+    public class SelectList : Spinner, INativeSelectList, AdapterView.IOnItemSelectedListener, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when the control receives focus.
@@ -56,12 +56,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the control loses focus.
         /// </summary>
         public event EventHandler LostFocus;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -277,7 +277,7 @@ namespace Prism.Android.UI.Controls
                             }
                         }
                     }
-                
+
                     foreground = value;
                     if (glyphForeground == null)
                     {
@@ -291,7 +291,7 @@ namespace Prism.Android.UI.Controls
                             foregroundDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
                         }
                     }
-                    
+
                     OnPropertyChanged(Control.ForegroundProperty);
                     Invalidate();
                 }
@@ -321,7 +321,7 @@ namespace Prism.Android.UI.Controls
                 Layout(Left, Top, Right, Bottom);
             }
         }
-        
+
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the drop down glyph.
         /// </summary>
@@ -331,7 +331,7 @@ namespace Prism.Android.UI.Controls
             set
             {
                 glyphForeground = value;
-                
+
                 var scb = glyphForeground as SolidColorBrush ?? foreground as SolidColorBrush;
                 if (scb == null)
                 {
@@ -341,10 +341,15 @@ namespace Prism.Android.UI.Controls
                 {
                     foregroundDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
                 }
-                          
+
             }
         }
         private Brush glyphForeground;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the user can interact with the control.
@@ -450,7 +455,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -463,7 +468,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -523,10 +528,9 @@ namespace Prism.Android.UI.Controls
         {
             foregroundDrawable = base.Background;
             base.Background = null;
-        
+
             Focusable = true;
             OnItemSelectedListener = this;
-            SetPadding(0, 0, 0, 8);
             SetWillNotDraw(false);
 
             ChildViewAdded += (sender, e) =>
@@ -547,12 +551,20 @@ namespace Prism.Android.UI.Controls
         public override bool DispatchTouchEvent(MotionEvent e)
         {
             var parent = Parent as ITouchDispatcher;
-            if (parent == null || parent.IsDispatching)
+            if (parent != null && !parent.IsDispatching)
             {
-                return base.DispatchTouchEvent(e);
+                return false;
             }
 
-            return false;
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+
+            IsDispatching = true;
+            this.DispatchTouchEventToChildren(e);
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
         }
 
         /// <summary>
@@ -591,6 +603,15 @@ namespace Prism.Android.UI.Controls
             return constraints;
         }
 
+        /// <summary>
+        /// Implement this method to intercept all touch screen motion events.
+        /// </summary>
+        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
+        {
+            return !isHitTestVisible;
+        }
+
         /// <summary></summary>
         /// <param name="parent"></param>
         /// <param name="view"></param>
@@ -611,7 +632,7 @@ namespace Prism.Android.UI.Controls
         public void OnNothingSelected(AdapterView parent)
         {
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -620,30 +641,22 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (e.Action == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
-                base.OnTouchEvent(e);
-                return true;
             }
             if (e.Action == MotionEventActions.Down)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
-                base.OnTouchEvent(e);
-                return true;
             }
             if (e.Action == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
-                base.OnTouchEvent(e);
-                return true;
             }
             if (e.Action == MotionEventActions.Up)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
-                base.OnTouchEvent(e);
-                return true;
             }
             return base.OnTouchEvent(e);
         }
@@ -725,7 +738,7 @@ namespace Prism.Android.UI.Controls
         protected override void DispatchDraw(global::Android.Graphics.Canvas canvas)
         {
             base.DispatchDraw(canvas);
-            
+
             if (foregroundDrawable != null)
             {
                 foregroundDrawable.SetBounds(0, 0, Width, Height);
