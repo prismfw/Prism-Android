@@ -20,8 +20,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
+using Android;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Prism.Input;
@@ -34,11 +36,11 @@ using Prism.UI.Media;
 namespace Prism.Android.UI.Controls
 {
     /// <summary>
-    /// Represents an Android implementation of an <see cref="INativeActivityIndicator"/>.
+    /// Represents an Android implementation of an <see cref="INativeProgressBar"/>.
     /// </summary>
     [Preserve(AllMembers = true)]
-    [Register(typeof(INativeActivityIndicator))]
-    public class ActivityIndicator : global::Android.Widget.ProgressBar, INativeActivityIndicator
+    [Register(typeof(INativeProgressBar))]
+    public class ProgressBar : global::Android.Widget.ProgressBar, INativeProgressBar
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -96,6 +98,36 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets the method to invoke when this instance requests an arrangement of its children.
         /// </summary>
         public ArrangeRequestHandler ArrangeRequest { get; set; }
+        
+        public new Brush Background
+        {
+            get { return background; }
+            set
+            {
+                if (value != background)
+                {
+                    background = value;
+                    
+                    var drawable = (ProgressDrawable as LayerDrawable)?.FindDrawableByLayerId(Resource.Id.Background);
+                    var scb = background as SolidColorBrush;
+                    if (scb != null)
+                    {
+                        drawable?.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                    }
+                    else
+                    {
+                        drawable?.ClearColorFilter();
+                        if (background != null)
+                        {
+                            Prism.Utilities.Logger.Warn("ProgressBar.Background on Android only supports instances of SolidColorBrush.");
+                        }
+                    }
+                    
+                    OnPropertyChanged(Prism.UI.Controls.ProgressBar.BackgroundProperty);
+                }
+            }
+        }
+        private Brush background;
 
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the foreground content of the indicator.
@@ -107,30 +139,24 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
-
                     foreground = value;
                     
-                    if (foreground == null)
+                    var drawable = (ProgressDrawable as LayerDrawable)?.FindDrawableByLayerId(Resource.Id.Progress);
+                    var scb = foreground as SolidColorBrush;
+                    if (scb != null)
                     {
-                        IndeterminateDrawable = defaultDrawable;
-                        IndeterminateDrawable.ClearColorFilter();
+                        drawable?.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
                     }
                     else
                     {
-                        var scb = foreground as SolidColorBrush;
-                        if (scb == null)
+                        drawable?.ClearColorFilter();
+                        if (foreground != null)
                         {
-                            IndeterminateDrawable = foreground.GetDrawable(OnForegroundImageLoaded);
-                        }
-                        else
-                        {
-                            IndeterminateDrawable = defaultDrawable;
-                            IndeterminateDrawable.SetColorFilter(scb.Color.GetColor(), PorterDuff.Mode.SrcIn);
+                            Prism.Utilities.Logger.Warn("ProgressBar.Foreground on Android only supports instances of SolidColorBrush.");
                         }
                     }
                     
-                    OnPropertyChanged(Prism.UI.Controls.ActivityIndicator.ForegroundProperty);
+                    OnPropertyChanged(Prism.UI.Controls.ProgressBar.ForegroundProperty);
                 }
             }
         }
@@ -201,6 +227,31 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets the level of progress as a value between 0.0 and 1.0.
+        /// </summary>
+        public new double Progress
+        {
+            get { return base.Progress / (double)Max; }
+            set
+            {
+                var progress = (int)(value * Max);
+                if (progress != base.Progress)
+                {
+                    if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
+                    {
+                        SetProgress(progress, areAnimationsEnabled);
+                    }
+                    else
+                    {
+                        base.Progress = progress;
+                    }
+                    
+                    OnPropertyChanged(Prism.UI.Controls.ProgressBar.ProgressProperty);
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
@@ -252,18 +303,14 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
-        private readonly Drawable defaultDrawable;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ActivityIndicator"/> class.
+        /// Initializes a new instance of the <see cref="ProgressBar"/> class.
         /// </summary>
-        public ActivityIndicator()
-            : base(Application.MainActivity)
+        public ProgressBar()
+            : base(Application.MainActivity, null, Resource.Attribute.ProgressBarStyleHorizontal)
         {
-            defaultDrawable = IndeterminateDrawable;
-            
-            Indeterminate = true;
+            Max = 1000;
         }
 
         /// <summary></summary>
@@ -383,17 +430,6 @@ namespace Prism.Android.UI.Controls
         protected virtual void OnPropertyChanged(PropertyDescriptor pd)
         {
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
-        }
-
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
-        {
-            IndeterminateDrawable = foreground.GetDrawable(null);
-            
-            if (IndeterminateDrawable == null)
-            {
-                IndeterminateDrawable = defaultDrawable;
-                IndeterminateDrawable.ClearColorFilter();
-            }
         }
 
         private void OnLoaded()

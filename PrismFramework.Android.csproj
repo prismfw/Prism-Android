@@ -138,6 +138,7 @@
     <Compile Include="UI\Controls\InkCanvas.cs" />
     <Compile Include="TouchDispatcher.cs" />
     <Compile Include="UI\Controls\LoadIndicator.cs" />
+    <Compile Include="UI\Controls\ProgressBar.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>

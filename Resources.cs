@@ -189,6 +189,7 @@ namespace Prism.Android
                             return true;
                         case SystemResourceKeyId.AccentBrush:
                         case SystemResourceKeyId.ActivityIndicatorForegroundBrush:
+                        case SystemResourceKeyId.ProgressBarForegroundBrush:
                         case SystemResourceKeyId.TabViewForegroundBrush:
                         case SystemResourceKeyId.ToggleSwitchForegroundBrush:
                         case SystemResourceKeyId.ToggleSwitchThumbOnBrush:
@@ -202,6 +203,7 @@ namespace Prism.Android
                         case SystemResourceKeyId.ListBoxBackgroundBrush:
                         case SystemResourceKeyId.ListBoxItemBackgroundBrush:
                         case SystemResourceKeyId.ListBoxItemSelectedBackgroundBrush:
+                        case SystemResourceKeyId.ProgressBarBackgroundBrush:
                         case SystemResourceKeyId.SearchBoxBackgroundBrush:
                         case SystemResourceKeyId.SearchBoxBorderBrush:
                         case SystemResourceKeyId.SectionHeaderBackgroundBrush:
