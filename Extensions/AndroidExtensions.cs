@@ -282,6 +282,32 @@ namespace Prism.Android
                     return ImeAction.Unspecified;
             }
         }
+        
+        /// <summary>
+        /// Gets a <see cref="LineCap"/> from a <see cref="Paint.Cap"/>.
+        /// </summary>
+        /// <param name="cap">The paint cap.</param>
+        public static LineCap GetLineCap(this Paint.Cap cap)
+        {
+            if (cap == Paint.Cap.Square)
+                return LineCap.Square;
+            if (cap == Paint.Cap.Round)
+                return LineCap.Round;
+            return LineCap.Flat;
+        }
+
+        /// <summary>
+        /// Gets a <see cref="LineJoin"/> from a <see cref="Paint.Join"/>.
+        /// </summary>
+        /// <param name="join">The paint join.</param>
+        public static LineJoin GetLineJoin(this Paint.Join join)
+        {
+            if (join == Paint.Join.Bevel)
+                return LineJoin.Bevel;
+            if (join == Paint.Join.Round)
+                return LineJoin.Round;
+            return LineJoin.Miter;
+        }
 
         /// <summary>
         /// Gets a <see cref="Android.Graphics.Matrix"/> from a <see cref="Prism.UI.Media.Matrix"/>.
@@ -292,6 +318,40 @@ namespace Prism.Android
             var retVal = new global::Android.Graphics.Matrix();
             retVal.SetValues(new[] { (float)matrix.M11, (float)matrix.M21, (float)matrix.OffsetX, (float)matrix.M12, (float)matrix.M22, (float)matrix.OffsetY, 0f, 0f, 1f });
             return retVal;
+        }
+        
+        /// <summary>
+        /// Gets a <see cref="Paint.Cap"/> from a <see cref="LineCap"/>.
+        /// </summary>
+        /// <param name="lineCap">The line cap.</param>
+        public static Paint.Cap GetPaintCap(this LineCap lineCap)
+        {
+            switch (lineCap)
+            {
+                case LineCap.Square:
+                    return Paint.Cap.Square;
+                case LineCap.Round:
+                    return Paint.Cap.Round;
+                default:
+                    return Paint.Cap.Butt;
+            }
+        }
+
+        /// <summary>
+        /// Gets a <see cref="Paint.Join"/> from a <see cref="LineJoin"/>.
+        /// </summary>
+        /// <param name="lineJoin">The line join.</param>
+        public static Paint.Join GetPaintJoin(this LineJoin lineJoin)
+        {
+            switch (lineJoin)
+            {
+                case LineJoin.Bevel:
+                    return Paint.Join.Bevel;
+                case LineJoin.Round:
+                    return Paint.Join.Round;
+                default:
+                    return Paint.Join.Miter;
+            }
         }
 
         /// <summary>

@@ -139,6 +139,8 @@
     <Compile Include="TouchDispatcher.cs" />
     <Compile Include="UI\Controls\LoadIndicator.cs" />
     <Compile Include="UI\Controls\ProgressBar.cs" />
+    <Compile Include="UI\Shapes\Line.cs" />
+    <Compile Include="UI\Shapes\Ellipse.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
