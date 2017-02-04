@@ -23,12 +23,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Android.Graphics;
+using Android.Runtime;
 using Android.Views;
 using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
-using Prism.UI.Controls;
 using Prism.UI.Media.Inking;
 
 namespace Prism.Android.UI.Controls
@@ -36,6 +36,7 @@ namespace Prism.Android.UI.Controls
     /// <summary>
     /// Represents an Android implementation for an <see cref="INativeInkCanvas"/>.
     /// </summary>
+    [Preserve(AllMembers = true)]
     [Register(typeof(INativeInkCanvas))]
     public class InkCanvas : global::Android.Views.View, INativeInkCanvas
     {

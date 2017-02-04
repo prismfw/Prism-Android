@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System.Collections.Generic;
 using System.Linq;
 using Android.Graphics;
+using Android.Runtime;
 using Android.Views;
 using Prism.Native;
 using Prism.Systems;
@@ -32,6 +33,7 @@ namespace Prism.Android.UI.Media.Inking
     /// <summary>
     /// Represents an Android implementation for an <see cref="INativeInkStroke"/>.
     /// </summary>
+    [Preserve(AllMembers = true)]
     [Register(typeof(INativeInkStroke))]
     public class InkStroke : Path, INativeInkStroke
     {

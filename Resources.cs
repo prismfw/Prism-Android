@@ -30,6 +30,7 @@ using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
+using Android.Runtime;
 using Android.Views;
 using Prism.Native;
 using Prism.UI.Media;
@@ -39,6 +40,7 @@ namespace Prism.Android
     /// <summary>
     /// Represents an Android implementation of an <see cref="INativeResources"/>.
     /// </summary>
+    [Preserve(AllMembers = true)]
     [Register(typeof(INativeResources), IsSingleton = true)]
     public class Resources : INativeResources
     {
