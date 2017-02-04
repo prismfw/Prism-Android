@@ -141,6 +141,10 @@
     <Compile Include="UI\Controls\ProgressBar.cs" />
     <Compile Include="UI\Shapes\Line.cs" />
     <Compile Include="UI\Shapes\Ellipse.cs" />
+    <Compile Include="UI\Shapes\PolyShapeBase.cs" />
+    <Compile Include="UI\Shapes\Polygon.cs" />
+    <Compile Include="UI\Shapes\Polyline.cs" />
+    <Compile Include="UI\Shapes\Quadrangle.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
