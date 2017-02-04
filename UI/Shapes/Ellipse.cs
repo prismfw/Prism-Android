@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.Linq;
 using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
@@ -390,7 +389,7 @@ namespace Prism.Android.UI.Shapes
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            return new Size();
+            return constraints;
         }
         
         /// <summary></summary>
@@ -473,23 +472,14 @@ namespace Prism.Android.UI.Shapes
             base.OnDraw(canvas);
             
             var rect = new RectF(StrokePaint.StrokeWidth * 0.5f, StrokePaint.StrokeWidth * 0.5f,
-                Width - StrokePaint.StrokeWidth, Height - StrokePaint.StrokeWidth);
+                Width - StrokePaint.StrokeWidth * 0.5f, Height - StrokePaint.StrokeWidth * 0.5f);
             
             if (fill != null)
             {
                 canvas.DrawOval(rect, FillPaint);
             }
 
-            if (StrokePaint.PathEffect == null)
-            {
-                canvas.DrawOval(rect, StrokePaint);
-            }
-            else
-            {
-                var path = new Path();
-                path.AddOval(rect, Path.Direction.Cw);
-                canvas.DrawPath(path, StrokePaint);
-            }
+            canvas.DrawOval(rect, StrokePaint);
         }
 
         /// <summary>

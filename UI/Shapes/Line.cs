@@ -96,25 +96,6 @@ namespace Prism.Android.UI.Shapes
         public ArrangeRequestHandler ArrangeRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets the end point of the line.
-        /// </summary>
-        public Point EndPoint
-        {
-            get { return endPoint; }
-            set
-            {
-                if (value != endPoint)
-                {
-                    endPoint = value;
-
-                    OnPropertyChanged(Prism.UI.Shapes.Line.EndPointProperty);
-                    Invalidate();
-                }
-            }
-        }
-        private Point endPoint;
-
-        /// <summary>
         /// Gets or sets the background for the control.
         /// </summary>
         public Brush Fill
@@ -230,25 +211,6 @@ namespace Prism.Android.UI.Shapes
         /// Gets or sets the visual theme that should be used by this instance.
         /// </summary>
         public Theme RequestedTheme { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the start point of the line.
-        /// </summary>
-        public Point StartPoint
-        {
-            get { return startPoint; }
-            set
-            {
-                if (value != startPoint)
-                {
-                    startPoint  = value;
-
-                    OnPropertyChanged(Prism.UI.Shapes.Line.StartPointProperty);
-                    Invalidate();
-                }
-            }
-        }
-        private Point startPoint;
 
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the outline of the shape.
@@ -362,6 +324,78 @@ namespace Prism.Android.UI.Shapes
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets the X-coordinate of the start point of the line.
+        /// </summary>
+        public double X1
+        {
+            get { return x1; }
+            set
+            {
+                if (value != x1)
+                {
+                    x1 = value;
+                    OnPropertyChanged(Prism.UI.Shapes.Line.X1Property);
+                    Invalidate();
+                }
+            }
+        }
+        private double x1;
+
+        /// <summary>
+        /// Gets or sets the X-coordinate of the end point of the line.
+        /// </summary>
+        public double X2
+        {
+            get { return x2; }
+            set
+            {
+                if (value != x2)
+                {
+                    x2 = value;
+                    OnPropertyChanged(Prism.UI.Shapes.Line.X2Property);
+                    Invalidate();
+                }
+            }
+        }
+        private double x2;
+
+        /// <summary>
+        /// Gets or sets the Y-coordinate of the start point of the line.
+        /// </summary>
+        public double Y1
+        {
+            get { return y1; }
+            set
+            {
+                if (value != y1)
+                {
+                    y1 = value;
+                    OnPropertyChanged(Prism.UI.Shapes.Line.Y1Property);
+                    Invalidate();
+                }
+            }
+        }
+        private double y1;
+
+        /// <summary>
+        /// Gets or sets the Y-coordinate of the end point of the line.
+        /// </summary>
+        public double Y2
+        {
+            get { return y2; }
+            set
+            {
+                if (value != y2)
+                {
+                    y2 = value;
+                    OnPropertyChanged(Prism.UI.Shapes.Line.Y2Property);
+                    Invalidate();
+                }
+            }
+        }
+        private double y2;
 
         /// <summary>
         /// Gets the <see cref="Paint"/> object used to render the shape outline.
@@ -415,8 +449,7 @@ namespace Prism.Android.UI.Shapes
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            return new Size(Math.Min(Math.Max(startPoint.X, endPoint.X) + StrokePaint.StrokeWidth * 0.5 / Device.Current.DisplayScale, constraints.Width),
-                Math.Min(Math.Max(startPoint.Y, endPoint.Y) + StrokePaint.StrokeWidth * 0.5 / Device.Current.DisplayScale, constraints.Height));
+            return constraints;
         }
         
         /// <summary></summary>
@@ -500,14 +533,14 @@ namespace Prism.Android.UI.Shapes
 
             if (StrokePaint.PathEffect == null)
             {
-                canvas.DrawLine((float)(startPoint.X * Device.Current.DisplayScale), (float)(startPoint.Y * Device.Current.DisplayScale),
-                    (float)(endPoint.X * Device.Current.DisplayScale), (float)(endPoint.Y * Device.Current.DisplayScale), StrokePaint);
+                canvas.DrawLine((float)(x1 * Device.Current.DisplayScale), (float)(y1 * Device.Current.DisplayScale),
+                    (float)(x2 * Device.Current.DisplayScale), (float)(y2 * Device.Current.DisplayScale), StrokePaint);
             }
             else
             {
                 var path = new Path();
-                path.MoveTo((float)(startPoint.X * Device.Current.DisplayScale), (float)(startPoint.Y * Device.Current.DisplayScale));
-                path.LineTo((float)(endPoint.X * Device.Current.DisplayScale), (float)(endPoint.Y * Device.Current.DisplayScale));
+                path.MoveTo((float)(x1 * Device.Current.DisplayScale), (float)(y1 * Device.Current.DisplayScale));
+                path.LineTo((float)(x2 * Device.Current.DisplayScale), (float)(y2 * Device.Current.DisplayScale));
                 canvas.DrawPath(path, StrokePaint);
             }
         }
