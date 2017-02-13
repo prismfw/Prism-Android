@@ -45,6 +45,7 @@ namespace Prism.Android
     public class Resources : INativeResources
     {
         private static readonly Drawable buttonBackground = new global::Android.Widget.Button(Application.MainActivity).Background;
+        private static readonly Drawable selectListListBackground = new global::Android.Widget.Spinner(Application.MainActivity, global::Android.Widget.SpinnerMode.Dropdown).PopupBackground;
         private static readonly Drawable sliderThumb = new global::Android.Widget.SeekBar(Application.MainActivity).Thumb;
         private static readonly Drawable textBoxBackground = new global::Android.Widget.EditText(Application.MainActivity).Background;
 
@@ -211,6 +212,7 @@ namespace Prism.Android
                         case SystemResourceKeyId.SectionHeaderBackgroundBrush:
                         case SystemResourceKeyId.SelectListBackgroundBrush:
                         case SystemResourceKeyId.SelectListBorderBrush:
+                        case SystemResourceKeyId.SelectListListSeparatorBrush:
                         case SystemResourceKeyId.TabViewBackgroundBrush:
                         case SystemResourceKeyId.TextBoxBorderBrush:
                         case SystemResourceKeyId.ToggleSwitchBorderBrush:
@@ -246,6 +248,9 @@ namespace Prism.Android
                         case SystemResourceKeyId.LoadIndicatorBackgroundBrush:
                             resourceId = Resource.Attribute.PanelColorBackground;
                             break;
+                        case SystemResourceKeyId.SelectListListBackgroundBrush:
+                            value = convert ? (object)new DataBrush(selectListListBackground.GetConstantState().NewDrawable()) : selectListListBackground.GetConstantState().NewDrawable();
+                            return true;
                         case SystemResourceKeyId.SliderBackgroundBrush:
                             value = new SolidColorBrush(new Prism.UI.Color(33, 36, 40));
                             return true;

@@ -431,9 +431,46 @@ namespace Prism.Android.UI.Controls
         private IList items;
 
         /// <summary>
+        /// Gets or sets the background of the selection list.
+        /// </summary>
+        public Brush ListBackground
+        {
+            get { return listBackground; }
+            set
+            {
+                if (value != listBackground)
+                {
+                    listBackground = value;
+                    SetPopupBackgroundDrawable(listBackground.GetDrawable(OnListBackgroundLoaded) ??
+                        Android.Resources.GetDrawable(this, SystemResources.SelectListListBackgroundBrushKey));
+
+                    OnPropertyChanged(Prism.UI.Controls.SelectList.ListBackgroundProperty);
+                }
+            }
+        }
+        private Brush listBackground;
+
+        /// <summary>
         /// Gets or sets the method to invoke when this instance requests a list item for an object in the select list.
         /// </summary>
         public SelectListListItemRequestHandler ListItemRequest { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="Brush"/> to apply to the separators in the selection list, if applicable.
+        /// </summary>
+        public Brush ListSeparatorBrush
+        {
+            get { return listSeparatorBrush; }
+            set
+            {
+                if (value != listSeparatorBrush)
+                {
+                    listSeparatorBrush = value;
+                    OnPropertyChanged(Prism.UI.Controls.SelectList.ListSeparatorBrushProperty);
+                }
+            }
+        }
+        private Brush listSeparatorBrush;
 
         /// <summary>
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
@@ -831,6 +868,12 @@ namespace Prism.Android.UI.Controls
         private void OnBorderImageLoaded(object sender, EventArgs e)
         {
             Invalidate();
+        }
+
+        private void OnListBackgroundLoaded(object sender, EventArgs e)
+        {
+            SetPopupBackgroundDrawable(listBackground.GetDrawable(null) ??
+                Android.Resources.GetDrawable(this, SystemResources.SelectListListBackgroundBrushKey));
         }
 
         private void OnLoaded()
