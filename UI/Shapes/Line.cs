@@ -538,7 +538,7 @@ namespace Prism.Android.UI.Shapes
             }
             else
             {
-                var path = new Path();
+                var path = new global::Android.Graphics.Path();
                 path.MoveTo((float)(x1 * Device.Current.DisplayScale), (float)(y1 * Device.Current.DisplayScale));
                 path.LineTo((float)(x2 * Device.Current.DisplayScale), (float)(y2 * Device.Current.DisplayScale));
                 canvas.DrawPath(path, StrokePaint);

@@ -128,6 +128,26 @@ namespace Prism.Android
                 imageLoadedEventManager.RemoveHandler(source, handler);
             }
         }
+        
+        /// <summary>
+        /// Gets a <see cref="double"/> from a <see cref="float"/>
+        /// that is divided by the device's display scale.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        public static double GetScaledDouble(this float value)
+        {
+            return value / Device.Current.DisplayScale;
+        }
+        
+        /// <summary>
+        /// Gets a <see cref="float"/> from a <see cref="double"/>
+        /// that is multiplied by the device's display scale.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        public static float GetScaledFloat(this double value)
+        {
+            return (float)(value * Device.Current.DisplayScale);
+        }
 
         /// <summary>
         /// Gets an <see cref="ActionKeyType"/> from an <see cref="ImeAction"/>.

@@ -20,9 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
@@ -37,10 +34,11 @@ using APath = Android.Graphics.Path;
 namespace Prism.Android.UI.Shapes
 {
     /// <summary>
-    /// Represents the base class for the <see cref="Polygon"/> and <see cref="Polyline"/> classes.
+    /// Represents an Android implementation of an <see cref="INativePath"/>.
     /// </summary>
     [Preserve(AllMembers = true)]
-    public class PolyShapeBase : global::Android.Views.View, INativePolyShape
+    [Register(typeof(INativePath))]
+    public class Path : global::Android.Views.View, INativePath
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -136,7 +134,7 @@ namespace Prism.Android.UI.Shapes
                 if (fillType != path.GetFillType())
                 {
                     path.SetFillType(fillType);
-                    OnPropertyChanged(isClosedShape ? Prism.UI.Shapes.Polygon.FillRuleProperty : Prism.UI.Shapes.Polyline.FillRuleProperty);
+                    OnPropertyChanged(Prism.UI.Shapes.Path.FillRuleProperty);
                     Invalidate();
                 }
             }
@@ -209,13 +207,9 @@ namespace Prism.Android.UI.Shapes
         }
         
         /// <summary>
-        /// Gets a collection of the points that describe the vertices of the shape.
+        /// Gets or sets the method to invoke when this instance requests information for the path being drawn.
         /// </summary>
-        public IList<Point> Points
-        {
-            get { return points; }
-        }
-        private readonly ObservableCollection<Point> points;
+        public PathInfoRequestHandler PathInfoRequest { get; set; }
         
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
@@ -333,10 +327,10 @@ namespace Prism.Android.UI.Shapes
         /// </summary>
         public double StrokeThickness
         {
-            get { return StrokePaint.StrokeWidth / Device.Current.DisplayScale; }
+            get { return StrokePaint.StrokeWidth.GetScaledDouble(); }
             set
             {
-                float thickness = (float)(value * Device.Current.DisplayScale);
+                float thickness = value.GetScaledFloat();
                 if (thickness != StrokePaint.StrokeWidth)
                 {
                     StrokePaint.StrokeWidth = thickness;
@@ -374,23 +368,14 @@ namespace Prism.Android.UI.Shapes
         /// </summary>
         protected Paint StrokePaint { get; } = new Paint();
         
-        private readonly bool isClosedShape;
-        private readonly APath path;
-        private bool isPathClosed;
+        private readonly APath path = new APath();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PolyShapeBase"/> class.
+        /// Initializes a new instance of the <see cref="Ellipse"/> class.
         /// </summary>
-        /// <param name="isPolygon">A value indicating whether the shape is a polygon, i.e. a closed shape.</param>
-        public PolyShapeBase(bool isPolygon)
+        public Path()
             : base(Application.MainActivity)
         {
-            isClosedShape = isPolygon;
-            path = new APath();
-            
-            points = new ObservableCollection<Point>();
-            points.CollectionChanged += OnPointsChanged;
-            
             SetWillNotDraw(false);
             
             FillPaint.AntiAlias = true;
@@ -427,6 +412,15 @@ namespace Prism.Android.UI.Shapes
         public void InvalidateMeasure()
         {
             RequestLayout();
+        }
+        
+        /// <summary>
+        /// Signals that the path needs to be rebuilt before it is drawn again.
+        /// </summary>
+        public void InvalidatePathInfo()
+        {
+            path.Reset();
+            Invalidate();
         }
 
         /// <summary>
@@ -482,10 +476,10 @@ namespace Prism.Android.UI.Shapes
                 var array = new float[pattern.Length];
                 for (int i = 0; i < pattern.Length; i++)
                 {
-                    array[i] = (float)(pattern[i] * Device.Current.DisplayScale);
+                    array[i] = pattern[i].GetScaledFloat();
                 }
                 
-                StrokePaint.SetPathEffect(new DashPathEffect(array, (float)(offset * Device.Current.DisplayScale)));
+                StrokePaint.SetPathEffect(new DashPathEffect(array, offset.GetScaledFloat()));
             }
             
             Invalidate();
@@ -517,10 +511,9 @@ namespace Prism.Android.UI.Shapes
         {
             base.OnDraw(canvas);
             
-            if (!isPathClosed && isClosedShape)
+            if (path.IsEmpty)
             {
-                path.Close();
-                isPathClosed = true;
+                BuildPath();
             }
             
             if (fill != null)
@@ -566,6 +559,158 @@ namespace Prism.Android.UI.Shapes
             base.OnSizeChanged(w, h, oldw, oldh);
             StrokePaint.SetBrush(stroke, w, h, null);
         }
+        
+        private void BuildPath()
+        {
+            var pathInfos = PathInfoRequest();
+
+            for (int i = 0; i < pathInfos.Count; i++)
+            {
+                var figure = pathInfos[i];
+                var subpath = new APath();
+
+                subpath.MoveTo(figure.StartPoint.X.GetScaledFloat(), figure.StartPoint.Y.GetScaledFloat());
+
+                for (int j = 0; j < figure.Segments.Count; j++)
+                {
+                    var segment = figure.Segments[j];
+
+                    var line = segment as LineSegment;
+                    if (line != null)
+                    {
+                        subpath.LineTo(line.EndPoint.X.GetScaledFloat(), line.EndPoint.Y.GetScaledFloat());
+                        continue;
+                    }
+                    
+                    var arc = segment as ArcSegment;
+                    if (arc != null)
+                    {
+                        var startPoint = j == 0 ? figure.StartPoint : figure.Segments[j - 1].EndPoint;
+                        var endPoint = arc.EndPoint;
+                        var trueSize = arc.Size;
+                        
+                        if (trueSize.Width == 0 || trueSize.Height == 0)
+                        {
+                            subpath.LineTo(endPoint.X.GetScaledFloat(), endPoint.Y.GetScaledFloat());
+                            continue;
+                        }
+            
+                        double rise = Math.Round(Math.Abs(endPoint.Y - startPoint.Y), 1);
+                        double run = Math.Round(Math.Abs(endPoint.X - startPoint.X), 1);
+                        if (rise == 0 && run == 0)
+                        {
+                            continue;
+                        }
+
+                        Point center = new Point(double.NaN, double.NaN);
+                        
+                        double scale = Math.Max(run / (trueSize.Width * 2), rise / (trueSize.Height * 2));
+                        if (scale > 1)
+                        {
+                            center.X = (startPoint.X + endPoint.X) / 2;
+                            center.Y = (startPoint.Y + endPoint.Y) / 2;
+            
+                            double diffX = run / 2;
+                            double diffY = rise / 2;
+            
+                            var angle = Math.Atan2(diffY / trueSize.Height, diffX / trueSize.Width);
+                            var cos = Math.Cos(angle) * trueSize.Width;
+                            var sin = Math.Sin(angle) * trueSize.Height;
+            
+                            scale = Math.Sqrt(diffX * diffX + diffY * diffY) / Math.Sqrt(cos * cos + sin * sin);
+                            trueSize.Width *= scale;
+                            trueSize.Height *= scale;
+                        }
+
+                        startPoint.X /= trueSize.Width;
+                        startPoint.Y /= trueSize.Height;
+                        endPoint.X /= trueSize.Width;
+                        endPoint.Y /= trueSize.Height;
+                        center.X /= trueSize.Width;
+                        center.Y /= trueSize.Height;
+
+                        if (double.IsNaN(center.X) || double.IsNaN(center.Y))
+                        {
+                            var midPoint = new Point((startPoint.X + endPoint.X) / 2, (startPoint.Y + endPoint.Y) / 2);
+                            var perpAngle = Math.Atan2(startPoint.Y - endPoint.Y, endPoint.X - startPoint.X);
+                            
+                            double diffX = startPoint.X - midPoint.X;
+                            double diffY = startPoint.Y - midPoint.Y;
+                            double distance = Math.Sqrt(diffX * diffX + diffY * diffY);
+    
+                            distance = Math.Sqrt(1 - distance * distance);
+    
+                            if ((arc.IsLargeArc && arc.SweepDirection == SweepDirection.Counterclockwise) ||
+                                (!arc.IsLargeArc && arc.SweepDirection == SweepDirection.Clockwise))
+                            {
+                                center = new Point(midPoint.X + Math.Sin(perpAngle) * distance, midPoint.Y + Math.Cos(perpAngle) * distance);
+                            }
+                            else
+                            {
+                                center = new Point(midPoint.X - Math.Sin(perpAngle) * distance, midPoint.Y - Math.Cos(perpAngle) * distance);
+                            }
+                        }
+            
+                        double twoPi = Math.PI * 2;
+                        double startAngle = Math.Atan2(startPoint.Y - center.Y, startPoint.X - center.X);
+                        if (startAngle < 0)
+                        {
+                            startAngle += twoPi;
+                        }
+            
+                        double endAngle = Math.Atan2(endPoint.Y - center.Y, endPoint.X - center.X);
+                        if (endAngle < 0)
+                        {
+                            endAngle += twoPi;
+                        }
+                        
+                        double arcAngle = Math.Abs(startAngle - endAngle);
+                        if ((arcAngle < Math.PI && arc.IsLargeArc) || (arcAngle > Math.PI && !arc.IsLargeArc))
+                        {
+                            arcAngle = twoPi - arcAngle;
+                        }
+                        
+                        if (arc.SweepDirection == SweepDirection.Counterclockwise)
+                        {
+                            arcAngle = -arcAngle;
+                        }
+                        
+                        center.X *= trueSize.Width;
+                        center.Y *= trueSize.Height;
+                        
+                        subpath.ArcTo(new RectF((center.X - trueSize.Width).GetScaledFloat(), (center.Y - trueSize.Height).GetScaledFloat(),
+                            (center.X + trueSize.Width).GetScaledFloat(), (center.Y + trueSize.Height).GetScaledFloat()),
+                            (float)(startAngle * (180 / Math.PI)), (float)(arcAngle * (180 / Math.PI)));
+                    }
+
+                    var bezier = segment as BezierSegment;
+                    if (bezier != null)
+                    {
+                        subpath.CubicTo(bezier.ControlPoint1.X.GetScaledFloat(), bezier.ControlPoint1.Y.GetScaledFloat(),
+                            bezier.ControlPoint2.X.GetScaledFloat(), bezier.ControlPoint2.Y.GetScaledFloat(),
+                            bezier.EndPoint.X.GetScaledFloat(), bezier.EndPoint.Y.GetScaledFloat());
+
+                        continue;
+                    }
+
+                    var quad = segment as QuadraticBezierSegment;
+                    if (quad != null)
+                    {
+                        subpath.QuadTo(quad.ControlPoint.X.GetScaledFloat(), quad.ControlPoint.Y.GetScaledFloat(),
+                            quad.EndPoint.X.GetScaledFloat(), quad.EndPoint.Y.GetScaledFloat());
+
+                        continue;
+                    }
+                }
+                
+                if (figure.IsClosed)
+                {
+                    subpath.Close();
+                }
+                
+                path.AddPath(subpath);
+            }
+        }
 
         private void OnImageLoaded(object sender, EventArgs e)
         {
@@ -590,85 +735,6 @@ namespace Prism.Android.UI.Shapes
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Unloaded(this, EventArgs.Empty);
             }
-        }
-        
-        private void OnPointsChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            switch (e.Action)
-            {
-                case NotifyCollectionChangedAction.Add:
-                    if (isPathClosed)
-                    {
-                        if (e.NewItems.Count == 1)
-                        {
-                            path.Rewind();
-                        }
-                        else
-                        {
-                            path.Reset();
-                        }
-                        
-                        var point = points[0];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        
-                        for (int i = 1; i < points.Count; i++)
-                        {
-                            point = points[i];
-                            path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        }
-                        
-                        break;
-                    }
-                    
-                    int index = 0;
-                    if (e.NewStartingIndex == 0)
-                    { 
-                        var point = (Point)e.NewItems[index++];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                    }
-                    
-                    for (; index < e.NewItems.Count; index++)
-                    {
-                        var point = (Point)e.NewItems[index];
-                        path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                    }
-                    break;
-                case NotifyCollectionChangedAction.Move:
-                case NotifyCollectionChangedAction.Replace:
-                    path.Rewind();
-                    if (points.Count > 0)
-                    {
-                        var point = points[0];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        
-                        for (int i = 1; i < points.Count; i++)
-                        {
-                            point = points[i];
-                            path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        }
-                    }
-                    break;
-                case NotifyCollectionChangedAction.Remove:
-                    path.Reset();
-                    if (points.Count > 0)
-                    {
-                        var point = points[0];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        
-                        for (int i = 1; i < points.Count; i++)
-                        {
-                            point = points[i];
-                            path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        }
-                    }
-                    break;
-                case NotifyCollectionChangedAction.Reset:
-                    path.Reset();
-                    break;
-            }
-            
-            isPathClosed = false;
-            Invalidate();
         }
     }
 }
