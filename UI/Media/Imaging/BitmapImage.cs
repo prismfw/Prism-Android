@@ -138,11 +138,10 @@ namespace Prism.Android.UI.Media.Imaging
                             }
                             else if (!SourceUri.IsAbsoluteUri || SourceUri.IsFile)
                             {
-                                Source = BitmapFactory.DecodeFile(SourceUri.OriginalString);
-                                if (Source == null && SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectory))
+                                if (SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectory))
                                 {
                                     string fileName = SourceUri.OriginalString.Remove(0, Prism.IO.Directory.AssetDirectory.Length);
-                                    int id = Application.MainActivity.Resources.GetIdentifier(System.IO.Path.GetFileNameWithoutExtension(fileName), "drawable", Application.MainActivity.PackageName);
+                                    int id = Application.MainActivity.Resources.GetIdentifier(System.IO.Path.GetFileNameWithoutExtension(fileName).ToLower(), "drawable", Application.MainActivity.PackageName);
                                     if (id > 0)
                                     {
                                         var options = new BitmapFactory.Options();
@@ -160,6 +159,10 @@ namespace Prism.Android.UI.Media.Imaging
                                             Source = BitmapFactory.DecodeStream(stream);
                                         }
                                     }
+                                }
+                                else
+                                {
+                                    Source = BitmapFactory.DecodeFile(SourceUri.OriginalString);
                                 }
                             }
                             else
