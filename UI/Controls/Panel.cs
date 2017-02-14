@@ -30,7 +30,6 @@ using Prism.Input;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
-using Prism.UI.Controls;
 using Prism.UI.Media;
 
 namespace Prism.Android.UI.Controls
@@ -311,7 +310,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
         public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            return !IsHitTestVisible;
+            return !isHitTestVisible;
         }
         
         /// <summary></summary>
@@ -370,7 +369,6 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            MeasureRequest(false, null);
             ArrangeRequest(false, null);
 
             for (int i = 0; i < ChildCount; i++)
@@ -378,6 +376,17 @@ namespace Prism.Android.UI.Controls
                 var child = GetChildAt(i);
                 child.Layout(child.Left, child.Top, child.Right, child.Bottom);
             }
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>

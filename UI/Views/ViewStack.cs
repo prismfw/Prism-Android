@@ -639,7 +639,6 @@ namespace Prism.Android.UI
 
             protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
             {
-                ViewStack.MeasureRequest(false, null);
                 ViewStack.ArrangeRequest(false, null);
 
                 int width = (int)(ViewStack.frame.Width * Device.Current.DisplayScale);
@@ -651,6 +650,12 @@ namespace Prism.Android.UI
                 {
                     content.Layout(0, headerView.Bottom, width, bottom);
                 }
+            }
+
+            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                ViewStack.MeasureRequest(false, null);
+                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
             }
         }
     }

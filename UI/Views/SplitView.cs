@@ -498,12 +498,17 @@ namespace Prism.Android.UI
 
             protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
             {
-                SplitView.MeasureRequest(false, null);
                 SplitView.ArrangeRequest(false, null);
 
                 int width = (int)(left + SplitView.ActualMasterWidth * Device.Current.DisplayScale);
                 MasterLayout.Layout(left, top, width, bottom);
                 DetailLayout.Layout(width, top, right, bottom);
+            }
+
+            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                SplitView.MeasureRequest(false, null);
+                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
             }
 
             protected override void OnSizeChanged(int w, int h, int oldw, int oldh)

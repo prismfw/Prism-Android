@@ -348,7 +348,7 @@ namespace Prism.Android.UI
             }
         }
 
-        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher
+        private class ViewContentContainer : RelativeLayout, IFragmentView, ITouchDispatcher
         {
             public new Brush Background
             {
@@ -461,7 +461,6 @@ namespace Prism.Android.UI
 
             protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
             {
-                ContentView.MeasureRequest(false, null);
                 ContentView.ArrangeRequest(false, null);
 
                 for (int i = 0; i < ChildCount; i++)
@@ -469,6 +468,12 @@ namespace Prism.Android.UI
                     var child = GetChildAt(i);
                     child.Layout(child.Left, child.Top, child.Right, child.Bottom);
                 }
+            }
+
+            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                ContentView.MeasureRequest(false, null);
+                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
             }
 
             private void OnBackgroundImageLoaded(object sender, EventArgs e)

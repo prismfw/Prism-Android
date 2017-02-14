@@ -421,7 +421,6 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout (bool changed, int left, int top, int right, int bottom)
         {
-            MeasureRequest(false, null);
             ArrangeRequest(false, null);
 
             base.OnLayout(changed, left, top, right, bottom);
@@ -440,6 +439,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
         {
+            MeasureRequest(false, null);
             base.OnMeasure (widthMeasureSpec, heightMeasureSpec);
             
             for (int i = 0; i < ChildCount; i++)

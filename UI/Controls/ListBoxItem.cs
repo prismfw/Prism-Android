@@ -455,6 +455,8 @@ namespace Prism.Android.UI.Controls
             OnUnloaded();
         }
 
+        private Size desiredSize;
+
         /// <summary>
         /// Called from layout when this view should assign a size and position to each of its children.
         /// </summary>
@@ -465,9 +467,12 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            var width = Parent?.Width ?? (ObjectRetriever.GetAgnosticObject(this.GetParent<INativeListBox>()) as Visual)?.RenderSize.Width;
+            double? width = Parent?.Width;
+            if (width == null)
+            {
+                width = (ObjectRetriever.GetAgnosticObject(this.GetParent<INativeListBox>()) as Visual)?.RenderSize.Width * Device.Current.DisplayScale;
+            }
 
-            var desiredSize = MeasureRequest(width != parentWidth, new Size((width ?? double.PositiveInfinity) / Device.Current.DisplayScale, double.PositiveInfinity));
             ArrangeRequest(Width != width || Height != desiredSize.Height, new Rectangle(0, Top / Device.Current.DisplayScale, (width ?? 0) / Device.Current.DisplayScale, desiredSize.Height));
 
             parentWidth = width;
@@ -476,6 +481,23 @@ namespace Prism.Android.UI.Controls
                 var child = GetChildAt(i);
                 child.Layout(child.Left, child.Top, child.Right, child.Bottom);
             }
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            double? width = Parent?.Width;
+            if (width == null)
+            {
+                width = (ObjectRetriever.GetAgnosticObject(this.GetParent<INativeListBox>()) as Visual)?.RenderSize.Width * Device.Current.DisplayScale;
+            }
+
+            desiredSize = MeasureRequest(width != parentWidth, new Size((width ?? double.PositiveInfinity) / Device.Current.DisplayScale, double.PositiveInfinity));
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>
