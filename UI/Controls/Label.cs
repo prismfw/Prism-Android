@@ -290,7 +290,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -556,6 +556,7 @@ namespace Prism.Android.UI.Controls
             if (parent == null || !parent.IsSelected || highlightBrush == null)
             {
                 Paint.SetShader(foreground.GetShader(Width, Height, null));
+                Invalidate();
             }
         }
 
@@ -565,6 +566,7 @@ namespace Prism.Android.UI.Controls
             if (parent != null && parent.IsSelected && highlightBrush != null)
             {
                 Paint.SetShader(highlightBrush.GetShader(Width, Height, null));
+                Invalidate();
             }
         }
 

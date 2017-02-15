@@ -662,6 +662,7 @@ namespace Prism.Android.UI.Controls
         private void OnForegroundImageLoaded(object sender, EventArgs e)
         {
             Paint.SetShader(foreground.GetShader(Width, Height, null));
+            Invalidate();
         }
 
         private void OnLoaded()

@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using Android.Graphics;
-using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Text;
 using Android.Util;
@@ -786,6 +785,7 @@ namespace Prism.Android.UI.Controls
         private void OnForegroundImageLoaded(object sender, EventArgs e)
         {
             TextView.Paint.SetShader(foreground.GetShader(Width, Height, null));
+            TextView.Invalidate();
         }
 
         private void OnImageLoaded(object sender, EventArgs e)

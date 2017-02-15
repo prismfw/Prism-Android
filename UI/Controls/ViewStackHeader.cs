@@ -23,7 +23,6 @@ using System;
 using System.Collections.Generic;
 using Android.Content;
 using Android.Graphics;
-using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Util;
 using Android.Views;
@@ -32,8 +31,6 @@ using Prism.Native;
 using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
-
-using Color = Android.Graphics.Color;
 
 namespace Prism.Android.UI.Controls
 {
@@ -457,6 +454,7 @@ namespace Prism.Android.UI.Controls
         private void OnForegroundImageLoaded(object sender, EventArgs e)
         {
             TitleView.Paint.SetShader(foreground.GetShader(Width, Height, null));
+            TitleView.Invalidate();
         }
 
         private void OnLoaded()

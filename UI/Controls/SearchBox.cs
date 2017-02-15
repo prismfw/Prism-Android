@@ -725,6 +725,7 @@ namespace Prism.Android.UI.Controls
         private void OnForegroundImageLoaded(object sender, EventArgs e)
         {
             TextView.Paint.SetShader(foreground.GetShader(Width, Height, null));
+            TextView.Invalidate();
         }
 
         private void OnLoaded()
