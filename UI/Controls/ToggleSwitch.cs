@@ -619,7 +619,7 @@ namespace Prism.Android.UI.Controls
                 canvas.DrawLines(new float[] { 0, Height, 0, 0, 0, 0, Width, 0 }, borderPaint);
 
                 // the right and bottom borders seem to be drawn thinner than the left and top ones
-                borderPaint.StrokeWidth++;
+                borderPaint.StrokeWidth = (float)Math.Floor(borderPaint.StrokeWidth + 1);
                 canvas.DrawLines(new float[] { Width, 0, Width, Height, Width, Height, 0, Height }, borderPaint);
 
                 canvas.Restore();
