@@ -206,6 +206,10 @@ namespace Prism.Android.UI.Controls
                 Top = (int)(value.Top * Device.Current.DisplayScale);
                 Right = (int)(value.Right * Device.Current.DisplayScale);
                 Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
+
+                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
+                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
+                Layout(Left, Top, Right, Bottom);
             }
         }
 
