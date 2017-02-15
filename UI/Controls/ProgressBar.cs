@@ -99,6 +99,9 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public ArrangeRequestHandler ArrangeRequest { get; set; }
         
+        /// <summary>
+        /// Gets or sets the background of the progress bar.
+        /// </summary>
         public new Brush Background
         {
             get { return background; }
@@ -178,10 +181,6 @@ namespace Prism.Android.UI.Controls
                 Top = (int)(value.Top * Device.Current.DisplayScale);
                 Right = (int)(value.Right * Device.Current.DisplayScale);
                 Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
             }
         }
 
@@ -418,9 +417,19 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            MeasureRequest(false, null);
             ArrangeRequest(false, null);
             base.OnLayout(changed, Left, Top, Right, Bottom);
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>

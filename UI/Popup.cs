@@ -395,10 +395,6 @@ namespace Prism.Android.UI
                 
                 Left = 0;
                 Top = 0;
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
             }
             
             public void SetTransform()
@@ -428,7 +424,6 @@ namespace Prism.Android.UI
 
             protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
             {
-                Popup.MeasureRequest(false, null);
                 Popup.ArrangeRequest(false, null);
 
                 for (int i = 0; i < ChildCount; i++)
@@ -436,6 +431,12 @@ namespace Prism.Android.UI
                     var child = GetChildAt(i);
                     child.Layout(child.Left, child.Top, child.Right, child.Bottom);
                 }
+            }
+
+            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                Popup.MeasureRequest(false, null);
+                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
             }
         }
     }

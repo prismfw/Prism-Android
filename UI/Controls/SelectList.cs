@@ -832,10 +832,20 @@ namespace Prism.Android.UI.Controls
             }
             else
             {
-                MeasureRequest(false, null);
                 ArrangeRequest(false, null);
             }
             base.OnLayout(changed, Left, Top, Right, Bottom);
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>

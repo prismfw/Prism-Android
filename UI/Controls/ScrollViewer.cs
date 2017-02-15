@@ -481,9 +481,34 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            MeasureRequest(false, null);
             ArrangeRequest(false, null);
             base.OnLayout(changed, Left, Top, Right, Bottom);
+
+            var content = horizontalScrollView.GetChildAt(0);
+            var element = ObjectRetriever.GetAgnosticObject(content) as Element;
+            if (element != null)
+            {
+                right = (int)(element.DesiredSize.Width * Device.Current.DisplayScale);
+                bottom = (int)(element.DesiredSize.Height * Device.Current.DisplayScale);
+            }
+
+            horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
+            content?.Layout(0, 0, right, bottom);
+
+            ContentSize = new Size(horizontalScrollView.HorizontalScrollRange, ComputeVerticalScrollRange()) / Device.Current.DisplayScale;
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            var desiredSize = MeasureRequest(false, null);
+            
+            int right = Right;
+            int bottom = Bottom;
 
             var content = horizontalScrollView.GetChildAt(0);
             var element = ObjectRetriever.GetAgnosticObject(content) as Element;
@@ -496,14 +521,11 @@ namespace Prism.Android.UI.Controls
             horizontalScrollView.Measure(MeasureSpec.MakeMeasureSpec(CanScrollHorizontally ? Width : Math.Max(right, Width), MeasureSpecMode.Exactly),
                 MeasureSpec.MakeMeasureSpec(CanScrollVertically ? Math.Max(bottom, Height) : Height, MeasureSpecMode.Exactly));
 
-            horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
-
             content?.Measure(MeasureSpec.MakeMeasureSpec(right, MeasureSpecMode.Exactly),
                 MeasureSpec.MakeMeasureSpec(bottom, MeasureSpecMode.Exactly));
-
-            content?.Layout(0, 0, right, bottom);
-
-            ContentSize = new Size(horizontalScrollView.HorizontalScrollRange, ComputeVerticalScrollRange()) / Device.Current.DisplayScale;
+            
+            SetMeasuredDimension((int)(desiredSize.Width * Device.Current.DisplayScale),
+                (int)(desiredSize.Height * Device.Current.DisplayScale));
         }
 
         /// <summary>
