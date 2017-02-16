@@ -332,6 +332,7 @@ namespace Prism.Android.UI.Controls
         }
 
         private readonly HorizontalScrollViewer horizontalScrollView;
+        private bool touchEventHandledByChildren;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScrollViewer"/> class.
@@ -359,7 +360,7 @@ namespace Prism.Android.UI.Controls
             }
             
             IsDispatching = true;
-            this.DispatchTouchEventToChildren(e);
+            touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
             IsDispatching = false;
             return base.DispatchTouchEvent(e);
         }
@@ -428,25 +429,37 @@ namespace Prism.Android.UI.Controls
             
             if (e.Action == MotionEventActions.Cancel)
             {
-                OnPointerCanceled(e);
+                if (!touchEventHandledByChildren)
+                {
+                    OnPointerCanceled(e);
+                }
                 base.OnTouchEvent(e);
                 return true;
             }
             if (e.Action == MotionEventActions.Down)
             {
-                OnPointerPressed(e);
+                if (!touchEventHandledByChildren)
+                {
+                    OnPointerPressed(e);
+                }
                 base.OnTouchEvent(e);
                 return true;
             }
             if (e.Action == MotionEventActions.Move)
             {
-                OnPointerMoved(e);
+                if (!touchEventHandledByChildren)
+                {
+                    OnPointerMoved(e);
+                }
                 base.OnTouchEvent(e);
                 return true;
             }
             if (e.Action == MotionEventActions.Up)
             {
-                OnPointerReleased(e);
+                if (!touchEventHandledByChildren)
+                {
+                    OnPointerReleased(e);
+                }
                 base.OnTouchEvent(e);
                 return true;
             }
@@ -488,8 +501,8 @@ namespace Prism.Android.UI.Controls
             var element = ObjectRetriever.GetAgnosticObject(content) as Element;
             if (element != null)
             {
-                right = (int)(element.DesiredSize.Width * Device.Current.DisplayScale);
-                bottom = (int)(element.DesiredSize.Height * Device.Current.DisplayScale);
+                right = (int)Math.Max(right, (element.DesiredSize.Width * Device.Current.DisplayScale));
+                bottom = (int)Math.Max(bottom, (element.DesiredSize.Height * Device.Current.DisplayScale));
             }
 
             horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
@@ -598,8 +611,6 @@ namespace Prism.Android.UI.Controls
 
         private class HorizontalScrollViewer : HorizontalScrollView, ITouchDispatcher
         {
-            private readonly ScrollViewer parent;
-
             public int HorizontalScrollRange
             {
                 get { return ComputeHorizontalScrollRange(); }
@@ -611,6 +622,9 @@ namespace Prism.Android.UI.Controls
             {
                 get { return ComputeVerticalScrollRange(); }
             }
+
+            private readonly ScrollViewer parent;
+            private bool touchEventHandledByChildren;
 
             public HorizontalScrollViewer(Context context, ScrollViewer parent)
                 : base(context)
@@ -634,7 +648,7 @@ namespace Prism.Android.UI.Controls
                 }
                 
                 IsDispatching = true;
-                this.DispatchTouchEventToChildren(e);
+                touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
                 IsDispatching = false;
                 return base.DispatchTouchEvent(e);
             }
@@ -651,21 +665,24 @@ namespace Prism.Android.UI.Controls
                     return false;
                 }
                 
-                if (e.Action == MotionEventActions.Cancel)
+                if (!touchEventHandledByChildren)
                 {
-                    parent.OnPointerCanceled(e);
-                }
-                if (e.Action == MotionEventActions.Down)
-                {
-                    parent.OnPointerPressed(e);
-                }
-                if (e.Action == MotionEventActions.Move)
-                {
-                    parent.OnPointerMoved(e);
-                }
-                if (e.Action == MotionEventActions.Up)
-                {
-                    parent.OnPointerReleased(e);
+                    if (e.Action == MotionEventActions.Cancel)
+                    {
+                        parent.OnPointerCanceled(e);
+                    }
+                    else if (e.Action == MotionEventActions.Down)
+                    {
+                        parent.OnPointerPressed(e);
+                    }
+                    else if (e.Action == MotionEventActions.Move)
+                    {
+                        parent.OnPointerMoved(e);
+                    }
+                    else if (e.Action == MotionEventActions.Up)
+                    {
+                        parent.OnPointerReleased(e);
+                    }
                 }
                 return base.OnTouchEvent(e);
             }

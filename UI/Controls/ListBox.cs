@@ -468,6 +468,7 @@ namespace Prism.Android.UI.Controls
 
         private readonly List<int> selectedIndices;
         private Drawable separatorDrawable;
+        private bool touchEventHandledByChildren;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ListBox"/> class.
@@ -524,7 +525,7 @@ namespace Prism.Android.UI.Controls
             }
 
             IsDispatching = true;
-            this.DispatchTouchEventToChildren(e);
+            touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
             IsDispatching = false;
             return base.DispatchTouchEvent(e);
         }
@@ -598,21 +599,24 @@ namespace Prism.Android.UI.Controls
                 return false;
             }
 
-            if (e.Action == MotionEventActions.Cancel)
+            if (!touchEventHandledByChildren)
             {
-                PointerCanceled(this, e.GetPointerEventArgs(this));
-            }
-            if (e.Action == MotionEventActions.Down)
-            {
-                PointerPressed(this, e.GetPointerEventArgs(this));
-            }
-            if (e.Action == MotionEventActions.Move)
-            {
-                PointerMoved(this, e.GetPointerEventArgs(this));
-            }
-            if (e.Action == MotionEventActions.Up)
-            {
-                PointerReleased(this, e.GetPointerEventArgs(this));
+                if (e.Action == MotionEventActions.Cancel)
+                {
+                    PointerCanceled(this, e.GetPointerEventArgs(this));
+                }
+                else if (e.Action == MotionEventActions.Down)
+                {
+                    PointerPressed(this, e.GetPointerEventArgs(this));
+                }
+                else if (e.Action == MotionEventActions.Move)
+                {
+                    PointerMoved(this, e.GetPointerEventArgs(this));
+                }
+                else if (e.Action == MotionEventActions.Up)
+                {
+                    PointerReleased(this, e.GetPointerEventArgs(this));
+                }
             }
             return base.OnTouchEvent(e);
         }
