@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
+using System.Linq;
 using Android.App;
 using Android.Runtime;
 using Android.Support.V7.Widget;
@@ -54,16 +55,23 @@ namespace Prism.Android.UI
                 var fragment = reference as Fragment;
                 if (fragment != null)
                 {
-                    int id = 1;
-                    while (fragment.ChildFragmentManager.FindFragmentById(id) != null)
+                    int count = 1;
+                    while (fragment.ChildFragmentManager.FindFragmentById(count) != null)
                     {
-                        id++;
+                        count++;
                     }
 
-                    return id - 1 + (fragment.View == null ? 0 : 1);
+                    count--;
+                    var viewStack = reference as INativeViewStack;
+                    if (viewStack != null)
+                    {
+                        count += viewStack.Views.Count(o => o != viewStack.CurrentView);
+                    }
+
+                    return count + (fragment.View == null ? 0 : 1);
                 }
             }
-            
+
             var vsh = reference as Controls.ViewStackHeader;
             if (vsh != null)
             {
@@ -102,14 +110,26 @@ namespace Prism.Android.UI
                         return fragment.View;
                     }
 
-                    return fragment.ChildFragmentManager.FindFragmentById(childIndex);
+                    object child = fragment.ChildFragmentManager.FindFragmentById(childIndex);
+                    if (child == null)
+                    {
+                        var viewStack = reference as INativeViewStack;
+                        if (viewStack != null)
+                        {
+                            int id = childIndex - 1;
+                            while (fragment.ChildFragmentManager.FindFragmentById(id) == null && --id > 0) ;
+                            child = viewStack.Views.Where(o => o != viewStack.CurrentView).ElementAtOrDefault(childIndex - (id + 1));
+                        }
+                    }
+
+                    return child;
                 }
                 else
                 {
                     view = (reference as RecyclerView.ViewHolder)?.ItemView as ViewGroup;
                 }
             }
-            
+
             var vsh = reference as Controls.ViewStackHeader;
             if (vsh != null)
             {
@@ -162,7 +182,22 @@ namespace Prism.Android.UI
             var frag = reference as Fragment;
             if (frag != null)
             {
-                return frag.ParentFragment ?? (object)frag.Activity?.FindViewById(frag.Id);
+                if (frag.ParentFragment != null && frag.Activity == frag.ParentFragment.Activity)
+                {
+                    return frag.ParentFragment;
+                }
+
+                view = frag.Activity?.FindViewById(frag.Id);
+                if (view != null)
+                {
+                    return view;
+                }
+            }
+
+            var vsc = reference as IViewStackChild;
+            if (vsc?.ViewStack != null)
+            {
+                return vsc.ViewStack;
             }
 
             return (reference as Controls.ActionMenu)?.Parent;

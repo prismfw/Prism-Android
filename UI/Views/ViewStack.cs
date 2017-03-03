@@ -182,7 +182,7 @@ namespace Prism.Android.UI
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -197,7 +197,7 @@ namespace Prism.Android.UI
                     {
                         (renderTransform as Media.Transform)?.RemoveView(contentContainer);
                     }
-                    
+
                     renderTransform = value;
                     contentContainer?.SetTransform();
                     OnPropertyChanged(Visual.RenderTransformProperty);
@@ -241,6 +241,13 @@ namespace Prism.Android.UI
         public void InsertView(object view, int index, Animate animate)
         {
             views.Insert(index, view);
+
+            var vsc = view as IViewStackChild;
+            if (vsc != null)
+            {
+                vsc.ViewStack = this;
+            }
+
             if (views.Last() == view)
             {
                 ViewChanging(this, new NativeViewStackViewChangingEventArgs(views.Count > 1 ? views[views.Count - 2] : null, view));
@@ -345,6 +352,13 @@ namespace Prism.Android.UI
             }
 
             views.RemoveAt(views.Count - 1);
+
+            var vsc = last as IViewStackChild;
+            if (vsc != null)
+            {
+                vsc.ViewStack = null;
+            }
+
             ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, views.Last()));
             ChangeChild(views.Last());
             return last;
@@ -377,6 +391,11 @@ namespace Prism.Android.UI
 
             var popped = views.Skip(1);
             views.RemoveRange(1, views.Count - 1);
+
+            foreach (var vsc in popped.OfType<IViewStackChild>())
+            {
+                vsc.ViewStack = null;
+            }
 
             ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, views.Last()));
             ChangeChild(views.Last());
@@ -414,6 +433,11 @@ namespace Prism.Android.UI
             var popped = views.Skip(++index);
             views.RemoveRange(index, views.Count - index);
 
+            foreach (var vsc in popped.OfType<IViewStackChild>())
+            {
+                vsc.ViewStack = null;
+            }
+
             ViewChanging(this, new NativeViewStackViewChangingEventArgs(last, view));
             ChangeChild(view);
             return popped.ToArray();
@@ -427,6 +451,13 @@ namespace Prism.Android.UI
         public void PushView(object view, Animate animate)
         {
             views.Add(view);
+
+            var vsc = view as IViewStackChild;
+            if (vsc != null)
+            {
+                vsc.ViewStack = this;
+            }
+
             ViewChanging(this, new NativeViewStackViewChangingEventArgs(views.Count > 1 ? views[views.Count - 2] : null, view));
             ChangeChild(view);
         }
@@ -440,8 +471,20 @@ namespace Prism.Android.UI
         public void ReplaceView(object oldView, object newView, Animate animate)
         {
             int index = views.IndexOf(oldView);
-
             views[index] = newView;
+
+            var vsc = oldView as IViewStackChild;
+            if (vsc != null)
+            {
+                vsc.ViewStack = null;
+            }
+
+            vsc = newView as IViewStackChild;
+            if (vsc != null)
+            {
+                vsc.ViewStack = this;
+            }
+
             if (index == views.Count - 1)
             {
                 ViewChanging(this, new NativeViewStackViewChangingEventArgs(oldView, newView));
@@ -491,7 +534,7 @@ namespace Prism.Android.UI
                         if (contentContainer.ChildCount > 2)
                         {
                             contentContainer.RemoveViewAt(1);
-                            
+
                             var vsh = Header as ViewStackHeader;
                             if (vsh != null)
                             {
@@ -549,7 +592,7 @@ namespace Prism.Android.UI
             {
                 get { return ViewStack; }
             }
-            
+
             public bool IsDispatching { get; private set; }
 
             public ViewStack ViewStack { get; }
@@ -574,7 +617,7 @@ namespace Prism.Android.UI
                     BringChildToFront(ViewStack.Header as global::Android.Views.View);
                 };
             }
-            
+
             public override bool DispatchTouchEvent(MotionEvent e)
             {
                 var parent = Parent as ITouchDispatcher;
@@ -587,14 +630,14 @@ namespace Prism.Android.UI
                 {
                     return true;
                 }
-                
+
                 IsDispatching = true;
                 if (this.DispatchTouchEventToChildren(e))
                 {
                     IsDispatching = false;
                     return true;
                 }
-                
+
                 IsDispatching = false;
                 return base.DispatchTouchEvent(e);
             }
@@ -611,7 +654,7 @@ namespace Prism.Android.UI
                 Right = (int)(ViewStack.frame.Right * Device.Current.DisplayScale);
                 Bottom = (int)(ViewStack.frame.Bottom * Device.Current.DisplayScale);
             }
-            
+
             public void SetTransform()
             {
                 var transform = ViewStack.renderTransform as Media.Transform;
@@ -644,7 +687,7 @@ namespace Prism.Android.UI
                 int width = (int)(ViewStack.frame.Width * Device.Current.DisplayScale);
                 var headerView = ViewStack.Header as global::Android.Views.View;
                 headerView.Layout(0, 0, width, headerView.Height);
-                    
+
                 var content = GetChildAt(0);
                 if (content != null && content != headerView)
                 {

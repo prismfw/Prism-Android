@@ -37,7 +37,7 @@ namespace Prism.Android.UI
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeContentView))]
-    public class ContentView : Fragment, INativeContentView
+    public class ContentView : Fragment, INativeContentView, IViewStackChild
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -162,7 +162,7 @@ namespace Prism.Android.UI
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the action menu for the view.
         /// </summary>
@@ -174,19 +174,19 @@ namespace Prism.Android.UI
                 if (value != menu)
                 {
                     menu = value;
-                    
+
                     var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
                     if (header != null)
                     {
                         header.Menu = menu as Controls.ActionMenu;
                     }
-                    
+
                     OnPropertyChanged(Prism.UI.ContentView.MenuProperty);
                 }
             }
         }
         private INativeActionMenu menu;
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -201,7 +201,7 @@ namespace Prism.Android.UI
                     {
                         (renderTransform as Media.Transform)?.RemoveView(contentContainer);
                     }
-                    
+
                     renderTransform = value;
                     contentContainer?.SetTransform();
                     OnPropertyChanged(Visual.RenderTransformProperty);
@@ -238,6 +238,11 @@ namespace Prism.Android.UI
             }
         }
         private string title;
+
+        /// <summary>
+        /// Gets or sets the view stack of which this instance is a child.
+        /// </summary>
+        public object ViewStack { get; set; }
 
         private ViewContentContainer contentContainer;
 
@@ -330,7 +335,7 @@ namespace Prism.Android.UI
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Loaded.Invoke(this, EventArgs.Empty);
             }
-            
+
             var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
             if (header != null)
             {
@@ -362,14 +367,14 @@ namespace Prism.Android.UI
                 }
             }
             private Brush background;
-            
+
             public ContentView ContentView { get; }
 
             public Fragment Fragment
             {
                 get { return ContentView; }
             }
-            
+
             public bool IsDispatching { get; private set; }
 
             public ViewContentContainer(ContentView contentView)
@@ -392,7 +397,7 @@ namespace Prism.Android.UI
                 SetFrame();
                 SetTransform();
             }
-            
+
             public override bool DispatchTouchEvent(MotionEvent e)
             {
                 var parent = Parent as ITouchDispatcher;
@@ -405,14 +410,14 @@ namespace Prism.Android.UI
                 {
                     return true;
                 }
-                
+
                 IsDispatching = true;
                 if (this.DispatchTouchEventToChildren(e))
                 {
                     IsDispatching = false;
                     return true;
                 }
-                
+
                 IsDispatching = false;
                 return base.DispatchTouchEvent(e);
             }
@@ -433,7 +438,7 @@ namespace Prism.Android.UI
                     MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
                 Layout(Left, Top, Right, Bottom);
             }
-            
+
             public void SetTransform()
             {
                 var transform = ContentView.renderTransform as Media.Transform;
