@@ -322,11 +322,7 @@ namespace Prism.Android.UI
                         var tabView = appContent as INativeTabView;
                         if (tabView != null)
                         {
-                            stack = (tabView as INativeTabbedSplitView)?.DetailContent as INativeViewStack;
-                            if (stack == null || !stack.IsBackButtonEnabled || stack.Views.Count() < 2)
-                            {
-                                stack = (tabView.TabItems[tabView.SelectedIndex] as INativeTabItem)?.Content as INativeViewStack;
-                            }
+                            stack = (tabView.TabItems[tabView.SelectedIndex] as INativeTabItem)?.Content as INativeViewStack;
                         }
                     }
                 }

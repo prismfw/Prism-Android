@@ -125,7 +125,6 @@
     <Compile Include="UI\Views\TabView.cs" />
     <Compile Include="UI\Controls\TabItemCollection.cs" />
     <Compile Include="UI\Controls\TabItem.cs" />
-    <Compile Include="UI\Views\TabbedSplitView.cs" />
     <Compile Include="UI\Controls\RecyclerViewChild.cs" />
     <Compile Include="UI\Controls\ActionMenu.cs" />
     <Compile Include="UI\Controls\MenuButton.cs" />
@@ -147,6 +146,7 @@
     <Compile Include="UI\Shapes\Polygon.cs" />
     <Compile Include="UI\Shapes\Polyline.cs" />
     <Compile Include="UI\Shapes\Quadrangle.cs" />
+    <Compile Include="UI\Controls\TabLayout.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>

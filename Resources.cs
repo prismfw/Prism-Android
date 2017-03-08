@@ -168,7 +168,7 @@ namespace Prism.Android
                             value = 14.0;
                             return true;
                         case SystemResourceKeyId.TabItemFontSize:
-                            value = 10.0;
+                            value = 12.0;
                             return true;
                         case SystemResourceKeyId.ViewHeaderFontSize:
                             value = 16.0;

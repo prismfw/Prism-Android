@@ -208,29 +208,46 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets an <see cref="INativeImageSource"/> for an image to display with the item.
         /// </summary>
-        public INativeImageSource ImageSource
+        public INativeImageSource Image
         {
-            get { return imageSource; }
+            get { return image; }
             set
             {
-                if (value != imageSource)
+                if (value != image)
                 {
-                    imageSource.ClearImageHandler(OnImageLoaded);
+                    image.ClearImageHandler(OnImageLoaded);
 
-                    imageSource = value;
-                    if (imageSource != null && ((imageSource as INativeBitmapImage)?.IsLoaded ?? true))
+                    image = value;
+                    if (image != null && ((image as INativeBitmapImage)?.IsLoaded ?? true))
                     {
                         OnImageLoaded(null, null);
                     }
                     else
                     {
-                        ImageView.SetImageBitmap(imageSource.BeginLoadingImage(OnImageLoaded));
+                        ImageView.SetImageBitmap(image.BeginLoadingImage(OnImageLoaded));
                     }
-                    OnPropertyChanged(Prism.UI.Controls.TabItem.ImageSourceProperty);
+                    OnPropertyChanged(Prism.UI.Controls.TabItem.ImageProperty);
                 }
             }
         }
-        private INativeImageSource imageSource;
+        private INativeImageSource image;
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether the user can interact with the item.
+        /// </summary>
+        public bool IsEnabled
+        {
+            get { return base.Enabled; }
+            set
+            {
+                if (value != base.Enabled)
+                {
+                    base.Enabled = value;
+                    Alpha = value ? 1 : 0.4f;
+                    OnPropertyChanged(Prism.UI.Controls.TabItem.IsEnabledProperty);
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -326,18 +343,32 @@ namespace Prism.Android.UI.Controls
             : base(Application.MainActivity)
         {
             ImageView = new ImageView(Context);
+            ImageView.SetScaleType(ImageView.ScaleType.FitCenter);
+            
             TextView = new TextView(Context)
             {
                 Ellipsize = TextUtils.TruncateAt.End,
-                Gravity = global::Android.Views.GravityFlags.CenterHorizontal,
+                Gravity = GravityFlags.CenterHorizontal,
                 Typeface = Typeface.Default
             };
             TextView.SetMaxLines(2);
 
             Orientation = global::Android.Widget.Orientation.Vertical;
-            AddView(ImageView, new LinearLayout.LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent));
-            AddView(TextView, new LinearLayout.LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent));
-            SetMinimumWidth(200);
+            SetMinimumWidth(160);
+            
+            AddView(ImageView, new LayoutParams((int)(32 * Device.Current.DisplayScale), (int)(32 * Device.Current.DisplayScale))
+            {
+                Gravity = GravityFlags.CenterHorizontal,
+                TopMargin = 4,
+                BottomMargin = 2
+            });
+            
+            AddView(TextView, new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent)
+            {
+                Gravity = GravityFlags.CenterHorizontal,
+                TopMargin = 4,
+                BottomMargin = 6
+            });
         }
 
         /// <summary>
@@ -440,8 +471,8 @@ namespace Prism.Android.UI.Controls
 
         private void OnImageLoaded(object sender, EventArgs e)
         {
-            ImageView.SetImageBitmap(imageSource.GetImageSource());
-            imageSource.GetImageSource().PrepareToDraw();
+            ImageView.SetImageBitmap(image.GetImageSource());
+            image.GetImageSource().PrepareToDraw();
             ImageView.Invalidate();
         }
 

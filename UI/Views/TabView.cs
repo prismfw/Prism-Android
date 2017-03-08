@@ -24,7 +24,6 @@ using System.Collections;
 using Android.App;
 using Android.OS;
 using Android.Runtime;
-using Android.Support.Design.Widget;
 using Android.Views;
 using Android.Widget;
 using Prism.Android.UI.Controls;
@@ -203,13 +202,13 @@ namespace Prism.Android.UI
         /// </summary>
         public int SelectedIndex
         {
-            get { return contentContainer?.TabLayout.SelectedTabPosition ?? selectedIndex; }
+            get { return contentContainer?.TabLayout.SelectedTabIndex ?? selectedIndex; }
             set
             {
                 if (value != selectedIndex)
                 {
                     selectedIndex = value;
-                    contentContainer?.TabLayout.GetTabAt(value).Select();
+                    contentContainer?.TabLayout.SelectTabAt(selectedIndex);
                 }
             }
         }
@@ -241,16 +240,16 @@ namespace Prism.Android.UI
         {
             get { return tabItems; }
         }
-        private readonly TabItemCollection tabItems = new TabItemCollection();
+        private readonly TabItemCollection tabItems;
         
         private ViewContentContainer contentContainer;
-        private object currentTab;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TabView"/> class.
         /// </summary>
         public TabView()
         {
+            tabItems = new TabItemCollection(new TabLayout(Application.MainActivity));
         }
 
         /// <summary>
@@ -327,20 +326,6 @@ namespace Prism.Android.UI
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        /// <summary>
-        /// Called when a tab is selected.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The event arguments.</param>
-        protected void OnTabSelected(object sender, TabLayout.TabSelectedEventArgs e)
-        {
-            var newTab = tabItems.GetItemForTab(e.Tab);
-            TabItemSelected(this, new NativeItemSelectedEventArgs(currentTab, newTab));
-            currentTab = newTab;
-
-            contentContainer?.SetContent((newTab as INativeTabItem)?.Content);
-        }
-
         private void OnLoaded()
         {
             contentContainer?.SetContent((tabItems[SelectedIndex] as INativeTabItem)?.Content);
@@ -349,6 +334,22 @@ namespace Prism.Android.UI
                 IsLoaded = true;
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Loaded(this, EventArgs.Empty);
+            }
+        }
+        
+        private void OnTabSelected(object sender, TabLayout.TabSelectedEventArgs e)
+        {
+            bool changed = tabItems.IndexOf(e.OldTab) != tabItems.IndexOf(e.NewTab);
+            if (changed)
+            {
+                OnPropertyChanged(Prism.UI.TabView.SelectedIndexProperty);
+            }
+            
+            TabItemSelected(this, new NativeItemSelectedEventArgs(e.OldTab, e.NewTab));
+            
+            if (changed)
+            {
+                contentContainer?.SetContent((e.NewTab as INativeTabItem)?.Content);
             }
         }
 
@@ -380,27 +381,9 @@ namespace Prism.Android.UI
             
             public new Brush Foreground
             {
-                get { return foreground; }
-                set
-                {
-                    foreground = value;
-
-                    var scb = foreground as SolidColorBrush;
-                    if (scb != null)
-                    {
-                        TabLayout.SetSelectedTabIndicatorColor(scb.Color.GetHashCode());
-                    }
-                    else
-                    {
-                        TabLayout.SetSelectedTabIndicatorColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.ColorAccent));
-                        if (foreground != null)
-                        {
-                            Prism.Utilities.Logger.Warn("TabView.Foreground on Android only supports instances of SolidColorBrush.");
-                        }
-                    }
-                }
+                get { return TabLayout.SelectionBrush; }
+                set { TabLayout.SelectionBrush = value; }
             }
-            private Brush foreground;
 
             public Fragment Fragment
             {
@@ -419,7 +402,7 @@ namespace Prism.Android.UI
                 : base(Application.MainActivity)
             {
                 TabView = tabView;
-                TabLayout = new TabLayout(Context);
+                TabLayout = tabView.tabItems.TabLayout;
                 FrameLayout = new FrameLayout(Context) { Id = 1 };
 
                 Background = tabView.Background;
@@ -435,9 +418,7 @@ namespace Prism.Android.UI
                 SetTransform();
 
                 TabLayout.TabSelected += TabView.OnTabSelected;
-                TabView.tabItems.TabLayout = TabLayout;
-                TabLayout.TabMode = TabLayout.TabCount > 4 ? 0 : 1;
-                TabLayout.GetTabAt(TabView.SelectedIndex)?.Select();
+                TabLayout.SelectTabAt(TabView.SelectedIndex);
             }
             
             public override bool DispatchTouchEvent(MotionEvent e)
@@ -462,7 +443,7 @@ namespace Prism.Android.UI
                 
                 IsDispatching = false;
                 return base.DispatchTouchEvent(e);
-        }
+            }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
             {
@@ -528,10 +509,15 @@ namespace Prism.Android.UI
 
             protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
             {
-                TabView.MeasureRequest(false, null);
                 TabView.ArrangeRequest(false, null);
 
                 base.OnLayout(changed, left, top, right, bottom);
+            }
+
+            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                TabView.MeasureRequest(false, null);
+                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
             }
 
             private void OnBackgroundImageLoaded(object sender, EventArgs e)

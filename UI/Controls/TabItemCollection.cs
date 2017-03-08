@@ -22,8 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Android.Support.Design.Widget;
+using Android.Views;
 using Prism.Native;
 
 namespace Prism.Android.UI.Controls
@@ -32,7 +31,7 @@ namespace Prism.Android.UI.Controls
     {
         public int Count
         {
-            get { return tabCollection.Count; }
+            get { return TabLayout.TabCount; }
         }
 
         public bool IsFixedSize
@@ -55,90 +54,77 @@ namespace Prism.Android.UI.Controls
             get { return null; }
         }
 
-        public TabLayout TabLayout
-        {
-            get { return tabLayout; }
-            set
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException("TabLayout");
-                }
-
-                tabLayout = value;
-                for (int i = 0; i < tabCollection.Count; i++)
-                {
-                    var kvp = tabCollection[i];
-                    kvp = new KeyValuePair<object, TabLayout.Tab>(kvp.Key, CreateTab(kvp.Key));
-                    tabCollection[i] = kvp;
-                    tabLayout.AddTab(kvp.Value);
-                }
-            }
-        }
-        private TabLayout tabLayout;
+        public TabLayout TabLayout { get; }
 
         public object this[int index]
         {
             get
             {
-                if (tabCollection.Count <= index)
+                if (TabLayout.TabCount <= index)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return tabCollection[index].Key;
+                return TabLayout.GetTabAt(index);
             }
             set
             {
-                if (tabCollection.Count <= index)
+                if (TabLayout.TabCount <= index)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                var kvp = tabCollection[index];
-                TabLayout?.RemoveTab(kvp.Value);
-
-                kvp = new KeyValuePair<object, TabLayout.Tab>(value, CreateTab(value));
-                tabCollection[index] = kvp;
-                TabLayout?.AddTab(kvp.Value, index);
+                TabLayout.RemoveTabAt(index);
+                TabLayout.AddTab(value as View, index);
             }
         }
-
-        private readonly List<KeyValuePair<object, TabLayout.Tab>> tabCollection;
         
-        public TabItemCollection()
+        public TabItemCollection(TabLayout layout)
         {
-            tabCollection = new List<KeyValuePair<object, TabLayout.Tab>>();
+            if (layout == null)
+            {
+                throw new ArgumentNullException(nameof(layout));
+            }
+            
+            TabLayout = layout;
         }
 
         public int Add(object value)
         {
-            int count = tabCollection.Count;
-            var kvp = new KeyValuePair<object, TabLayout.Tab>(value, CreateTab(value));
-            tabCollection.Add(kvp);
-            TabLayout?.AddTab(kvp.Value);
-            return tabCollection.Count - count;
+            int count = TabLayout.TabCount;
+            TabLayout.AddTab(value as View);
+            return TabLayout.TabCount - count;
         }
 
         public void Clear()
         {
-            TabLayout?.RemoveAllTabs();
-            tabCollection.Clear();
+            TabLayout.RemoveAllTabs();
         }
 
         public bool Contains(object value)
         {
-            return tabCollection.Any(kvp => kvp.Key == value);
-        }
-
-        public object GetItemForTab(TabLayout.Tab tab)
-        {
-            return tabCollection.FirstOrDefault(kvp => kvp.Value == tab).Key;
+            for (int i = 0; i < TabLayout.TabCount; i++)
+            {
+                if (TabLayout.GetTabAt(i) == value)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         public int IndexOf(object value)
         {
-            return tabCollection.FindIndex(kvp => kvp.Key == value);
+            for (int i = 0; i < TabLayout.TabCount; i++)
+            {
+                if (TabLayout.GetTabAt(i) == value)
+                {
+                    return i;
+                }
+            }
+            
+            return -1;
         }
 
         public void Insert(int index, object value)
@@ -154,93 +140,67 @@ namespace Prism.Android.UI.Controls
             }
             else
             {
-                var kvp = new KeyValuePair<object, TabLayout.Tab>(value, CreateTab(value));
-                tabCollection.Insert(index, kvp);
-                TabLayout?.AddTab(kvp.Value, index);
+                TabLayout.AddTab(value as View, index);
             }
         }
 
         public void Remove(object value)
         {
-            var kvp = tabCollection.FirstOrDefault(k => k.Key == value);
-            tabCollection.Remove(kvp);
-            TabLayout?.RemoveTab(kvp.Value);
+            TabLayout.RemoveTab(value as View);
         }
 
         public void RemoveAt(int index)
         {
-            var kvp = tabCollection[index];
-            tabCollection.RemoveAt(index);
-            TabLayout?.RemoveTab(kvp.Value);
+            TabLayout.RemoveTabAt(index);
         }
 
         public void CopyTo(Array array, int index)
         {
-            tabCollection.Select(kvp => kvp.Key).ToArray().CopyTo(array, index);
+            for (int i = 0; i < TabLayout.TabCount; i++)
+            {
+                array.SetValue(TabLayout.GetTabAt(i), i + index);
+            }
         }
 
         public IEnumerator GetEnumerator()
         {
-            return new TabItemEnumerator(tabCollection.Select(kvp => kvp.Key).GetEnumerator());
-        }
-
-        private TabLayout.Tab CreateTab(object value)
-        {
-            if (tabLayout == null)
-            {
-                return null;
-            }
-
-            var tab = tabLayout.NewTab();
-            tab.SetCustomView(value as global::Android.Views.View);
-            return tab;
+            return new TabItemEnumerator(TabLayout);
         }
 
         private class TabItemEnumerator : IEnumerator<INativeTabItem>, IEnumerator
         {
+            private int currentIndex = -1;
+            private TabLayout tabLayout;
+        
             public INativeTabItem Current
             {
-                get { return tabItemEnumerator.Current as INativeTabItem; }
+                get { return tabLayout?.GetTabAt(currentIndex) as INativeTabItem; }
             }
 
             object IEnumerator.Current
             {
-                get { return tabItemEnumerator.Current; }
+                get { return tabLayout?.GetTabAt(currentIndex); }
             }
 
-            private readonly IEnumerator tabItemEnumerator;
-
-            public TabItemEnumerator(IEnumerator tabItemEnumerator)
+            public TabItemEnumerator(TabLayout layout)
             {
-                this.tabItemEnumerator = tabItemEnumerator;
+                tabLayout = layout;
             }
 
             public void Dispose()
             {
-                var disposable = tabItemEnumerator as IDisposable;
-                if (disposable != null)
-                {
-                    disposable.Dispose();
-                }
+                tabLayout = null;
             }
 
             public bool MoveNext()
             {
-                do
-                {
-                    if (!tabItemEnumerator.MoveNext())
-                    {
-                        return false;
-                    }
-                }
-                while (!(tabItemEnumerator.Current is INativeTabItem));
-
-                return true;
+                currentIndex++;
+                return currentIndex < tabLayout.TabCount;
             }
 
             public void Reset()
             {
-                tabItemEnumerator.Reset();
+                currentIndex = -1;
             }
         }
     }
