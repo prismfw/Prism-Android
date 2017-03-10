@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016  Prism Framework Team
+Copyright (C) 2017  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -50,7 +50,7 @@ namespace Prism.Android.UI
         /// Occurs when the value of a property is changed.
         /// </summary>
         public event EventHandler<FrameworkPropertyChangedEventArgs> PropertyChanged;
-        
+
         /// <summary>
         /// Occurs when a tab item is selected.
         /// </summary>
@@ -77,12 +77,12 @@ namespace Prism.Android.UI
             }
         }
         private bool areAnimationsEnabled;
-        
+
         /// <summary>
         /// Gets or sets the method to invoke when this instance requests an arrangement of its children.
         /// </summary>
         public ArrangeRequestHandler ArrangeRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the background for the view.
         /// </summary>
@@ -104,7 +104,7 @@ namespace Prism.Android.UI
             }
         }
         private Brush background;
-        
+
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the selected tab item.
         /// </summary>
@@ -126,7 +126,7 @@ namespace Prism.Android.UI
             }
         }
         private Brush foreground;
-        
+
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents
         /// the size and position of the element relative to its parent container.
@@ -158,7 +158,7 @@ namespace Prism.Android.UI
             }
         }
         private bool isHitTestVisible = true;
-        
+
         /// <summary>
         /// Gets a value indicating whether this instance has been loaded and is ready for rendering.
         /// </summary>
@@ -168,7 +168,7 @@ namespace Prism.Android.UI
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -183,7 +183,7 @@ namespace Prism.Android.UI
                     {
                         (renderTransform as Media.Transform)?.RemoveView(contentContainer);
                     }
-                    
+
                     renderTransform = value;
                     contentContainer?.SetTransform();
                     OnPropertyChanged(Visual.RenderTransformProperty);
@@ -241,7 +241,7 @@ namespace Prism.Android.UI
             get { return tabItems; }
         }
         private readonly TabItemCollection tabItems;
-        
+
         private ViewContentContainer contentContainer;
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace Prism.Android.UI
         /// <param name="inflater"></param>
         /// <param name="container"></param>
         /// <param name="savedInstanceState"></param>
-        public override global::Android.Views.View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override global::Android.Views.View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             if (contentContainer == null)
             {
@@ -316,7 +316,7 @@ namespace Prism.Android.UI
             (contentContainer.Parent as ViewGroup)?.RemoveView(contentContainer);
             return contentContainer;
         }
-        
+
         /// <summary>
         /// Called when a property value is changed.
         /// </summary>
@@ -336,7 +336,7 @@ namespace Prism.Android.UI
                 Loaded(this, EventArgs.Empty);
             }
         }
-        
+
         private void OnTabSelected(object sender, TabLayout.TabSelectedEventArgs e)
         {
             bool changed = tabItems.IndexOf(e.OldTab) != tabItems.IndexOf(e.NewTab);
@@ -344,9 +344,9 @@ namespace Prism.Android.UI
             {
                 OnPropertyChanged(Prism.UI.TabView.SelectedIndexProperty);
             }
-            
+
             TabItemSelected(this, new NativeItemSelectedEventArgs(e.OldTab, e.NewTab));
-            
+
             if (changed)
             {
                 contentContainer?.SetContent((e.NewTab as INativeTabItem)?.Content);
@@ -362,7 +362,7 @@ namespace Prism.Android.UI
                 Unloaded(this, EventArgs.Empty);
             }
         }
-        
+
         private class ViewContentContainer : LinearLayout, IFragmentView, ITouchDispatcher
         {
             public new Brush Background
@@ -378,7 +378,7 @@ namespace Prism.Android.UI
                 }
             }
             private Brush background;
-            
+
             public new Brush Foreground
             {
                 get { return TabLayout.SelectionBrush; }
@@ -389,13 +389,13 @@ namespace Prism.Android.UI
             {
                 get { return TabView; }
             }
-            
+
             public FrameLayout FrameLayout { get; }
-            
+
             public bool IsDispatching { get; private set; }
-            
+
             public TabLayout TabLayout { get; }
-            
+
             public TabView TabView { get; }
 
             public ViewContentContainer(TabView tabView)
@@ -420,7 +420,7 @@ namespace Prism.Android.UI
                 TabLayout.TabSelected += TabView.OnTabSelected;
                 TabLayout.SelectTabAt(TabView.SelectedIndex);
             }
-            
+
             public override bool DispatchTouchEvent(MotionEvent e)
             {
                 var parent = Parent as ITouchDispatcher;
@@ -433,14 +433,14 @@ namespace Prism.Android.UI
                 {
                     return true;
                 }
-                
+
                 IsDispatching = true;
                 if (this.DispatchTouchEventToChildren(e))
                 {
                     IsDispatching = false;
                     return true;
                 }
-                
+
                 IsDispatching = false;
                 return base.DispatchTouchEvent(e);
             }
@@ -481,7 +481,7 @@ namespace Prism.Android.UI
                     MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
                 Layout(Left, Top, Right, Bottom);
             }
-            
+
             public void SetTransform()
             {
                 var transform = TabView.renderTransform as Media.Transform;
@@ -510,7 +510,6 @@ namespace Prism.Android.UI
             protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
             {
                 TabView.ArrangeRequest(false, null);
-
                 base.OnLayout(changed, left, top, right, bottom);
             }
 

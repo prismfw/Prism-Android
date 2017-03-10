@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016  Prism Framework Team
+Copyright (C) 2017  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using Android.App;
-using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;

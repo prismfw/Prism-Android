@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (C) 2016  Prism Framework Team
+Copyright (C) 2017  Prism Framework Team
 
 This file is part of the Prism Framework.
 

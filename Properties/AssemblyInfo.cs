@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2016  Prism Framework Team
+Copyright (C) 2017  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -30,7 +30,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Prism Framework Team")]
 [assembly: AssemblyProduct("Prism Framework")]
-[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
