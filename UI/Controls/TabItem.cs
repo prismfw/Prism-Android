@@ -50,7 +50,7 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the value of a property is changed.
         /// </summary>
         public event EventHandler<FrameworkPropertyChangedEventArgs> PropertyChanged;
-        
+
         /// <summary>
         /// Occurs when this instance has been detached from the visual tree.
         /// </summary>
@@ -89,7 +89,7 @@ namespace Prism.Android.UI.Controls
             {
                 content = value;
 
-                var tabView = ObjectRetriever.GetNativeObject(Prism.UI.Window.Current.Content) as INativeTabView;
+                var tabView = this.GetParent<INativeTabView>();
                 if (tabView != null)
                 {
                     var view = value as global::Android.Views.View;
@@ -180,12 +180,12 @@ namespace Prism.Android.UI.Controls
                 if (value != foreground)
                 {
                     (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
-                    
+
                     foreground = value;
                     if (foreground == null)
                     {
                         TextView.Paint.SetShader(null);
-                        TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary)); 
+                        TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
                     }
                     else
                     {
@@ -231,7 +231,7 @@ namespace Prism.Android.UI.Controls
             }
         }
         private INativeImageSource image;
-        
+
         /// <summary>
         /// Gets or sets a value indicating whether the user can interact with the item.
         /// </summary>
@@ -298,7 +298,7 @@ namespace Prism.Android.UI.Controls
                     {
                         transform.AddView(this);
                     }
-                    
+
                     OnPropertyChanged(Visual.RenderTransformProperty);
                 }
             }
@@ -344,7 +344,7 @@ namespace Prism.Android.UI.Controls
         {
             ImageView = new ImageView(Context);
             ImageView.SetScaleType(ImageView.ScaleType.FitCenter);
-            
+
             TextView = new TextView(Context)
             {
                 Ellipsize = TextUtils.TruncateAt.End,
@@ -355,14 +355,14 @@ namespace Prism.Android.UI.Controls
 
             Orientation = global::Android.Widget.Orientation.Vertical;
             SetMinimumWidth(160);
-            
+
             AddView(ImageView, new LayoutParams((int)(32 * Device.Current.DisplayScale), (int)(32 * Device.Current.DisplayScale))
             {
                 Gravity = GravityFlags.CenterHorizontal,
                 TopMargin = 4,
                 BottomMargin = 2
             });
-            
+
             AddView(TextView, new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent)
             {
                 Gravity = GravityFlags.CenterHorizontal,
@@ -407,7 +407,7 @@ namespace Prism.Android.UI.Controls
             {
                 return true;
             }
-            
+
             return base.OnTouchEvent(e);
         }
 
