@@ -183,10 +183,10 @@ namespace Prism.Android.UI.Controls
             }
             set
             {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
+                Left = (int)Math.Ceiling(value.Left * Device.Current.DisplayScale);
+                Top = (int)Math.Ceiling(value.Top * Device.Current.DisplayScale);
+                Right = (int)Math.Ceiling(value.Right * Device.Current.DisplayScale);
+                Bottom = (int)Math.Ceiling(value.Bottom * Device.Current.DisplayScale);
 
                 if (MaxWidth != Width)
                 {
