@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using Android.Graphics.Drawables;
 using Android.Runtime;
-using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using Prism.Input;
@@ -39,18 +38,18 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeListBoxItem))]
-    public class ListBoxItem : FrameLayout, INativeListBoxItem, IRecyclerViewChild, ITouchDispatcher
+    public class ListBoxItem : FrameLayout, INativeListBoxItem, IListBoxChild, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -175,7 +174,7 @@ namespace Prism.Android.UI.Controls
                 Layout(Left, Top, Right, Bottom);
             }
         }
-        
+
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
         /// </summary>
@@ -228,7 +227,7 @@ namespace Prism.Android.UI.Controls
             }
         }
         private bool isSelected;
-        
+
         /// <summary>
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
@@ -251,10 +250,10 @@ namespace Prism.Android.UI.Controls
         }
 
         /// <summary>
-        /// Gets the containing <see cref="RecyclerView"/>.
+        /// Gets the containing <see cref="ListBox"/>.
         /// </summary>
-        public new RecyclerView Parent { get; private set; }
-        
+        public new ListBox Parent { get; private set; }
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -267,7 +266,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -365,12 +364,12 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (OnInterceptTouchEvent(e))
             {
                 return true;
             }
-            
+
             IsDispatching = true;
             touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
             IsDispatching = false;
@@ -410,7 +409,7 @@ namespace Prism.Android.UI.Controls
         {
             return !IsHitTestVisible;
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -419,7 +418,7 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (!touchEventHandledByChildren)
             {
                 if (e.Action == MotionEventActions.Cancel)
@@ -564,7 +563,7 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        void IRecyclerViewChild.SetParent(RecyclerView parent)
+        void IListBoxChild.SetParent(ListBox parent)
         {
             Parent = parent;
         }

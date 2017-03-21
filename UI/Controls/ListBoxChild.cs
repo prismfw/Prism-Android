@@ -19,16 +19,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-using System;
-using Android.Support.V7.Widget;
+using Prism.Android.UI.Controls;
 
 namespace Prism.Android
 {
-    internal interface IRecyclerViewChild
+    internal interface IListBoxChild
     {
-        RecyclerView Parent { get; }
+        ListBox Parent { get; }
 
-        void SetParent(RecyclerView parent);
+        void SetParent(ListBox parent);
     }
 }
 

@@ -23,8 +23,8 @@ using System;
 using System.Linq;
 using Android.App;
 using Android.Runtime;
-using Android.Support.V7.Widget;
 using Android.Views;
+using Prism.Android.UI.Controls;
 using Prism.Native;
 
 namespace Prism.Android.UI
@@ -126,7 +126,7 @@ namespace Prism.Android.UI
                 }
                 else
                 {
-                    view = (reference as RecyclerView.ViewHolder)?.ItemView as ViewGroup;
+                    view = (reference as ListBox.ListBoxViewHolder)?.ItemView as ViewGroup;
                 }
             }
 
@@ -155,7 +155,7 @@ namespace Prism.Android.UI
             var view = reference as View;
             if (view == null)
             {
-                view = (reference as RecyclerView.ViewHolder)?.ItemView;
+                view = (reference as ListBox.ListBoxViewHolder)?.ItemView;
             }
 
             if (view != null)

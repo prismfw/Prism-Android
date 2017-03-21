@@ -57,21 +57,10 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
-    <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\packages\Xamarin.Android.Support.v4.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
-      <HintPath>..\packages\Xamarin.Android.Support.v7.AppCompat.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.RecyclerView">
-      <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.Design">
-      <HintPath>..\packages\Xamarin.Android.Support.Design.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.Design.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -82,7 +71,9 @@
     <Compile Include="UI\Controls\ActivityIndicator.cs" />
     <Compile Include="UI\Shapes\Path.cs" />
     <Compile Include="UI\Views\ViewStackChild.cs" />
-    <Compile Include="Utilities\Timer.cs" />
+    <Compile Include="Utilities\Timer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Extensions\AndroidExtensions.cs" />
     <Compile Include="UI\Media\Transform.cs" />
     <Compile Include="UI\Views\ContentView.cs" />
@@ -125,7 +116,7 @@
     <Compile Include="UI\Views\TabView.cs" />
     <Compile Include="UI\Controls\TabItemCollection.cs" />
     <Compile Include="UI\Controls\TabItem.cs" />
-    <Compile Include="UI\Controls\RecyclerViewChild.cs" />
+    <Compile Include="UI\Controls\ListBoxChild.cs" />
     <Compile Include="UI\Controls\ActionMenu.cs" />
     <Compile Include="UI\Controls\MenuButton.cs" />
     <Compile Include="UI\Controls\MenuSeparator.cs" />
@@ -166,8 +157,5 @@
       <Project>{BF3EDE00-0B3E-4C83-82E0-3ED08BE0E2E5}</Project>
       <Name>PrismFramework</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

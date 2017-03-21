@@ -24,10 +24,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using Android.Content;
+using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Runtime;
-using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using Prism.Input;
@@ -44,7 +43,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeListBox))]
-    public class ListBox : RecyclerView, INativeListBox, ITouchDispatcher
+    public class ListBox : ListView, INativeListBox, ITouchDispatcher, AbsListView.IOnScrollListener
     {
         /// <summary>
         /// Occurs when an accessory in a list box item is clicked or tapped.
@@ -439,11 +438,11 @@ namespace Prism.Android.UI.Controls
                     (separatorBrush as ImageBrush).ClearImageHandler(OnSeparatorImageLoaded);
 
                     separatorBrush = value;
-                    separatorDrawable = separatorBrush.GetDrawable(OnSeparatorImageLoaded) ??
+                    Divider = separatorBrush.GetDrawable(OnSeparatorImageLoaded) ??
                         Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.TextColorPrimary);
 
                     OnPropertyChanged(Prism.UI.Controls.ListBox.SeparatorBrushProperty);
-                    InvalidateItemDecorations();
+                    DividerHeight = 1;
                 }
             }
         }
@@ -467,7 +466,6 @@ namespace Prism.Android.UI.Controls
         }
 
         private readonly List<int> selectedIndices;
-        private Drawable separatorDrawable;
         private bool touchEventHandledByChildren;
 
         /// <summary>
@@ -479,9 +477,8 @@ namespace Prism.Android.UI.Controls
             selectedIndices = new List<int>();
             DescendantFocusability = DescendantFocusability.BeforeDescendants;
 
-            AddItemDecoration(new ListBoxItemDecoration(this));
-            SetAdapter(new ListBoxAdapter(this));
-            SetLayoutManager(new LinearLayoutManager(Context));
+            base.Adapter = new ListBoxAdapter(this);
+            base.SetOnScrollListener(this);
         }
 
         /// <summary>
@@ -621,14 +618,26 @@ namespace Prism.Android.UI.Controls
             return base.OnTouchEvent(e);
         }
 
-        /// <summary></summary>
-        /// <param name="dx"></param>
-        /// <param name="dy"></param>
-        public override void OnScrolled(int dx, int dy)
+        /// <summary>
+        /// Callback method to be invoked when the list or grid has been scrolled. This will be called after the scroll has completed
+        /// </summary>
+        /// <param name="view">The view whose scroll state is being reported</param>
+        /// <param name="firstVisibleItem">the index of the first visible cell (ignore if visibleItemCount == 0)</param>
+        /// <param name="visibleItemCount">the number of visible cells</param>
+        /// <param name="totalItemCount">the number of items in the list adapter</param>
+        public void OnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount)
         {
-            base.OnScrolled(dx, dy);
             ContentOffset = new Point(ComputeHorizontalScrollOffset() / Device.Current.DisplayScale, ComputeVerticalScrollOffset() / Device.Current.DisplayScale);
         }
+
+        /// <summary>
+        /// Callback method to be invoked while the list view or grid view is being scrolled. If the view is
+        /// being scrolled, this method will be called before the next frame of the scroll is rendered. In particular,
+        /// it will be called before any calls to GetView(int, View, ViewGroup)
+        /// </summary>
+        /// <param name="view">The view whose scroll state is being reported</param>
+        /// <param name="scrollState">The current scroll state. One of <see cref="ScrollState.TouchScroll"/> or <see cref="ScrollState.Idle"/>.</param>
+        public void OnScrollStateChanged(AbsListView view, ScrollState scrollState) { }
 
         /// <summary>
         /// Forces a reload of the list box's contents.
@@ -636,6 +645,16 @@ namespace Prism.Android.UI.Controls
         public void Reload()
         {
             GetAdapter()?.NotifyDataSetChanged();
+        }
+
+        private ListBoxAdapter GetAdapter()
+        {
+            return Adapter as ListBoxAdapter;
+        }
+
+        private int GetChildAdapterPosition(ListBoxItem child)
+        {
+            return (child.Tag as ListBoxViewHolder)?.AdapterPosition ?? -1;
         }
 
         /// <summary>
@@ -653,7 +672,7 @@ namespace Prism.Android.UI.Controls
 
             if (animate == Prism.UI.Animate.Off || !areAnimationsEnabled)
             {
-                ScrollToPosition(index);
+                SmoothScrollToPositionFromTop(index, 0, 0);
             }
             else
             {
@@ -826,8 +845,8 @@ namespace Prism.Android.UI.Controls
 
         private void OnSeparatorImageLoaded(object sender, EventArgs e)
         {
-            separatorDrawable = separatorBrush.GetDrawable(null);
-            InvalidateItemDecorations();
+            Divider = separatorBrush.GetDrawable(null);
+            DividerHeight = 1;
         }
 
         private void OnItemClicked(global::Android.Views.View view, int position)
@@ -887,7 +906,7 @@ namespace Prism.Android.UI.Controls
                         }
                     }
 
-                    GetAdapter().NotifyItemRangeInserted(e.NewStartingIndex, e.NewItems.Count);
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Move:
                     int startIndex = Math.Min(e.OldStartingIndex, e.NewStartingIndex);
@@ -912,11 +931,7 @@ namespace Prism.Android.UI.Controls
                         }
                     }
 
-                    var adapter = GetAdapter();
-                    for (int i = 0; i < e.NewItems.Count; i++)
-                    {
-                        adapter.NotifyItemMoved(e.OldStartingIndex + i, e.NewStartingIndex + i);
-                    }
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Remove:
                     for (int i = selectedIndices.Count - 1; i >= 0; i--)
@@ -934,10 +949,10 @@ namespace Prism.Android.UI.Controls
                             }
                         }
                     }
-                    GetAdapter().NotifyItemRangeRemoved(e.OldStartingIndex, e.OldItems.Count);
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    GetAdapter().NotifyItemRangeChanged(e.OldStartingIndex, e.OldItems.Count);
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     selectedIndices.Clear();
@@ -978,7 +993,7 @@ namespace Prism.Android.UI.Controls
                         }
                     }
 
-                    GetAdapter().NotifyItemRangeInserted(newStartingIndex, e.NewItems.Count);
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Move:
                     int startIndex = Math.Min(oldStartingIndex, newStartingIndex);
@@ -1003,11 +1018,7 @@ namespace Prism.Android.UI.Controls
                         }
                     }
 
-                    var adapter = GetAdapter();
-                    for (int i = 0; i < e.NewItems.Count; i++)
-                    {
-                        adapter.NotifyItemMoved(oldStartingIndex + i, newStartingIndex + i);
-                    }
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Remove:
                     for (int i = selectedIndices.Count - 1; i >= 0; i--)
@@ -1025,10 +1036,10 @@ namespace Prism.Android.UI.Controls
                             }
                         }
                     }
-                    GetAdapter().NotifyItemRangeRemoved(oldStartingIndex, e.OldItems.Count);
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    GetAdapter().NotifyItemRangeChanged(oldStartingIndex, e.OldItems.Count);
+                    GetAdapter().NotifyDataSetChanged();
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     selectedIndices.Clear();
@@ -1057,9 +1068,10 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private class ListBoxAdapter : Adapter
+
+        private class ListBoxAdapter : BaseAdapter
         {
-            public override int ItemCount
+            public override int Count
             {
                 get
                 {
@@ -1106,8 +1118,10 @@ namespace Prism.Android.UI.Controls
                 return itemIds.Count - 1;
             }
 
-            public override void OnBindViewHolder(ViewHolder holder, int position)
+            public override global::Android.Views.View GetView(int position, global::Android.Views.View convertView, ViewGroup parent)
             {
+                var holder = convertView?.Tag as ListBoxViewHolder ?? new ListBoxViewHolder();
+                holder.AdapterPosition = position;
                 var item = holder.ItemView as ListBoxItem;
                 if (item != null)
                 {
@@ -1117,7 +1131,7 @@ namespace Prism.Android.UI.Controls
                 holder.ItemView?.SetOnClickListener(null);
 
                 var obj = listBox.ItemRequest(listBox.GetItemAtPosition(position), holder.ItemView as INativeListBoxItem);
-                (obj as IRecyclerViewChild)?.SetParent(listBox);
+                (obj as IListBoxChild)?.SetParent(listBox);
 
                 var view = obj as global::Android.Views.View;
                 if (view != null)
@@ -1127,27 +1141,32 @@ namespace Prism.Android.UI.Controls
                 }
 
                 holder.ItemView = view ?? new TextView(listBox.Context) { Text = obj?.ToString() };
-                holder.ItemView.SetOnClickListener(holder as IOnClickListener);
+                holder.ItemView.Tag = holder;
+                holder.ItemView.SetOnClickListener(holder);
 
                 item = holder.ItemView as ListBoxItem;
                 if (item != null)
                 {
                     item.IsSelected = listBox.selectedIndices.Contains(position);
                 }
+                return holder.ItemView;
             }
 
-            public override ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
+            public override Java.Lang.Object GetItem(int position)
             {
-                return new ListBoxViewHolder(listBox.Context);
+                return position;
+            }
+
+            public override long GetItemId(int position)
+            {
+                return position;
             }
         }
 
-        private class ListBoxViewHolder : ViewHolder, IOnClickListener
+        internal class ListBoxViewHolder : Java.Lang.Object, IOnClickListener
         {
-            public ListBoxViewHolder(Context context)
-                : base(new global::Android.Views.View(context))
-            {
-            }
+            public int AdapterPosition { get; set; }
+            public global::Android.Views.View ItemView { get; set; }
 
             public void OnClick(global::Android.Views.View v)
             {
@@ -1156,50 +1175,6 @@ namespace Prism.Android.UI.Controls
                 {
                     parent.OnItemClicked(v, AdapterPosition);
                 }
-            }
-        }
-
-        private class ListBoxItemDecoration : ItemDecoration
-        {
-            private readonly ListBox listBox;
-
-            public ListBoxItemDecoration(ListBox parent)
-            {
-                listBox = parent;
-            }
-
-            public override void OnDrawOver(global::Android.Graphics.Canvas cValue, RecyclerView parent, State state)
-            {
-                base.OnDrawOver(cValue, parent, state);
-
-                for (int i = 0; i < parent.ChildCount - 1; i++)
-                {
-                    int left, top, right, bottom;
-                    int height = (int)Math.Max(1, 0.5 * Device.Current.DisplayScale);
-
-                    var child = parent.GetChildAt(i);
-                    var item = child as INativeListBoxItem;
-                    if (item != null)
-                    {
-                        var indentation = item.SeparatorIndentation * Device.Current.DisplayScale;
-                        left = (int)(child.Left + indentation.Left);
-                        top = (int)(child.Bottom + indentation.Top - indentation.Bottom - height);
-                        right = (int)(child.Right - indentation.Right);
-                        bottom = (int)(top + height);
-                    }
-                    else
-                    {
-                        left = child.Left;
-                        top = (child.Bottom - height);
-                        right = child.Right;
-                        bottom = child.Bottom;
-                    }
-
-                    listBox.separatorDrawable.SetBounds(left, top, right, bottom);
-                    listBox.separatorDrawable.Draw(cValue);
-                }
-
-                parent.Invalidate();
             }
         }
     }
