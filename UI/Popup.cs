@@ -310,8 +310,8 @@ namespace Prism.Android.UI
                 Unloaded.Invoke(this, EventArgs.Empty);
             }
         }
-        
-        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher
+
+        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher, global::Android.Views.View.IOnClickListener
         {            
             public Popup Popup { get; }
 
@@ -330,6 +330,7 @@ namespace Prism.Android.UI
                 Id = 1;
                 LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
 
+                SetOnClickListener(this);
                 SetContent();
             }
             
@@ -350,6 +351,14 @@ namespace Prism.Android.UI
                 this.DispatchTouchEventToChildren(e);
                 IsDispatching = false;
                 return base.DispatchTouchEvent(e);
+            }
+            
+            public void OnClick(global::Android.Views.View v)
+            {
+                if (v != this && v != null && v.Clickable)
+                {
+                    v.PerformClick();
+                }
             }
 
             public override bool OnInterceptTouchEvent(MotionEvent ev)
