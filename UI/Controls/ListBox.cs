@@ -438,7 +438,7 @@ namespace Prism.Android.UI.Controls
                     (separatorBrush as ImageBrush).ClearImageHandler(OnSeparatorImageLoaded);
 
                     separatorBrush = value;
-                    Divider = separatorBrush.GetDrawable(OnSeparatorImageLoaded) ??
+                    separatorDrawable = separatorBrush.GetDrawable(OnSeparatorImageLoaded) ??
                         Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.TextColorPrimary);
 
                     OnPropertyChanged(Prism.UI.Controls.ListBox.SeparatorBrushProperty);
@@ -466,6 +466,7 @@ namespace Prism.Android.UI.Controls
         }
 
         private readonly List<int> selectedIndices;
+        private Drawable separatorDrawable;
         private bool touchEventHandledByChildren;
 
         /// <summary>
@@ -477,6 +478,7 @@ namespace Prism.Android.UI.Controls
             selectedIndices = new List<int>();
             DescendantFocusability = DescendantFocusability.BeforeDescendants;
 
+            Divider = new ListBoxDividerDrawable(this);
             base.Adapter = new ListBoxAdapter(this);
             base.SetOnScrollListener(this);
         }
@@ -845,7 +847,7 @@ namespace Prism.Android.UI.Controls
 
         private void OnSeparatorImageLoaded(object sender, EventArgs e)
         {
-            Divider = separatorBrush.GetDrawable(null);
+            separatorDrawable = separatorBrush.GetDrawable(null);
             DividerHeight = 1;
         }
 
@@ -1175,6 +1177,60 @@ namespace Prism.Android.UI.Controls
                 {
                     parent.OnItemClicked(v, AdapterPosition);
                 }
+            }
+        }
+
+        private class ListBoxDividerDrawable : Drawable
+        {
+            private readonly ListBox listBox;
+
+            public ListBoxItemDecoration(ListBox parent)
+            {
+                listBox = parent;
+            }
+
+            public override void Draw(global::Android.Graphics.Canvas cValue)
+            {
+                for (int i = 0; i < listBox.ChildCount - 1; i++)
+                {
+                    int left, top, right, bottom;
+                    int height = (int)Math.Max(1, 0.5 * Device.Current.DisplayScale);
+
+                    var child = listBox.GetChildAt(i);
+                    var item = child as INativeListBoxItem;
+                    if (item != null)
+                    {
+                        var indentation = item.SeparatorIndentation * Device.Current.DisplayScale;
+                        left = (int)(child.Left + indentation.Left);
+                        top = (int)(child.Bottom + indentation.Top - indentation.Bottom - height);
+                        right = (int)(child.Right - indentation.Right);
+                        bottom = (int)(top + height);
+                    }
+                    else
+                    {
+                        left = child.Left;
+                        top = (child.Bottom - height);
+                        right = child.Right;
+                        bottom = child.Bottom;
+                    }
+
+                    listBox.separatorDrawable.SetBounds(left, top, right, bottom);
+                    listBox.separatorDrawable.Draw(cValue);
+                }
+
+                listBox.Invalidate();
+            }
+
+            public override int Opacity { get { return listBox.separatorDrawable?.Opacity ?? (int)Format.Opaque; } }
+
+            public override void SetAlpha(int alpha)
+            {
+                listBox.separatorDrawable?.SetAlpha(alpha);
+            }
+
+            public override void SetColorFilter(ColorFilter colorFilter)
+            {
+                listBox.separatorDrawable?.SetColorFilter(colorFilter);
             }
         }
     }
