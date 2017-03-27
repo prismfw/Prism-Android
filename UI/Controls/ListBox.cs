@@ -1184,7 +1184,7 @@ namespace Prism.Android.UI.Controls
         {
             private readonly ListBox listBox;
 
-            public ListBoxItemDecoration(ListBox parent)
+            public ListBoxDividerDrawable(ListBox parent)
             {
                 listBox = parent;
             }
