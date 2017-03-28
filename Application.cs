@@ -76,7 +76,7 @@ namespace Prism.Android
                 {
                     throw new InvalidOperationException("Platform has not been properly initialized.  Use the AndroidInitializer class to initialize the platform.");
                 }
-                
+
                 return mainActivity;
             }
             set
@@ -101,10 +101,7 @@ namespace Prism.Android
         /// <summary>
         /// Gets the default theme that is used by the application.
         /// </summary>
-        public Theme DefaultTheme
-        {
-            get { return Theme.Light; }
-        }
+        public Theme DefaultTheme { get; }
 
         /// <summary>
         /// Gets the platform on which the application is running.
@@ -121,8 +118,11 @@ namespace Prism.Android
         {
             MainActivity.Application.RegisterActivityLifecycleCallbacks(new ActivityLifecycleCallbacks(this));
             AppDomain.CurrentDomain.UnhandledException += (o, e) => UnhandledException(this, new ErrorEventArgs(e.ExceptionObject as Exception));
+
+            var textColor = Resources.GetColor(null, Resource.Attribute.TextColorPrimary);
+            DefaultTheme = textColor.GetBrightness() > 0.5f ? Theme.Dark : Theme.Light;
         }
-        
+
         /// <summary>
         /// Returns an <see cref="AssetFileDescriptor"/> for an Android asset.
         /// </summary>
@@ -134,7 +134,7 @@ namespace Prism.Android
             {
                 return null;
             }
-            
+
             try
             {
                 var assetName = assetUri.OriginalString;
@@ -142,7 +142,7 @@ namespace Prism.Android
                 {
                     assetName = assetName.Remove(0, Prism.IO.Directory.AssetDirectory.Length);
                 }
-                
+
                 return MainActivity.Assets.OpenFd(assetName);
             }
             catch
