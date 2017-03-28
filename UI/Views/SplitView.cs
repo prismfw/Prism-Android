@@ -20,8 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using Android.App;
-using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -36,7 +34,7 @@ namespace Prism.Android.UI
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeSplitView))]
-    public class SplitView : Fragment, INativeSplitView
+    public class SplitView : FrameLayout, INativeSplitView, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -96,7 +94,17 @@ namespace Prism.Android.UI
                 if (value != detailContent)
                 {
                     detailContent = value;
-                    contentContainer?.SetDetailView();
+
+                    if (DetailLayout.ChildCount > 0)
+                    {
+                        DetailLayout.RemoveAllViews();
+                    }
+
+                    var view = detailContent as global::Android.Views.View;
+                    if (view != null)
+                    {
+                        DetailLayout.AddView(view);
+                    }
                 }
             }
         }
@@ -108,14 +116,24 @@ namespace Prism.Android.UI
         /// </summary>
         public Rectangle Frame
         {
-            get { return frame; }
+            get
+            {
+                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
+                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
+            }
             set
             {
-                frame = value;
-                contentContainer?.SetFrame();
+                Left = (int)(value.Left * Device.Current.DisplayScale);
+                Top = (int)(value.Top * Device.Current.DisplayScale);
+                Right = (int)(value.Right * Device.Current.DisplayScale);
+                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
             }
         }
-        private Rectangle frame;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -150,7 +168,17 @@ namespace Prism.Android.UI
                 if (value != masterContent)
                 {
                     masterContent = value;
-                    contentContainer?.SetMasterView();
+
+                    if (MasterLayout.ChildCount > 0)
+                    {
+                        MasterLayout.RemoveAllViews();
+                    }
+
+                    var view = masterContent as global::Android.Views.View;
+                    if (view != null)
+                    {
+                        MasterLayout.AddView(view);
+                    }
                 }
             }
         }
@@ -226,13 +254,19 @@ namespace Prism.Android.UI
             {
                 if (value != renderTransform)
                 {
-                    if (contentContainer != null)
-                    {
-                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
-                    }
-                    
+                    (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    contentContainer?.SetTransform();
+
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
+                    {
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
+                    }
+
                     OnPropertyChanged(Visual.RenderTransformProperty);
                 }
             }
@@ -244,16 +278,59 @@ namespace Prism.Android.UI
         /// </summary>
         public Theme RequestedTheme { get; set; }
 
-        private ViewContentContainer contentContainer;
+        /// <summary>
+        /// Gets the layout that contains the detail content.
+        /// </summary>
+        protected FrameLayout DetailLayout { get; }
+
+        /// <summary>
+        /// Gets the layout that contains the master content.
+        /// </summary>
+        protected FrameLayout MasterLayout { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SplitView"/> class.
         /// </summary>
         public SplitView()
+            : base(Application.MainActivity)
         {
-            minMasterWidth = 360;
+            minMasterWidth = 280;
             maxMasterWidth = 360;
-            preferredMasterWidthRatio = 0.3;
+            preferredMasterWidthRatio = 0.35;
+
+            MasterLayout = new FrameLayout(Context) { Id = 1 };
+            AddView(MasterLayout, new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent));
+
+            DetailLayout = new FrameLayout(Context) { Id = 2 };
+            AddView(DetailLayout, new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent));
+
+            LayoutParameters = new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent != null && !parent.IsDispatching)
+            {
+                return false;
+            }
+
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+
+            IsDispatching = true;
+            if (this.DispatchTouchEventToChildren(e))
+            {
+                IsDispatching = false;
+                return true;
+            }
+
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
         }
 
         /// <summary>
@@ -261,7 +338,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void InvalidateArrange()
         {
-            contentContainer?.RequestLayout();
+            RequestLayout();
         }
 
         /// <summary>
@@ -269,7 +346,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void InvalidateMeasure()
         {
-            contentContainer?.RequestLayout();
+            RequestLayout();
         }
 
         /// <summary>
@@ -283,22 +360,58 @@ namespace Prism.Android.UI
         }
 
         /// <summary>
-        /// Called to have the fragment instantiate its user interface view.
+        /// Implement this method to intercept all touch screen motion events.
         /// </summary>
-        /// <param name="inflater"></param>
-        /// <param name="container"></param>
-        /// <param name="savedInstanceState"></param>
-        public override global::Android.Views.View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            if (contentContainer?.Parent != null)
-            {
-                (contentContainer.Parent as ViewGroup)?.RemoveView(contentContainer);
-                return contentContainer;
-            }
+            return !isHitTestVisible;
+        }
 
-            contentContainer = new ViewContentContainer(this);
-            SetMasterWidth();
-            return contentContainer;
+        /// <summary>
+        /// This is called when the view is attached to a window.
+        /// </summary>
+        protected override void OnAttachedToWindow()
+        {
+            base.OnAttachedToWindow();
+            OnLoaded();
+        }
+
+        /// <summary>
+        /// This is called when the view is detached from a window.
+        /// </summary>
+        protected override void OnDetachedFromWindow()
+        {
+            base.OnDetachedFromWindow();
+            OnUnloaded();
+        }
+
+        /// <summary>
+        /// Called from layout when this view should assign a size and position to each of its children.
+        /// </summary>
+        /// <param name="changed"></param>
+        /// <param name="left">Left position, relative to parent.</param>
+        /// <param name="top">Top position, relative to parent.</param>
+        /// <param name="right">Right position, relative to parent.</param>
+        /// <param name="bottom">Bottom position, relative to parent.</param>
+        protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
+        {
+            ArrangeRequest(false, null);
+
+            int width = (int)(left + ActualMasterWidth * Device.Current.DisplayScale);
+            MasterLayout.Layout(left, top, width, bottom);
+            DetailLayout.Layout(width, top, right, bottom);
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>
@@ -308,6 +421,19 @@ namespace Prism.Android.UI
         protected virtual void OnPropertyChanged(PropertyDescriptor pd)
         {
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
+        }
+
+        /// <summary>
+        /// This is called during layout when the size of this view has changed.
+        /// </summary>
+        /// <param name="w">Current width of this view.</param>
+        /// <param name="h">Current height of this view.</param>
+        /// <param name="oldw">Old width of this view.</param>
+        /// <param name="oldh">Old height of this view.</param>
+        protected override void OnSizeChanged(int w, int h, int oldw, int oldh)
+        {
+            base.OnSizeChanged(w, h, oldw, oldh);
+            SetMasterWidth();
         }
 
         private void OnLoaded()
@@ -332,190 +458,26 @@ namespace Prism.Android.UI
 
         private void SetMasterWidth()
         {
-            if (contentContainer != null)
+            var width = (int)Math.Max(minMasterWidth, Math.Min(maxMasterWidth, (Width / Device.Current.DisplayScale) * preferredMasterWidthRatio));
+            if (width != ActualMasterWidth)
             {
-                var width = (int)Math.Max(minMasterWidth, Math.Min(maxMasterWidth, (contentContainer.Width / Device.Current.DisplayScale) * preferredMasterWidthRatio));
-                if (width != ActualMasterWidth)
-                {
-                    ActualMasterWidth = width;
-                    OnPropertyChanged(Prism.UI.SplitView.ActualMasterWidthProperty);
-                }
-
-                var detailWidth = Math.Max(0, (contentContainer.Width / Device.Current.DisplayScale) - width);
-                if (detailWidth != ActualDetailWidth)
-                {
-                    ActualDetailWidth = detailWidth;
-                    OnPropertyChanged(Prism.UI.SplitView.ActualDetailWidthProperty);
-                }
-
-                contentContainer.MasterLayout.Right = (int)(width * Device.Current.DisplayScale);
+                ActualMasterWidth = width;
+                OnPropertyChanged(Prism.UI.SplitView.ActualMasterWidthProperty);
             }
-        }
 
-        private class ViewContentContainer : FrameLayout, IFragmentView, ITouchDispatcher
-        {
-            public FrameLayout DetailLayout { get; }
-
-            public Fragment Fragment
+            var detailWidth = Math.Max(0, (Width / Device.Current.DisplayScale) - width);
+            if (detailWidth != ActualDetailWidth)
             {
-                get { return SplitView; }
-            }
-            
-            public bool IsDispatching { get; private set; }
-
-            public FrameLayout MasterLayout { get; }
-
-            public SplitView SplitView { get; }
-
-            public ViewContentContainer(SplitView splitView)
-                : base(Application.MainActivity)
-            {
-                SplitView = splitView;
-
-                MasterLayout = new FrameLayout(Context) { Id = 1 };
-                AddView(MasterLayout, new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent));
-
-                DetailLayout = new FrameLayout(Context) { Id = 2 };
-                AddView(DetailLayout, new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent));
-
-                LayoutParameters = new ViewGroup.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent);
-
-                SetFrame();
-                SetTransform();
-                SetMasterView();
-                SetDetailView();
-            }
-            
-            public override bool DispatchTouchEvent(MotionEvent e)
-            {
-                var parent = Parent as ITouchDispatcher;
-                if (parent != null && !parent.IsDispatching)
-                {
-                    return false;
-                }
-
-                if (OnInterceptTouchEvent(e))
-                {
-                    return true;
-                }
+                ActualDetailWidth = detailWidth;
+                OnPropertyChanged(Prism.UI.SplitView.ActualDetailWidthProperty);
                 
-                IsDispatching = true;
-                if (this.DispatchTouchEventToChildren(e))
+                if (IsInLayout)
                 {
-                    IsDispatching = false;
-                    return true;
-                }
-                
-                IsDispatching = false;
-                return base.DispatchTouchEvent(e);
-            }
-
-            public override bool OnInterceptTouchEvent(MotionEvent ev)
-            {
-                return SplitView != null && !SplitView.IsHitTestVisible;
-            }
-
-            public void SetDetailView()
-            {
-                var detailFrag = SplitView.DetailContent as Fragment;
-                if (detailFrag != null)
-                {
-                    var transaction = SplitView.ChildFragmentManager.BeginTransaction();
-                    transaction.Replace(2, detailFrag);
-                    transaction.Commit();
-                }
-                else
-                {
-                    if (DetailLayout.ChildCount > 0)
-                    {
-                        DetailLayout.RemoveAllViews();
-                    }
-
-                    var view = SplitView.DetailContent as global::Android.Views.View;
-                    if (view != null)
-                    {
-                        DetailLayout.AddView(view);
-                    }
+                    ArrangeRequest(true, null);
                 }
             }
 
-            public void SetFrame()
-            {
-                Left = (int)(SplitView.frame.Left * Device.Current.DisplayScale);
-                Top = (int)(SplitView.frame.Top * Device.Current.DisplayScale);
-                Right = (int)(SplitView.frame.Right * Device.Current.DisplayScale);
-                Bottom = (int)(SplitView.frame.Bottom * Device.Current.DisplayScale);
-            }
-
-            public void SetMasterView()
-            {
-                var masterFrag = SplitView.MasterContent as Fragment;
-                if (masterFrag != null)
-                {
-                    var transaction = SplitView.ChildFragmentManager.BeginTransaction();
-                    transaction.Replace(1, masterFrag);
-                    transaction.Commit();
-                }
-                else
-                {
-                    if (MasterLayout.ChildCount > 0)
-                    {
-                        MasterLayout.RemoveAllViews();
-                    }
-
-                    var view = SplitView.MasterContent as global::Android.Views.View;
-                    if (view != null)
-                    {
-                        MasterLayout.AddView(view);
-                    }
-                }
-            }
-            
-            public void SetTransform()
-            {
-                var transform = SplitView.renderTransform as Media.Transform;
-                if (transform == null)
-                {
-                    Animation = SplitView.renderTransform as global::Android.Views.Animations.Animation;
-                }
-                else
-                {
-                    transform.AddView(this);
-                }
-            }
-
-            protected override void OnAttachedToWindow()
-            {
-                base.OnAttachedToWindow();
-                SplitView.OnLoaded();
-            }
-
-            protected override void OnDetachedFromWindow()
-            {
-                base.OnDetachedFromWindow();
-                SplitView.OnUnloaded();
-            }
-
-            protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
-            {
-                SplitView.ArrangeRequest(false, null);
-
-                int width = (int)(left + SplitView.ActualMasterWidth * Device.Current.DisplayScale);
-                MasterLayout.Layout(left, top, width, bottom);
-                DetailLayout.Layout(width, top, right, bottom);
-            }
-
-            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
-            {
-                SplitView.MeasureRequest(false, null);
-                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-
-            protected override void OnSizeChanged(int w, int h, int oldw, int oldh)
-            {
-                base.OnSizeChanged(w, h, oldw, oldh);
-                SplitView.SetMasterWidth();
-            }
+            MasterLayout.Right = (int)(width * Device.Current.DisplayScale);
         }
     }
 }

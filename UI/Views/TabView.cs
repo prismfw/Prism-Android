@@ -21,8 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using System.Collections;
-using Android.App;
-using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -39,7 +37,7 @@ namespace Prism.Android.UI
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeTabView))]
-    public class TabView : Fragment, INativeTabView
+    public class TabView : FrameLayout, INativeTabView, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -86,18 +84,18 @@ namespace Prism.Android.UI
         /// <summary>
         /// Gets or sets the background for the view.
         /// </summary>
-        public Brush Background
+        public new Brush Background
         {
             get { return background; }
             set
             {
                 if (value != background)
                 {
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+
                     background = value;
-                    if (contentContainer != null)
-                    {
-                        contentContainer.Background = background;
-                    }
+                    TabLayout.Background = background.GetDrawable(OnBackgroundImageLoaded) ??
+                        Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
 
                     OnPropertyChanged(Prism.UI.TabView.BackgroundProperty);
                 }
@@ -108,24 +106,18 @@ namespace Prism.Android.UI
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the selected tab item.
         /// </summary>
-        public Brush Foreground
+        public new Brush Foreground
         {
-            get { return foreground; }
+            get { return TabLayout.SelectionBrush; }
             set
             {
-                if (value != foreground)
+                if (value != TabLayout.SelectionBrush)
                 {
-                    foreground = value;
-                    if (contentContainer != null)
-                    {
-                        contentContainer.Foreground = foreground;
-                    }
-
+                    TabLayout.SelectionBrush = value;
                     OnPropertyChanged(Prism.UI.TabView.ForegroundProperty);
                 }
             }
         }
-        private Brush foreground;
 
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents
@@ -133,14 +125,28 @@ namespace Prism.Android.UI
         /// </summary>
         public Rectangle Frame
         {
-            get { return frame; }
+            get
+            {
+                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
+                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
+            }
             set
             {
-                frame = value;
-                contentContainer?.SetFrame();
+                Left = (int)(value.Left * Device.Current.DisplayScale);
+                Top = (int)(value.Top * Device.Current.DisplayScale);
+                Right = (int)(value.Right * Device.Current.DisplayScale);
+                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
+
+                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
+                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
+                Layout(Left, Top, Right, Bottom);
             }
         }
-        private Rectangle frame;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -179,13 +185,19 @@ namespace Prism.Android.UI
             {
                 if (value != renderTransform)
                 {
-                    if (contentContainer != null)
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
                     {
-                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
                     }
 
-                    renderTransform = value;
-                    contentContainer?.SetTransform();
                     OnPropertyChanged(Visual.RenderTransformProperty);
                 }
             }
@@ -202,13 +214,13 @@ namespace Prism.Android.UI
         /// </summary>
         public int SelectedIndex
         {
-            get { return contentContainer?.TabLayout.SelectedTabIndex ?? selectedIndex; }
+            get { return TabLayout.SelectedTabIndex; }
             set
             {
                 if (value != selectedIndex)
                 {
                     selectedIndex = value;
-                    contentContainer?.TabLayout.SelectTabAt(selectedIndex);
+                    TabLayout.SelectTabAt(selectedIndex);
                 }
             }
         }
@@ -221,15 +233,10 @@ namespace Prism.Android.UI
         {
             get
             {
-                if (contentContainer == null)
-                {
-                    return new Rectangle();
-                }
-
-                return new Rectangle(contentContainer.TabLayout.Left / Device.Current.DisplayScale,
-                    contentContainer.TabLayout.Top / Device.Current.DisplayScale,
-                    contentContainer.TabLayout.Width / Device.Current.DisplayScale,
-                    contentContainer.TabLayout.Height / Device.Current.DisplayScale);
+                return new Rectangle(TabLayout.Left / Device.Current.DisplayScale,
+                    TabLayout.Top / Device.Current.DisplayScale,
+                    TabLayout.Width / Device.Current.DisplayScale,
+                    TabLayout.Height / Device.Current.DisplayScale);
             }
         }
 
@@ -242,14 +249,55 @@ namespace Prism.Android.UI
         }
         private readonly TabItemCollection tabItems;
 
-        private ViewContentContainer contentContainer;
+        private FrameLayout FrameLayout { get; }
+
+        private TabLayout TabLayout { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TabView"/> class.
         /// </summary>
         public TabView()
+            : base(Application.MainActivity)
         {
-            tabItems = new TabItemCollection(new TabLayout(Application.MainActivity));
+            TabLayout = new TabLayout(Context);
+            FrameLayout = new FrameLayout(Context) { Id = 1 };
+
+            tabItems = new TabItemCollection(TabLayout);
+
+            Focusable = true;
+            FocusableInTouchMode = true;
+            LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+
+            AddView(TabLayout, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+            AddView(FrameLayout, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+
+            TabLayout.TabSelected += OnTabSelected;
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent != null && !parent.IsDispatching)
+            {
+                return false;
+            }
+
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+
+            IsDispatching = true;
+            if (this.DispatchTouchEventToChildren(e))
+            {
+                IsDispatching = false;
+                return true;
+            }
+
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
         }
 
         /// <summary>
@@ -257,7 +305,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void InvalidateArrange()
         {
-            contentContainer?.RequestLayout();
+            RequestLayout();
         }
 
         /// <summary>
@@ -265,7 +313,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void InvalidateMeasure()
         {
-            contentContainer?.RequestLayout();
+            RequestLayout();
         }
 
         /// <summary>
@@ -278,43 +326,58 @@ namespace Prism.Android.UI
         }
 
         /// <summary>
-        /// Called when the fragment's activity has been created and this fragment's view hierarchy instantiated.
+        /// Implement this method to intercept all touch screen motion events.
         /// </summary>
-        /// <param name="savedInstanceState"></param>
-        public override void OnActivityCreated(Bundle savedInstanceState)
+        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            try
-            {
-                // There appears to be a known bug in Android where fragments with a child fragment manager may throw
-                // a 'No Activity' exception when the fragment's activity is created.
-                // The suggested fix is to nullify the child fragment manager before activity creation.
-                var field = Class.Superclass.GetDeclaredField("mChildFragmentManager");
-                field.Accessible = true;
-                field.Set(this, null);
-            }
-            catch
-            {
-                Prism.Utilities.Logger.Warn("Unable to perform fragment cleanup.  This may lead to unexpected runtime errors.");
-            }
-
-            base.OnActivityCreated(savedInstanceState);
+            return !isHitTestVisible;
         }
 
         /// <summary>
-        /// Called to have the fragment instantiate its user interface view.
+        /// This is called when the view is attached to a window.
         /// </summary>
-        /// <param name="inflater"></param>
-        /// <param name="container"></param>
-        /// <param name="savedInstanceState"></param>
-        public override global::Android.Views.View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        protected override void OnAttachedToWindow()
         {
-            if (contentContainer == null)
-            {
-                return (contentContainer = new ViewContentContainer(this));
-            }
+            base.OnAttachedToWindow();
+            OnLoaded();
+        }
 
-            (contentContainer.Parent as ViewGroup)?.RemoveView(contentContainer);
-            return contentContainer;
+        /// <summary>
+        /// This is called when the view is detached from a window.
+        /// </summary>
+        protected override void OnDetachedFromWindow()
+        {
+            base.OnDetachedFromWindow();
+            OnUnloaded();
+        }
+
+        /// <summary>
+        /// Called from layout when this view should assign a size and position to each of its children.
+        /// </summary>
+        /// <param name="changed"></param>
+        /// <param name="left">Left position, relative to parent.</param>
+        /// <param name="top">Top position, relative to parent.</param>
+        /// <param name="right">Right position, relative to parent.</param>
+        /// <param name="bottom">Bottom position, relative to parent.</param>
+        protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
+        {
+            TabLayout.Layout(0, 0, right - left, TabLayout.MeasuredHeight);
+
+            ArrangeRequest(false, null);
+
+            FrameLayout.Layout(0, TabLayout.Bottom, right - left, bottom - top);
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>
@@ -326,9 +389,15 @@ namespace Prism.Android.UI
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
+        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        {
+            TabLayout.Background = background.GetDrawable(null) ??
+                Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
+        }
+
         private void OnLoaded()
         {
-            contentContainer?.SetContent((tabItems[SelectedIndex] as INativeTabItem)?.Content);
+            SetContent((tabItems[SelectedIndex] as INativeTabItem)?.Content);
             if (!IsLoaded)
             {
                 IsLoaded = true;
@@ -347,9 +416,9 @@ namespace Prism.Android.UI
 
             TabItemSelected(this, new NativeItemSelectedEventArgs(e.OldTab, e.NewTab));
 
-            if (changed)
+            if (changed || FrameLayout.ChildCount == 0)
             {
-                contentContainer?.SetContent((e.NewTab as INativeTabItem)?.Content);
+                SetContent((e.NewTab as INativeTabItem)?.Content);
             }
         }
 
@@ -363,166 +432,14 @@ namespace Prism.Android.UI
             }
         }
 
-        private class ViewContentContainer : LinearLayout, IFragmentView, ITouchDispatcher
+        private void SetContent(object content)
         {
-            public new Brush Background
+            FrameLayout.RemoveAllViews();
+
+            var view = content as global::Android.Views.View;
+            if (view != null)
             {
-                get { return background; }
-                set
-                {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
-
-                    background = value;
-                    TabLayout.Background = background.GetDrawable(OnBackgroundImageLoaded) ??
-                        Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
-                }
-            }
-            private Brush background;
-
-            public new Brush Foreground
-            {
-                get { return TabLayout.SelectionBrush; }
-                set { TabLayout.SelectionBrush = value; }
-            }
-
-            public Fragment Fragment
-            {
-                get { return TabView; }
-            }
-
-            public FrameLayout FrameLayout { get; }
-
-            public bool IsDispatching { get; private set; }
-
-            public TabLayout TabLayout { get; }
-
-            public TabView TabView { get; }
-
-            public ViewContentContainer(TabView tabView)
-                : base(Application.MainActivity)
-            {
-                TabView = tabView;
-                TabLayout = tabView.tabItems.TabLayout;
-                FrameLayout = new FrameLayout(Context) { Id = 1 };
-
-                Background = tabView.Background;
-                Focusable = true;
-                FocusableInTouchMode = true;
-                Foreground = tabView.Foreground;
-                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-                Orientation = global::Android.Widget.Orientation.Vertical;
-
-                AddView(TabLayout, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-                AddView(FrameLayout, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
-                SetFrame();
-                SetTransform();
-
-                TabLayout.TabSelected += TabView.OnTabSelected;
-                TabLayout.SelectTabAt(TabView.SelectedIndex);
-            }
-
-            public override bool DispatchTouchEvent(MotionEvent e)
-            {
-                var parent = Parent as ITouchDispatcher;
-                if (parent != null && !parent.IsDispatching)
-                {
-                    return false;
-                }
-
-                if (OnInterceptTouchEvent(e))
-                {
-                    return true;
-                }
-
-                IsDispatching = true;
-                if (this.DispatchTouchEventToChildren(e))
-                {
-                    IsDispatching = false;
-                    return true;
-                }
-
-                IsDispatching = false;
-                return base.DispatchTouchEvent(e);
-            }
-
-            public override bool OnInterceptTouchEvent(MotionEvent ev)
-            {
-                return TabView != null && !TabView.IsHitTestVisible;
-            }
-
-            public void SetContent(object content)
-            {
-                FrameLayout.RemoveAllViews();
-                var view = content as global::Android.Views.View;
-                if (view != null)
-                {
-                    FrameLayout.AddView(view);
-                }
-                else
-                {
-                    var fragment = content as Fragment;
-                    if (fragment != null)
-                    {
-                        var transaction = TabView.ChildFragmentManager.BeginTransaction();
-                        transaction.Replace(1, fragment);
-                        transaction.Commit();
-                    }
-                }
-            }
-
-            public void SetFrame()
-            {
-                Left = (int)(TabView.frame.Left * Device.Current.DisplayScale);
-                Top = (int)(TabView.frame.Top * Device.Current.DisplayScale);
-                Right = (int)(TabView.frame.Right * Device.Current.DisplayScale);
-                Bottom = (int)(TabView.frame.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
-            }
-
-            public void SetTransform()
-            {
-                var transform = TabView.renderTransform as Media.Transform;
-                if (transform == null)
-                {
-                    Animation = TabView.renderTransform as global::Android.Views.Animations.Animation;
-                }
-                else
-                {
-                    transform.AddView(this);
-                }
-            }
-
-            protected override void OnAttachedToWindow()
-            {
-                base.OnAttachedToWindow();
-                TabView.OnLoaded();
-            }
-
-            protected override void OnDetachedFromWindow()
-            {
-                base.OnDetachedFromWindow();
-                TabView.OnUnloaded();
-            }
-
-            protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
-            {
-                TabView.ArrangeRequest(false, null);
-                base.OnLayout(changed, left, top, right, bottom);
-            }
-
-            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
-            {
-                TabView.MeasureRequest(false, null);
-                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-
-            private void OnBackgroundImageLoaded(object sender, EventArgs e)
-            {
-                TabLayout.Background = background.GetDrawable(null) ??
-                    Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
+                FrameLayout.AddView(view);
             }
         }
     }

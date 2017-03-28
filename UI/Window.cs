@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content;
+using Android.Content.Res;
 using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
@@ -96,18 +97,12 @@ namespace Prism.Android.UI
                     return;
                 }
 
-                var view = content as global::Android.Views.View ?? Application.MainActivity.FindViewById<FrameLayout>(1);
-                if (view != null)
-                {
-                    view.LayoutChange -= OnLayoutChanged;
-                }
-
                 content = value;
 
-                view = value as global::Android.Views.View;
+                var view = value as global::Android.Views.View;
                 if (view != null)
                 {
-                    view.LayoutChange += OnLayoutChanged;
+                    view.SetFitsSystemWindows(true);
                     Application.MainActivity.SetContentView(view);
                     return;
                 }
@@ -121,7 +116,6 @@ namespace Prism.Android.UI
                         LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent)
                     };
                     fl.SetFitsSystemWindows(true);
-                    fl.LayoutChange += OnLayoutChanged;
 
                     Application.MainActivity.SetContentView(fl);
 
@@ -138,12 +132,7 @@ namespace Prism.Android.UI
         /// </summary>
         public double Height
         {
-            get
-            {
-                Rect frame = new Rect();
-                Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
-                return frame.Height() / Device.Current.DisplayScale;
-            }
+            get { return Application.MainActivity.Resources.Configuration.ScreenHeightDp; }
         }
 
         /// <summary>
@@ -172,14 +161,10 @@ namespace Prism.Android.UI
         /// </summary>
         public double Width
         {
-            get
-            {
-                Rect frame = new Rect();
-                Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
-                return frame.Width() / Device.Current.DisplayScale;
-            }
+            get { return Application.MainActivity.Resources.Configuration.ScreenWidthDp; }
         }
 
+        private global::Android.Content.Res.Orientation currentOrientation;
         private Size currentSize;
 
         /// <summary>
@@ -199,6 +184,10 @@ namespace Prism.Android.UI
             };
 
             Application.MainActivity.Window.Callback = new MainWindowCallback();
+
+            var config = Application.MainActivity.Resources.Configuration;
+            currentSize = new Size(config.ScreenWidthDp, config.ScreenHeightDp);
+            currentOrientation = config.Orientation;
         }
 
         /// <summary>
@@ -249,17 +238,15 @@ namespace Prism.Android.UI
             Deactivated?.Invoke(this, EventArgs.Empty);
         }
         
-        internal void OnOrientationChanged(global::Android.Content.Res.Orientation orientation)
+        internal void OnConfigurationChanged(Configuration config)
         {
-            OrientationChanged(this, new DisplayOrientationChangedEventArgs(orientation.GetDisplayOrientations()));
-        }
+            if (currentOrientation != config.Orientation)
+            {
+                OrientationChanged(this, new DisplayOrientationChangedEventArgs(config.Orientation.GetDisplayOrientations()));
+                currentOrientation = config.Orientation;
+            }
 
-        private void OnLayoutChanged(object sender, global::Android.Views.View.LayoutChangeEventArgs e)
-        {
-            Rect frame = new Rect();
-            Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
-
-            var newSize = new Size((frame.Right - frame.Left) / Device.Current.DisplayScale, (frame.Bottom - frame.Top) / Device.Current.DisplayScale);
+            var newSize = new Size(config.ScreenWidthDp, config.ScreenHeightDp);
             if (currentSize != newSize)
             {
                 SizeChanged(this, new WindowSizeChangedEventArgs(currentSize, newSize));
@@ -303,30 +290,7 @@ namespace Prism.Android.UI
         {
             if ((e.KeyCode == Keycode.Back || (e.Flags & KeyEventFlags.VirtualHardKey) != 0) && e.Action == KeyEventActions.Up)
             {
-                var appContent = ObjectRetriever.GetNativeObject(Prism.UI.Window.Current.Content);
-
-                var stack = appContent as INativeViewStack;
-                if (stack == null)
-                {
-                    var splitView = appContent as INativeSplitView;
-                    if (splitView != null)
-                    {
-                        stack = splitView.DetailContent as INativeViewStack;
-                        if (stack == null || !stack.IsBackButtonEnabled || stack.Views.Count() < 2)
-                        {
-                            stack = splitView.MasterContent as INativeViewStack;
-                        }
-                    }
-                    else
-                    {
-                        var tabView = appContent as INativeTabView;
-                        if (tabView != null)
-                        {
-                            stack = (tabView.TabItems[tabView.SelectedIndex] as INativeTabItem)?.Content as INativeViewStack;
-                        }
-                    }
-                }
-                
+                var stack = GetViewStack(ObjectRetriever.GetNativeObject(Prism.UI.Window.Current.Content));
                 if (stack != null && stack.IsBackButtonEnabled && stack.Views.Count() > 1)
                 {
                     stack.PopView(Animate.Default);
@@ -498,6 +462,31 @@ namespace Prism.Android.UI
         /// <param name="type"></param>
         public virtual ActionMode OnWindowStartingActionMode(ActionMode.ICallback callback, ActionModeType type)
         {
+            return null;
+        }
+
+        private INativeViewStack GetViewStack(object obj)
+        {
+            var vs = obj as INativeViewStack;
+            if (vs != null && vs.IsBackButtonEnabled && vs.Views.Count() > 1)
+            {
+                return vs;
+            }
+
+            var sv = obj as INativeSplitView;
+            if (sv != null)
+            {
+                return GetViewStack(sv.DetailContent) ?? GetViewStack(sv.MasterContent);
+            }
+            else
+            {
+                var tv = obj as INativeTabView;
+                if (tv != null)
+                {
+                    return GetViewStack((tv.TabItems[tv.SelectedIndex] as INativeTabItem)?.Content);
+                }
+            }
+
             return null;
         }
     }

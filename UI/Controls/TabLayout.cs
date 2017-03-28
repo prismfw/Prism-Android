@@ -50,7 +50,7 @@ namespace Prism.Android.UI.Controls
         }
         private Brush selectionBrush;
 
-        public int SelectedTabIndex { get; private set; }
+        public int SelectedTabIndex { get; private set; } = -1;
 
         public int TabCount
         {
@@ -74,6 +74,11 @@ namespace Prism.Android.UI.Controls
             {
                 e.Child.Click -= OnTabSelected;
                 e.Child.Click += OnTabSelected;
+
+                if (((e.Parent as ViewGroup)?.ChildCount ?? 0) == 1)
+                {
+                    OnTabSelected(e.Child, EventArgs.Empty);
+                }
             };
 
             innerLayout.ChildViewRemoved += (sender, e) =>
@@ -179,7 +184,7 @@ namespace Prism.Android.UI.Controls
                 int oldIndex = SelectedTabIndex;
                 SelectedTabIndex = index;
 
-                isSelecting = oldIndex != index;
+                isSelecting = oldIndex >= 0 && oldIndex != index;
 
                 Invalidate();
                 TabSelected?.Invoke(this, new TabSelectedEventArgs(oldIndex < 0 ? null : innerLayout.GetChildAt(oldIndex), tab));

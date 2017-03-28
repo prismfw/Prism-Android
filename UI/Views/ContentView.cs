@@ -20,8 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using Android.App;
-using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -37,7 +35,7 @@ namespace Prism.Android.UI
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeContentView))]
-    public class ContentView : Fragment, INativeContentView, IViewStackChild
+    public class ContentView : FrameLayout, INativeContentView, IViewStackChild, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -79,18 +77,17 @@ namespace Prism.Android.UI
         /// <summary>
         /// Gets or sets the background for the view.
         /// </summary>
-        public Brush Background
+        public new Brush Background
         {
             get { return background; }
             set
             {
                 if (value != background)
                 {
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+
                     background = value;
-                    if (contentContainer != null)
-                    {
-                        contentContainer.Background = background;
-                    }
+                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
 
                     OnPropertyChanged(Prism.UI.ContentView.BackgroundProperty);
                 }
@@ -107,15 +104,12 @@ namespace Prism.Android.UI
             set
             {
                 content = value;
-                if (contentContainer != null)
-                {
-                    contentContainer.RemoveAllViews();
+                RemoveAllViews();
 
-                    var view = content as global::Android.Views.View;
-                    if (view != null)
-                    {
-                        contentContainer.AddView(view, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
-                    }
+                var view = content as global::Android.Views.View;
+                if (view != null)
+                {
+                    AddView(view, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
                 }
             }
         }
@@ -127,14 +121,28 @@ namespace Prism.Android.UI
         /// </summary>
         public Rectangle Frame
         {
-            get { return frame; }
+            get
+            {
+                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
+                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
+            }
             set
             {
-                frame = value;
-                contentContainer?.SetFrame();
+                Left = (int)(value.Left * Device.Current.DisplayScale);
+                Top = (int)(value.Top * Device.Current.DisplayScale);
+                Right = (int)(value.Right * Device.Current.DisplayScale);
+                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
+
+                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
+                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
+                Layout(Left, Top, Right, Bottom);
             }
         }
-        private Rectangle frame;
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is currently dispatching touch events.
+        /// </summary>
+        public bool IsDispatching { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -175,7 +183,7 @@ namespace Prism.Android.UI
                 {
                     menu = value;
 
-                    var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
+                    var header = this.GetParent<INativeViewStack>()?.Header as Controls.ViewStackHeader;
                     if (header != null)
                     {
                         header.Menu = menu as Controls.ActionMenu;
@@ -197,13 +205,19 @@ namespace Prism.Android.UI
             {
                 if (value != renderTransform)
                 {
-                    if (contentContainer != null)
+                    (renderTransform as Media.Transform)?.RemoveView(this);
+                    renderTransform = value;
+
+                    var transform = renderTransform as Media.Transform;
+                    if (transform == null)
                     {
-                        (renderTransform as Media.Transform)?.RemoveView(contentContainer);
+                        Animation = renderTransform as global::Android.Views.Animations.Animation;
+                    }
+                    else
+                    {
+                        transform.AddView(this);
                     }
 
-                    renderTransform = value;
-                    contentContainer?.SetTransform();
                     OnPropertyChanged(Visual.RenderTransformProperty);
                 }
             }
@@ -227,7 +241,7 @@ namespace Prism.Android.UI
                 {
                     title = value;
 
-                    var stack = ParentFragment as INativeViewStack;
+                    var stack = this.GetParent<INativeViewStack>();
                     if (stack != null)
                     {
                         stack.Header.Title = title;
@@ -244,13 +258,41 @@ namespace Prism.Android.UI
         /// </summary>
         public object ViewStack { get; set; }
 
-        private ViewContentContainer contentContainer;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ContentView"/> class.
         /// </summary>
         public ContentView()
+            : base(Application.MainActivity)
         {
+                Focusable = true;
+                FocusableInTouchMode = true;
+                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
+        }
+
+        /// <summary></summary>
+        /// <param name="e"></param>
+        public override bool DispatchTouchEvent(MotionEvent e)
+        {
+            var parent = Parent as ITouchDispatcher;
+            if (parent != null && !parent.IsDispatching)
+            {
+                return false;
+            }
+
+            if (OnInterceptTouchEvent(e))
+            {
+                return true;
+            }
+
+            IsDispatching = true;
+            if (this.DispatchTouchEventToChildren(e))
+            {
+                IsDispatching = false;
+                return true;
+            }
+
+            IsDispatching = false;
+            return base.DispatchTouchEvent(e);
         }
 
         /// <summary>
@@ -258,7 +300,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void InvalidateArrange()
         {
-            contentContainer?.RequestLayout();
+            RequestLayout();
         }
 
         /// <summary>
@@ -266,7 +308,7 @@ namespace Prism.Android.UI
         /// </summary>
         public void InvalidateMeasure()
         {
-            contentContainer?.RequestLayout();
+            RequestLayout();
         }
 
         /// <summary>
@@ -279,43 +321,60 @@ namespace Prism.Android.UI
         }
 
         /// <summary>
-        /// Called when the fragment's activity has been created and this fragment's view hierarchy instantiated.
+        /// Implement this method to intercept all touch screen motion events.
         /// </summary>
-        /// <param name="savedInstanceState"></param>
-        public override void OnActivityCreated(Bundle savedInstanceState)
+        /// <param name="ev">The motion event being dispatched down the hierarchy.</param>
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            try
-            {
-                // There appears to be a known bug in Android where fragments with a child fragment manager may throw
-                // a 'No Activity' exception when the fragment's activity is created.
-                // The suggested fix is to nullify the child fragment manager before activity creation.
-                var field = Class.Superclass.GetDeclaredField("mChildFragmentManager");
-                field.Accessible = true;
-                field.Set(this, null);
-            }
-            catch
-            {
-                Prism.Utilities.Logger.Warn("Unable to perform fragment cleanup.  This may lead to unexpected runtime errors.");
-            }
-
-            base.OnActivityCreated(savedInstanceState);
+            return !isHitTestVisible;
+        }
+        
+        /// <summary>
+        /// This is called when the view is attached to a window.
+        /// </summary>
+        protected override void OnAttachedToWindow()
+        {
+            base.OnAttachedToWindow();
+            OnLoaded();
         }
 
         /// <summary>
-        /// Called to have the fragment instantiate its user interface view.
+        /// This is called when the view is detached from a window.
         /// </summary>
-        /// <param name="inflater"></param>
-        /// <param name="container"></param>
-        /// <param name="savedInstanceState"></param>
-        public override global::Android.Views.View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        protected override void OnDetachedFromWindow()
         {
-            if (contentContainer?.Parent != null)
-            {
-                (contentContainer.Parent as ViewGroup)?.RemoveView(contentContainer);
-                return contentContainer;
-            }
+            base.OnDetachedFromWindow();
+            OnUnloaded();
+        }
 
-            return (contentContainer = new ViewContentContainer(this));
+        /// <summary>
+        /// Called from layout when this view should assign a size and position to each of its children.
+        /// </summary>
+        /// <param name="changed"></param>
+        /// <param name="left">Left position, relative to parent.</param>
+        /// <param name="top">Top position, relative to parent.</param>
+        /// <param name="right">Right position, relative to parent.</param>
+        /// <param name="bottom">Bottom position, relative to parent.</param>
+        protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
+        {
+            ArrangeRequest(false, null);
+
+            for (int i = 0; i < ChildCount; i++)
+            {
+                var child = GetChildAt(i);
+                child.Layout(child.Left, child.Top, child.Right, child.Bottom);
+            }
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>
@@ -327,6 +386,11 @@ namespace Prism.Android.UI
             PropertyChanged.Invoke(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
+        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        {
+            base.Background = background.GetDrawable(null);
+        }
+
         private void OnLoaded()
         {
             if (!IsLoaded)
@@ -336,7 +400,7 @@ namespace Prism.Android.UI
                 Loaded.Invoke(this, EventArgs.Empty);
             }
 
-            var header = (ParentFragment as INativeViewStack)?.Header as Controls.ViewStackHeader;
+            var header = this.GetParent<INativeViewStack>()?.Header as Controls.ViewStackHeader;
             if (header != null)
             {
                 header.Menu = menu as Controls.ActionMenu;
@@ -350,140 +414,6 @@ namespace Prism.Android.UI
                 IsLoaded = false;
                 OnPropertyChanged(Visual.IsLoadedProperty);
                 Unloaded.Invoke(this, EventArgs.Empty);
-            }
-        }
-
-        private class ViewContentContainer : RelativeLayout, IFragmentView, ITouchDispatcher
-        {
-            public new Brush Background
-            {
-                get { return background; }
-                set
-                {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
-
-                    background = value;
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
-                }
-            }
-            private Brush background;
-
-            public ContentView ContentView { get; }
-
-            public Fragment Fragment
-            {
-                get { return ContentView; }
-            }
-
-            public bool IsDispatching { get; private set; }
-
-            public ViewContentContainer(ContentView contentView)
-                : base(Application.MainActivity)
-            {
-                ContentView = contentView;
-
-                Background = contentView.Background;
-                Focusable = true;
-                FocusableInTouchMode = true;
-                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent);
-
-                var view = contentView.Content as global::Android.Views.View;
-                if (view != null)
-                {
-                    (view.Parent as ViewGroup)?.RemoveView(view);
-                    AddView(view);
-                }
-
-                SetFrame();
-                SetTransform();
-            }
-
-            public override bool DispatchTouchEvent(MotionEvent e)
-            {
-                var parent = Parent as ITouchDispatcher;
-                if (parent != null && !parent.IsDispatching)
-                {
-                    return false;
-                }
-
-                if (OnInterceptTouchEvent(e))
-                {
-                    return true;
-                }
-
-                IsDispatching = true;
-                if (this.DispatchTouchEventToChildren(e))
-                {
-                    IsDispatching = false;
-                    return true;
-                }
-
-                IsDispatching = false;
-                return base.DispatchTouchEvent(e);
-            }
-
-            public override bool OnInterceptTouchEvent(MotionEvent ev)
-            {
-                return ContentView != null && !ContentView.IsHitTestVisible;
-            }
-
-            public void SetFrame()
-            {
-                Left = (int)(ContentView.frame.Left * Device.Current.DisplayScale);
-                Top = (int)(ContentView.frame.Top * Device.Current.DisplayScale);
-                Right = (int)(ContentView.frame.Right * Device.Current.DisplayScale);
-                Bottom = (int)(ContentView.frame.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
-            }
-
-            public void SetTransform()
-            {
-                var transform = ContentView.renderTransform as Media.Transform;
-                if (transform == null)
-                {
-                    Animation = ContentView.renderTransform as global::Android.Views.Animations.Animation;
-                }
-                else
-                {
-                    transform.AddView(this);
-                }
-            }
-
-            protected override void OnAttachedToWindow()
-            {
-                base.OnAttachedToWindow();
-                ContentView.OnLoaded();
-            }
-
-            protected override void OnDetachedFromWindow()
-            {
-                base.OnDetachedFromWindow();
-                ContentView.OnUnloaded();
-            }
-
-            protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
-            {
-                ContentView.ArrangeRequest(false, null);
-
-                for (int i = 0; i < ChildCount; i++)
-                {
-                    var child = GetChildAt(i);
-                    child.Layout(child.Left, child.Top, child.Right, child.Bottom);
-                }
-            }
-
-            protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
-            {
-                ContentView.MeasureRequest(false, null);
-                base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-
-            private void OnBackgroundImageLoaded(object sender, EventArgs e)
-            {
-                base.Background = background.GetDrawable(null);
             }
         }
     }

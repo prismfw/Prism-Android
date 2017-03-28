@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using Android.Content;
 using Android.Graphics;
 using Android.Runtime;
+using Android.Text;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -318,13 +319,21 @@ namespace Prism.Android.UI.Controls
         {
             Focusable = true;
             
-            BackButton = new ImageView(context) { Clickable = true, Focusable = true };
+            BackButton = new ImageView(context)
+            {
+                Clickable = true,
+                Focusable = true
+            };
             BackButton.SetColorFilter(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
             BackButton.SetImageDrawable(Android.Resources.GetDrawable(this, BackButtonKey + "|" + BackButtonAltKey));
             BackButton.Visibility = ViewStates.Gone;
             AddView(BackButton, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent));
 
-            TitleView = new TextView(context) { Typeface = Typeface.Default };
+            TitleView = new TextView(context)
+            {
+                Ellipsize = TextUtils.TruncateAt.End,
+                Typeface = Typeface.Default
+            };
             TitleView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
             AddView(TitleView, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent));
             
@@ -418,14 +427,14 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout (bool changed, int left, int top, int right, int bottom)
         {
-            ArrangeRequest(false, null);
+            ArrangeRequest(changed, null);
 
             base.OnLayout(changed, left, top, right, bottom);
             SetItemPositions();
             for (int i = 0; i < ChildCount; i++)
             {
                 var child = GetChildAt(i);
-                child.Layout(child.Left, child.Top, child.Left + child.MeasuredWidth, child.Top + child.MeasuredHeight);
+                child.Layout(child.Left, child.Top, child.Right, child.Bottom);
             }
         }
         
@@ -502,41 +511,56 @@ namespace Prism.Android.UI.Controls
             if (Height >= (int)(64 * scale))
             {
                 BackButton.Left = (int)(24 * scale);
-                BackButton.Top = Math.Min((int)(20 * scale), (Height - BackButton.Height) / 2);
-                TitleView.Left = (int)((BackButton.Visibility == ViewStates.Visible ? 72 : 24) * scale);
-                TitleView.Top = Math.Max(Height - (TitleView.Height + (int)(24 * scale)), (Height - TitleView.Height) / 2);
+                BackButton.Top = Math.Min((int)(20 * scale), (Height - BackButton.MeasuredHeight) / 2);
                 
+                TitleView.Left = (int)((BackButton.Visibility == ViewStates.Visible && BackButton.Drawable != null ? 72 : 24) * scale);
+                TitleView.Top = Math.Max(Height - (TitleView.MeasuredHeight + (int)(24 * scale)), (Height - TitleView.MeasuredHeight) / 2);
+
+                int right = Width - BackButton.Left;
                 if (menuButtons != null)
                 {
-                    int right = Width - BackButton.Left;
                     foreach (var button in menuButtons)
                     {
-                        button.Left = right - button.Width;
-                        button.Top = Math.Min((int)(20 * scale), (Height - button.Height) / 2);
+                        button.Left = right - button.MeasuredWidth;
+                        button.Top = Math.Min((int)(20 * scale), (Height - button.MeasuredHeight) / 2);
+                        button.Right = right;
+                        button.Bottom = button.Top + button.MeasuredHeight;
                         
-                        right = Math.Max(button.Left - (int)(20 * scale), TitleView.Right);
+                        right = Math.Max(button.Left - (int)(20 * scale), BackButton.Left + BackButton.MeasuredWidth);
                     }
                 }
+
+                TitleView.Right = Math.Min(TitleView.Left + TitleView.MeasuredWidth, right);
             }
             else
             {
                 BackButton.Left = (int)(16 * scale);
-                BackButton.Top = Math.Min(BackButton.Left, (Height - BackButton.Height) / 2);
-                TitleView.Left = (int)((BackButton.Visibility == ViewStates.Visible ? 64 : 16) * scale);
-                TitleView.Top = Math.Max(Height - (TitleView.Height + (int)(20 * scale)), (Height - TitleView.Height) / 2);
+                BackButton.Top = Math.Min(BackButton.Left, (Height - BackButton.MeasuredHeight) / 2);
                 
+                TitleView.Left = (int)((BackButton.Visibility == ViewStates.Visible && BackButton.Drawable != null ? 64 : 16) * scale);
+                TitleView.Top = Math.Max(Height - (TitleView.MeasuredHeight + (int)(20 * scale)), (Height - TitleView.MeasuredHeight) / 2);
+
+                int right = Width - BackButton.Left;
                 if (menuButtons != null)
                 {
-                    int right = Width - BackButton.Left;
                     foreach (var button in menuButtons)
                     {
-                        button.Left = right - button.Width;
-                        button.Top = Math.Min(BackButton.Left, (Height - button.Height) / 2);
+                        button.Left = right - button.MeasuredWidth;
+                        button.Top = Math.Min(BackButton.Left, (Height - button.MeasuredHeight) / 2);
+                        button.Right = right;
+                        button.Bottom = button.Top + button.MeasuredHeight;
                         
-                        right = Math.Max(button.Left - (int)(20 * scale), TitleView.Right);
+                        right = Math.Max(button.Left - (int)(20 * scale), TitleView.Left + TitleView.MeasuredWidth);
                     }
                 }
+
+                TitleView.Right = Math.Min(TitleView.Left + TitleView.MeasuredWidth, right);
             }
+
+            BackButton.Right = BackButton.Left + BackButton.MeasuredWidth;
+            BackButton.Bottom = BackButton.Top + BackButton.MeasuredHeight;
+
+            TitleView.Bottom = TitleView.Top + TitleView.MeasuredHeight;
         }
     }
 }
