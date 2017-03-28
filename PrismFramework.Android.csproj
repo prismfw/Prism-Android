@@ -138,6 +138,7 @@
     <Compile Include="UI\Shapes\Polyline.cs" />
     <Compile Include="UI\Shapes\Quadrangle.cs" />
     <Compile Include="UI\Controls\TabLayout.cs" />
+    <Compile Include="UI\Controls\ListBoxSectionHeader.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
