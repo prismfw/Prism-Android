@@ -52,7 +52,7 @@ namespace Prism.Android.UI
         /// <summary>
         /// Occurs when a tab item is selected.
         /// </summary>
-        public event EventHandler<NativeItemSelectedEventArgs> TabItemSelected;
+        public event EventHandler<NativeItemChangedEventArgs> TabItemSelected;
 
         /// <summary>
         /// Occurs when this instance has been detached from the visual tree.
@@ -414,7 +414,7 @@ namespace Prism.Android.UI
                 OnPropertyChanged(Prism.UI.TabView.SelectedIndexProperty);
             }
 
-            TabItemSelected(this, new NativeItemSelectedEventArgs(e.OldTab, e.NewTab));
+            TabItemSelected(this, new NativeItemChangedEventArgs(e.OldTab, e.NewTab));
 
             if (changed || FrameLayout.ChildCount == 0)
             {
