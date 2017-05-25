@@ -14,12 +14,14 @@
     <DeployExternal>false</DeployExternal>
     <AndroidSupportedAbis>armeabi,armeabi-v7a,x86</AndroidSupportedAbis>
     <MandroidI18n>West</MandroidI18n>
-    <TargetFrameworkVersion>v7.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v7.1</TargetFrameworkVersion>
     <AndroidStoreUncompressedFileExtensions />
     <JavaOptions />
     <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
     <JavaMaximumHeapSize>
     </JavaMaximumHeapSize>
+    <AndroidTlsProvider>
+    </AndroidTlsProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -139,6 +141,10 @@
     <Compile Include="UI\Shapes\Quadrangle.cs" />
     <Compile Include="UI\Controls\TabLayout.cs" />
     <Compile Include="UI\Controls\ListBoxSectionHeader.cs" />
+    <Compile Include="Media\MediaPlaybackItem.cs" />
+    <Compile Include="Media\MediaPlaybackList.cs" />
+    <Compile Include="UI\Controls\MediaElement.cs" />
+    <Compile Include="Media\MediaPlayerStatus.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
@@ -158,5 +164,8 @@
       <Project>{BF3EDE00-0B3E-4C83-82E0-3ED08BE0E2E5}</Project>
       <Name>PrismFramework</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Media\" />
   </ItemGroup>
 </Project>

@@ -205,16 +205,34 @@ namespace Prism.Android
 
         private void OnApplicationResume()
         {
+            foreach (var mediaPlayer in Media.MediaPlaybackItem.ActivePlayers)
+            {
+                mediaPlayer.Start();
+            }
+
             Resuming(this, EventArgs.Empty);
         }
 
         private void OnApplicationShutdown()
         {
+            var players = new global::Android.Media.MediaPlayer[Media.MediaPlaybackItem.ActivePlayers.Count];
+            Media.MediaPlaybackItem.ActivePlayers.CopyTo(players, 0);
+            foreach (var mediaPlayer in players)
+            {
+                mediaPlayer.Stop();
+                mediaPlayer.Release();
+            }
+
             Exiting(this, EventArgs.Empty);
         }
 
         private void OnApplicationSuspend()
         {
+            foreach (var mediaPlayer in Media.MediaPlaybackItem.ActivePlayers)
+            {
+                mediaPlayer.Pause();
+            }
+
             Suspending(this, EventArgs.Empty);
         }
 
