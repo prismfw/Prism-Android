@@ -122,7 +122,7 @@
     <Compile Include="UI\Controls\ActionMenu.cs" />
     <Compile Include="UI\Controls\MenuButton.cs" />
     <Compile Include="UI\Controls\MenuSeparator.cs" />
-    <Compile Include="UI\Media\AudioPlayer.cs" />
+    <Compile Include="Media\AudioPlayer.cs" />
     <Compile Include="Systems\Geolocation\Geolocator.cs" />
     <Compile Include="PermissionRequestCallback.cs" />
     <Compile Include="UI\StatusBar.cs" />

@@ -25,7 +25,7 @@ using Android.OS;
 using Android.Runtime;
 using Prism.Native;
 
-namespace Prism.Android.UI.Media
+namespace Prism.Android.Media
 {
     /// <summary>
     /// Represents an Android implementation of an <see cref="INativeAudioPlayer"/>.
@@ -42,7 +42,7 @@ namespace Prism.Android.UI.Media
         /// <summary>
         /// Occurs when buffering of the audio track has finished.
         /// </summary>
-        public event EventHandler BufferingCompleted;
+        public event EventHandler BufferingEnded;
 
         /// <summary>
         /// Occurs when buffering of the audio track has begun.
@@ -52,7 +52,7 @@ namespace Prism.Android.UI.Media
         /// <summary>
         /// Occurs when playback of the audio track has finished.
         /// </summary>
-        public event EventHandler PlaybackCompleted;
+        public event EventHandler PlaybackEnded;
 
         /// <summary>
         /// Occurs when playback of the audio track has begun.
@@ -146,6 +146,7 @@ namespace Prism.Android.UI.Media
         private double volume;
         
         private bool isPrepared;
+        private bool playAfterPrepare;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AudioPlayer"/> class.
@@ -164,7 +165,7 @@ namespace Prism.Android.UI.Media
         {
             if (!isLooping)
             {
-                PlaybackCompleted(this, EventArgs.Empty);
+                PlaybackEnded(this, EventArgs.Empty);
             }
         }
         
@@ -190,7 +191,7 @@ namespace Prism.Android.UI.Media
             }
             else if (what == MediaInfo.BufferingEnd)
             {
-                BufferingCompleted(this, EventArgs.Empty);
+                BufferingEnded(this, EventArgs.Empty);
             }
             
             return true;
@@ -205,8 +206,8 @@ namespace Prism.Android.UI.Media
             base.SeekTo((int)position.TotalMilliseconds);
             position = TimeSpan.Zero;
             isPrepared = true;
-        
-            if (AutoPlay)
+
+            if (AutoPlay || playAfterPrepare)
             {
                 Play();
             }
@@ -219,6 +220,7 @@ namespace Prism.Android.UI.Media
         public async void Open(Uri source)
         {
             isPrepared = false;
+            playAfterPrepare = false;
             base.Reset();
             
             try
@@ -247,7 +249,11 @@ namespace Prism.Android.UI.Media
         /// </summary>
         public new void Pause()
         {
-            if (base.IsPlaying)
+            if (!isPrepared)
+            {
+                playAfterPrepare = false;
+            }
+            else if (base.IsPlaying)
             {
                 base.Pause();
             }
@@ -258,7 +264,11 @@ namespace Prism.Android.UI.Media
         /// </summary>
         public void Play()
         {
-            if (!base.IsPlaying)
+            if (!isPrepared)
+            {
+                playAfterPrepare = true;
+            }
+            else if (!base.IsPlaying)
             {
                 base.Start();
                 PlaybackStarted(this, EventArgs.Empty);
