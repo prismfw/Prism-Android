@@ -143,6 +143,11 @@ namespace Prism.Android.Systems
         private bool isPowerMonitoringEnabled;
 
         /// <summary>
+        /// Gets the model of the device.
+        /// </summary>
+        public string Model => Build.Model;
+
+        /// <summary>
         /// Gets the name of the device.
         /// </summary>
         public string Name => Build.Model;
@@ -166,6 +171,11 @@ namespace Prism.Android.Systems
         /// Gets the source from which the device is receiving its power.
         /// </summary>
         public PowerSource PowerSource { get; private set; }
+
+        /// <summary>
+        /// Gets the amount of time, in milliseconds, that the system has been awake since it was last restarted.
+        /// </summary>
+        public long SystemUptime => SystemClock.UptimeMillis();
 
         private readonly BatteryReceiver batteryReceiver;
         private readonly Sensor gravitySensor;
