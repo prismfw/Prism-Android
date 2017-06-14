@@ -26,7 +26,6 @@ using System.Threading.Tasks;
 using Android.Graphics;
 using Android.Runtime;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Media.Imaging
@@ -73,7 +72,7 @@ namespace Prism.Android.UI.Media.Imaging
         /// </summary>
         public double Scale
         {
-            get { return Source == null ? 1 : (PixelWidth / (double)Source.Width) * Device.Current.DisplayScale; }
+            get { return Source == null ? 1 : (PixelWidth / (double)Source.Width); }
         }
         
         /// <summary>
@@ -138,7 +137,7 @@ namespace Prism.Android.UI.Media.Imaging
                             }
                             else if (!SourceUri.IsAbsoluteUri || SourceUri.IsFile)
                             {
-                                if (SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectory))
+                                if (SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectory, StringComparison.Ordinal))
                                 {
                                     string fileName = SourceUri.OriginalString.Remove(0, Prism.IO.Directory.AssetDirectory.Length);
                                     int id = Application.MainActivity.Resources.GetIdentifier(System.IO.Path.GetFileNameWithoutExtension(fileName).ToLower(), "drawable", Application.MainActivity.PackageName);
