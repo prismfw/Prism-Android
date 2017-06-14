@@ -503,15 +503,17 @@ namespace Prism.Android.UI.Controls
             TextView = new TextView(Application.MainActivity)
             {
                 Ellipsize = TextUtils.TruncateAt.End,
-                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent),
+                Gravity = GravityFlags.Center,
+                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent),
                 Typeface = Typeface.Default
             };
             TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
 
             ImageView = new ImageView(Application.MainActivity)
             {
-                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent)
+                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent),
             };
+            ImageView.SetScaleType(ImageView.ScaleType.Center);
 
             layout = new LinearLayout(Application.MainActivity)
             {
@@ -835,11 +837,6 @@ namespace Prism.Android.UI.Controls
                         layout.RemoveView(ImageView);
                         layout.AddView(ImageView);
                         break;
-                    case ContentDirection.Left:
-                        layout.Orientation = global::Android.Widget.Orientation.Horizontal;
-                        layout.RemoveView(TextView);
-                        layout.AddView(TextView);
-                        break;
                     case ContentDirection.Right:
                         layout.Orientation = global::Android.Widget.Orientation.Horizontal;
                         layout.RemoveView(ImageView);
@@ -850,14 +847,12 @@ namespace Prism.Android.UI.Controls
                         layout.RemoveView(TextView);
                         layout.AddView(TextView);
                         break;
+                    default:
+                        layout.Orientation = global::Android.Widget.Orientation.Horizontal;
+                        layout.RemoveView(TextView);
+                        layout.AddView(TextView);
+                        break;
                 }
-            }
-
-            var parent = Parent as global::Android.Views.View;
-            if (parent != null)
-            {
-                Measure(MeasureSpec.MakeMeasureSpec(parent.Right, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(parent.Bottom, MeasureSpecMode.Exactly));
             }
         }
     }
