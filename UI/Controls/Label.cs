@@ -123,14 +123,7 @@ namespace Prism.Android.UI.Controls
         public double FontSize
         {
             get { return TextSize / Device.Current.DisplayScale; }
-            set
-            {
-                if (value * Device.Current.DisplayScale != TextSize)
-                {
-                    SetTextSize(ComplexUnitType.Sp, (float)value);
-                    OnPropertyChanged(Prism.UI.Controls.Label.FontSizeProperty);
-                }
-            }
+            set { SetTextSize(ComplexUnitType.Sp, (float)value); }
         }
 
         /// <summary>
@@ -237,25 +230,6 @@ namespace Prism.Android.UI.Controls
         /// Gets a value indicating whether this instance has been loaded and is ready for rendering.
         /// </summary>
         public bool IsLoaded { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the maximum number of lines of text that the label can show.
-        /// A value of 0 means there is no limit.
-        /// </summary>
-        public int Lines
-        {
-            get { return lines; }
-            set
-            {
-                if (value != lines)
-                {
-                    lines = value;
-                    SetMaxLines(lines == 0 ? int.MaxValue : lines);
-                    OnPropertyChanged(Prism.UI.Controls.Label.LinesProperty);
-                }
-            }
-        }
-        private int lines;
 
         /// <summary>
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
@@ -462,6 +436,15 @@ namespace Prism.Android.UI.Controls
                 PointerReleased(this, e.GetPointerEventArgs(this));
             }
             return base.OnTouchEvent(e);
+        }
+
+        /// <summary>
+        /// Sets the maximum number of lines of text that the label can show.  A value of 0 means there is no limit.
+        /// </summary>
+        /// <param name="maxLines"></param>
+        public new void SetMaxLines(int maxLines)
+        {
+            base.SetMaxLines(maxLines == 0 ? int.MaxValue : maxLines);
         }
 
         /// <summary>
