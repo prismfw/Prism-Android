@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using Android.Runtime;
+using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
 using Prism.Native;
@@ -56,6 +57,37 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets the maximum number of characters that are allowed to be entered into the control.
+        /// A value of 0 means there is no limit.
+        /// </summary>
+        public int MaxLength
+        {
+            get { return maxLength; }
+            set
+            {
+                if (value != maxLength)
+                {
+                    maxLength = value;
+                    OnPropertyChanged(Prism.UI.Controls.TextArea.MaxLengthProperty);
+
+                    if (maxLength == 0)
+                    {
+                        SetFilters(new IInputFilter[0]);
+                    }
+                    else
+                    {
+                        SetFilters(new[] { new InputFilterLengthFilter(maxLength) });
+                        if (Text != null && Text.Length > maxLength)
+                        {
+                            Text = Text.Substring(0, maxLength);
+                        }
+                    }
+                }
+            }
+        }
+        private int maxLength;
 
         /// <summary>
         /// Gets or sets the maximum number of lines of text that should be shown.
