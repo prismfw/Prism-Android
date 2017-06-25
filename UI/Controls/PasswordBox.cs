@@ -24,6 +24,7 @@ using Android.Runtime;
 using Android.Text;
 using Android.Text.Method;
 using Android.Views.InputMethods;
+using Prism.Input;
 using Prism.Native;
 using Prism.UI;
 
@@ -57,6 +58,25 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets the type of text that the user is expected to input.
+        /// </summary>
+        public new InputType InputType
+        {
+            get { return inputType; }
+            set
+            {
+                var inputTypes = value.GetInputTypes() | (value == InputType.Number ? InputTypes.NumberVariationPassword : InputTypes.TextVariationPassword);
+                if (inputTypes != base.InputType)
+                {
+                    inputType = value;
+                    base.InputType = inputTypes;
+                    OnPropertyChanged(Prism.UI.Controls.PasswordBox.InputTypeProperty);
+                }
+            }
+        }
+        private InputType inputType;
 
         /// <summary>
         /// Gets or sets the maximum number of characters that are allowed to be entered into the control.
@@ -132,7 +152,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public PasswordBox()
         {
-            InputType = InputTypes.TextVariationPassword;
+            base.InputType = InputTypes.TextVariationPassword;
             TransformationMethod = new PasswordTransformationMethod();
         }
 

@@ -27,6 +27,7 @@ using Android.Content.PM;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Graphics.Drawables.Shapes;
+using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
@@ -302,7 +303,57 @@ namespace Prism.Android
                     return ImeAction.Unspecified;
             }
         }
-        
+
+        /// <summary>
+        /// Gets an <see cref="InputType"/> from an <see cref="InputTypes"/>.
+        /// </summary>
+        /// <param name="inputTypes">The input types.</param>
+        public static InputType GetInputType(this InputTypes inputTypes)
+        {
+            switch (inputTypes)
+            {
+                case InputTypes.ClassText:
+                    return InputType.Alphanumeric;
+                case InputTypes.ClassNumber | InputTypes.NumberFlagDecimal:
+                    return InputType.Number;
+                case InputTypes.ClassText | InputTypes.NumberFlagDecimal:
+                    return InputType.NumberAndSymbol;
+                case InputTypes.ClassPhone:
+                    return InputType.Phone;
+                case InputTypes.ClassText | InputTypes.TextVariationUri:
+                    return InputType.Url;
+                case InputTypes.ClassText | InputTypes.TextVariationEmailAddress:
+                    return InputType.EmailAddress;
+                default:
+                    return (InputType)((int)inputTypes + 6);
+            }
+        }
+
+        /// <summary>
+        /// Gets an <see cref="InputTypes"/> from an <see cref="InputType"/>.
+        /// </summary>
+        /// <param name="inputType">The input type.</param>
+        public static InputTypes GetInputTypes(this InputType inputType)
+        {
+            switch (inputType)
+            {
+                case InputType.Alphanumeric:
+                    return InputTypes.ClassText;
+                case InputType.Number:
+                    return InputTypes.ClassNumber | InputTypes.NumberFlagDecimal;
+                case InputType.NumberAndSymbol:
+                    return InputTypes.ClassText | InputTypes.MaskVariation; // flag doesn't affect anything, just using to differentiate
+                case InputType.Phone:
+                    return InputTypes.ClassPhone;
+                case InputType.Url:
+                    return InputTypes.ClassText | InputTypes.TextVariationUri;
+                case InputType.EmailAddress:
+                    return InputTypes.ClassText | InputTypes.TextVariationEmailAddress;
+                default:
+                    return (InputTypes)((int)inputType - 6);
+            }
+        }
+
         /// <summary>
         /// Gets a <see cref="LineCap"/> from a <see cref="Paint.Cap"/>.
         /// </summary>

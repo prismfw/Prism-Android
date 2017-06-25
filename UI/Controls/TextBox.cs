@@ -23,6 +23,7 @@ using System;
 using Android.Runtime;
 using Android.Text;
 using Android.Views.InputMethods;
+using Prism.Input;
 using Prism.Native;
 using Prism.UI;
 
@@ -53,6 +54,22 @@ namespace Prism.Android.UI.Controls
                 {
                     ImeOptions = action;
                     OnPropertyChanged(Prism.UI.Controls.TextBox.ActionKeyTypeProperty);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the type of text that the user is expected to input.
+        /// </summary>
+        public new InputType InputType
+        {
+            get { return base.InputType.GetInputType(); }
+            set
+            {
+                if (value != base.InputType.GetInputType())
+                {
+                    base.InputType = value.GetInputTypes();
+                    OnPropertyChanged(Prism.UI.Controls.TextBox.InputTypeProperty);
                 }
             }
         }

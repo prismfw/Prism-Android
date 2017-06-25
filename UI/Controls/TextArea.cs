@@ -24,6 +24,7 @@ using Android.Runtime;
 using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
+using Prism.Input;
 using Prism.Native;
 using Prism.UI;
 
@@ -57,6 +58,24 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets the type of text that the user is expected to input.
+        /// </summary>
+        public new InputType InputType
+        {
+            get { return inputType; }
+            set
+            {
+                if (value != inputType)
+                {
+                    inputType = value;
+                    base.InputType = value.GetInputTypes() | InputTypes.TextFlagMultiLine;
+                    OnPropertyChanged(Prism.UI.Controls.TextArea.InputTypeProperty);
+                }
+            }
+        }
+        private InputType inputType;
 
         /// <summary>
         /// Gets or sets the maximum number of characters that are allowed to be entered into the control.
