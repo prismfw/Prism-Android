@@ -58,7 +58,7 @@ namespace Prism.Android.UI
         /// Occurs when the window loses focus.
         /// </summary>
         public event EventHandler Deactivated;
-        
+
         /// <summary>
         /// Occurs when the orientation of the rendered content has changed.
         /// </summary>
@@ -68,7 +68,7 @@ namespace Prism.Android.UI
         /// Occurs when the size of the window has changed.
         /// </summary>
         public event EventHandler<WindowSizeChangedEventArgs> SizeChanged;
-        
+
         /// <summary>
         /// Gets or sets the preferred orientations in which to automatically rotate the window in response to orientation changes of the physical device.
         /// </summary>
@@ -142,7 +142,7 @@ namespace Prism.Android.UI
         {
             get { return Application.MainActivity.HasWindowFocus; }
         }
-        
+
         /// <summary>
         /// Gets the current orientation of the rendered content within the window.
         /// </summary>
@@ -150,7 +150,7 @@ namespace Prism.Android.UI
         {
             get { return Application.MainActivity.Resources.Configuration.Orientation.GetDisplayOrientations(); }
         }
-        
+
         /// <summary>
         /// Gets or sets the style for the window.
         /// </summary>
@@ -174,13 +174,20 @@ namespace Prism.Android.UI
         {
             Application.MainActivity.Window.ClearFlags(WindowManagerFlags.TranslucentStatus);
             Application.MainActivity.Window.AddFlags(WindowManagerFlags.DrawsSystemBarBackgrounds);
-        
+
             Application.MainActivityChanged += (sender, e) =>
             {
                 e.OldActivity.Window.Callback = null;
                 e.NewActivity.Window.Callback = new MainWindowCallback();
-                
+
                 e.NewActivity.RequestedOrientation = autorotationPreferences.GetScreenOrientation();
+
+                var oldView = e.OldActivity.Window.FindViewById(global::Android.Resource.Id.Content);
+                if (oldView != null)
+                {
+                    (oldView.Parent as ViewGroup)?.RemoveView(oldView);
+                    e.NewActivity.SetContentView(oldView);
+                }
             };
 
             Application.MainActivity.Window.Callback = new MainWindowCallback();
@@ -203,7 +210,7 @@ namespace Prism.Android.UI
 
             Application.MainActivity.Finish();
         }
-        
+
         /// <summary>
         /// Sets the preferred minimum size of the window.
         /// </summary>
@@ -217,7 +224,7 @@ namespace Prism.Android.UI
         {
             Application.MainActivity.StartActivity(new Intent(Application.MainActivity, GetType()));
         }
-        
+
         /// <summary>
         /// Attempts to resize the window to the specified size.
         /// </summary>
@@ -237,7 +244,7 @@ namespace Prism.Android.UI
         {
             Deactivated?.Invoke(this, EventArgs.Empty);
         }
-        
+
         internal void OnConfigurationChanged(Configuration config)
         {
             if (currentOrientation != config.Orientation)
@@ -300,7 +307,7 @@ namespace Prism.Android.UI
                     Prism.UI.Window.Current.Close();
                 }
             }
-        
+
             return Application.MainActivity.Window.SuperDispatchKeyEvent(e);
         }
 

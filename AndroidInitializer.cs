@@ -34,7 +34,7 @@ namespace Prism.Android
     public sealed class AndroidInitializer : PlatformInitializer
     {
         private static Prism.Application application;
-    
+
         private AndroidInitializer()
         {
         }
@@ -50,9 +50,9 @@ namespace Prism.Android
             {
                 throw new ArgumentNullException(nameof(activity));
             }
-        
+
             application = appInstance;
-            
+
             if (activity is AppActivity)
             {
                 Application.MainActivity = activity;
@@ -67,20 +67,20 @@ namespace Prism.Android
 
         internal static void Initialize()
         {
-            List<Assembly> appAssemblies = null;
             if (!HasInitialized)
             {
-                appAssemblies = new List<Assembly>(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetType() != typeof(System.Reflection.Emit.AssemblyBuilder)));
-
+                var appAssemblies = new List<Assembly>(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetType() != typeof(System.Reflection.Emit.AssemblyBuilder)));
                 var exeAssembly = Assembly.GetExecutingAssembly();
+
                 FilterAssemblies(exeAssembly.GetName(), appAssemblies);
                 appAssemblies.Insert(0, exeAssembly);
+
+                Initialize(application, appAssemblies?.ToArray());
             }
 
-            Initialize(application, appAssemblies?.ToArray());
             application = null;
         }
-        
+
         private static void FilterAssemblies(AssemblyName name, ICollection<Assembly> loadedAssemblies)
         {
             var assembly = loadedAssemblies.FirstOrDefault(a => a.FullName == name.FullName);

@@ -116,8 +116,8 @@ namespace Prism.Android
         /// </summary>
         public Application()
         {
+            AndroidEnvironment.UnhandledExceptionRaiser += (o, e) => UnhandledException(this, new ErrorEventArgs(e.Exception));
             MainActivity.Application.RegisterActivityLifecycleCallbacks(new ActivityLifecycleCallbacks(this));
-            AppDomain.CurrentDomain.UnhandledException += (o, e) => UnhandledException(this, new ErrorEventArgs(e.ExceptionObject as Exception));
 
             var textColor = Resources.GetColor(null, Resource.Attribute.TextColorPrimary);
             DefaultTheme = textColor.GetBrightness() > 0.5f ? Theme.Dark : Theme.Light;
@@ -253,7 +253,10 @@ namespace Prism.Android
 
             public void OnActivityCreated(Activity activity, Bundle savedInstanceState)
             {
-                isActivityStarted = false;
+                if (Application.MainActivity == activity)
+                {
+                    isActivityStarted = false;
+                }
             }
 
             public void OnActivityDestroyed(Activity activity)
