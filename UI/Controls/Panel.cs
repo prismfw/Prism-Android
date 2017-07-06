@@ -39,7 +39,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativePanel))]
-    public class Panel : RelativeLayout, INativePanel, ITouchDispatcher
+    public class Panel : FrameLayout, INativePanel, ITouchDispatcher
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -130,25 +130,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
-            }
-        }
+        public Rectangle Frame { get; set; }
         
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
@@ -376,11 +358,12 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            for (int i = 0; i < ChildCount; i++)
-            {
-                var child = GetChildAt(i);
-                child.Layout(child.Left, child.Top, child.Right, child.Bottom);
-            }
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
         /// <summary>

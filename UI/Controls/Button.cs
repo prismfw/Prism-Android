@@ -295,25 +295,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets or sets an image to display within the button.
@@ -400,17 +382,21 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public Thickness Padding
         {
-            get { return new Thickness(PaddingLeft, PaddingTop, PaddingRight, PaddingBottom) / Device.Current.DisplayScale; }
+            get { return padding; }
             set
             {
-                value *= Device.Current.DisplayScale;
-                if (value != Padding)
+                if (value != padding)
                 {
+                    padding = value;
+
+                    value *= Device.Current.DisplayScale;
                     SetPadding((int)value.Left, (int)value.Top, (int)value.Right, (int)value.Bottom);
+
                     OnPropertyChanged(Prism.UI.Controls.Button.PaddingProperty);
                 }
             }
         }
+        private Thickness padding;
         
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
@@ -587,41 +573,13 @@ namespace Prism.Android.UI.Controls
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            var imageSize = image == null ? Size.Empty : new Size(image.PixelWidth, image.PixelHeight) / image.Scale;
-            if (contentDirection == ContentDirection.Up || contentDirection == ContentDirection.Down)
-            {
-                constraints.Height -= imageSize.Height;
-            }
-            else
-            {
-                constraints.Width -= imageSize.Width;
-            }
+            var currentPadding = padding * Device.Current.DisplayScale;
+            SetPadding((int)currentPadding.Left, (int)currentPadding.Top, (int)currentPadding.Right, (int)currentPadding.Bottom);
 
-            var textSize = Size.Empty;
-            if (TextView.Parent != null)
-            {
-                TextView.Measure(MeasureSpec.MakeMeasureSpec((int)(constraints.Width * Device.Current.DisplayScale), MeasureSpecMode.AtMost),
-                    MeasureSpec.MakeMeasureSpec((int)(constraints.Height * Device.Current.DisplayScale), MeasureSpecMode.AtMost));
-
-                textSize = new Size(TextView.MeasuredWidth, TextView.MeasuredHeight);
-            }
-
-            var size = new Size(PaddingLeft + PaddingRight + (borderWidth * Device.Current.DisplayScale),
-                PaddingTop + PaddingBottom + (borderWidth * Device.Current.DisplayScale));
+            base.OnMeasure(MeasureSpec.MakeMeasureSpec((int)(constraints.Width * Device.Current.DisplayScale), MeasureSpecMode.AtMost),
+                MeasureSpec.MakeMeasureSpec((int)(constraints.Height * Device.Current.DisplayScale), MeasureSpecMode.AtMost));
             
-            if (contentDirection == ContentDirection.Up || contentDirection == ContentDirection.Down)
-            {
-                size.Width += Math.Max(imageSize.Width, textSize.Width);
-                size.Height += imageSize.Height + textSize.Height;
-            }
-            else
-            {
-                size.Width += imageSize.Width + textSize.Width;
-                size.Height += Math.Max(imageSize.Height, textSize.Height);
-            }
-
-            return new Size(Math.Min(constraints.Width, size.Width / Device.Current.DisplayScale),
-                Math.Min(constraints.Height, size.Height / Device.Current.DisplayScale));
+            return new Size(MeasuredWidth / Device.Current.DisplayScale, MeasuredHeight / Device.Current.DisplayScale);
         }
         
         /// <summary></summary>
@@ -737,6 +695,16 @@ namespace Prism.Android.UI.Controls
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
             ArrangeRequest(false, null);
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            //SetMeasuredDimension(Width, Height);
+            //layout.Measure(MeasureSpec.MakeMeasureSpec(Width - PaddingLeft - PaddingRight, MeasureSpecMode.AtMost),
+                //MeasureSpec.MakeMeasureSpec(Height - PaddingTop - PaddingBottom, MeasureSpecMode.AtMost));
+
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 

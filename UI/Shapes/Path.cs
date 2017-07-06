@@ -143,21 +143,7 @@ namespace Prism.Android.UI.Shapes
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -531,6 +517,13 @@ namespace Prism.Android.UI.Shapes
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
             ArrangeRequest(false, null);
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
         /// <summary>

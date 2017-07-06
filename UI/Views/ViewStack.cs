@@ -103,21 +103,7 @@ namespace Prism.Android.UI
         /// Gets or sets a <see cref="Rectangle"/> that represents
         /// the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets the header for the view stack.
@@ -570,7 +556,13 @@ namespace Prism.Android.UI
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
             ArrangeRequest(false, null);
-            base.OnLayout(changed, left, top, right, bottom);
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            base.OnLayout(changed, Left, Top, Right, Bottom);
 
             var headerView = header as global::Android.Views.View;
             headerView.Layout(0, 0, headerView.Width, headerView.Height);
@@ -578,7 +570,7 @@ namespace Prism.Android.UI
             var content = GetChildAt(0);
             if (content != null && content != headerView)
             {
-                content.Layout(0, headerView.Bottom, content.Width, bottom);
+                content.Layout(0, headerView.Bottom, content.Width, Bottom);
             }
         }
 

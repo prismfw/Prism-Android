@@ -104,16 +104,7 @@ namespace Prism.Android.UI
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the object relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get { return frame; }
-            set
-            {
-                frame = value;
-                contentContainer?.SetFrame();
-            }
-        }
-        private Rectangle frame;
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -391,20 +382,6 @@ namespace Prism.Android.UI
                     }
                 }
             }
-
-            public void SetFrame()
-            {
-                Left = (int)(Popup.frame.Left * Device.Current.DisplayScale);
-                Top = (int)(Popup.frame.Top * Device.Current.DisplayScale);
-                Right = (int)(Popup.frame.Right * Device.Current.DisplayScale);
-                Bottom = (int)(Popup.frame.Bottom * Device.Current.DisplayScale);
-
-                Popup.Dialog.Window.SetLayout(Right - Left, Bottom - Top);
-                Popup.Dialog.Window.SetGravity(GravityFlags.CenterHorizontal | GravityFlags.CenterVertical);
-                
-                Left = 0;
-                Top = 0;
-            }
             
             public void SetTransform()
             {
@@ -435,11 +412,15 @@ namespace Prism.Android.UI
             {
                 Popup.ArrangeRequest(false, null);
 
-                for (int i = 0; i < ChildCount; i++)
-                {
-                    var child = GetChildAt(i);
-                    child.Layout(child.Left, child.Top, child.Right, child.Bottom);
-                }
+                Right = (int)Math.Ceiling(Popup.Frame.Width * Device.Current.DisplayScale);
+                Bottom = (int)Math.Ceiling(Popup.Frame.Height * Device.Current.DisplayScale);
+                Left = 0;
+                Top = 0;
+
+                Popup.Dialog.Window.SetLayout(Width, Height);
+                Popup.Dialog.Window.SetGravity(GravityFlags.CenterHorizontal | GravityFlags.CenterVertical);
+
+                base.OnLayout(changed, Left, Top, Right, Bottom);
             }
 
             protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)

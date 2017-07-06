@@ -121,24 +121,10 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                // Frame won't actually size the window or its decor view.
-                // We might change this in the future, but for now it's intentional.
-                // Apps that need to change the size can set the WindowSize property through SetValue.
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-            }
-        }
+        // Frame won't actually size the window or its decor view.
+        // We might change this in the future, but for now it's intentional.
+        // Apps that need to change the size can set the WindowSize property through SetValue.
+        public Rectangle Frame { get; set; }
         
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
@@ -220,6 +206,9 @@ namespace Prism.Android.UI.Controls
             }
             set
             {
+                // This only seems to work after the first time the indicator is shown.
+                // If an app developer is trying to set this at the beginning of their app,
+                // they should first call Show, followed by Hide, and then this setter.
                 dialog.Window.SetLayout((int)value.Width, (int)value.Height);
             }
         }
@@ -310,11 +299,12 @@ namespace Prism.Android.UI.Controls
             MeasureRequest(false, null);
             ArrangeRequest(false, null);
 
-            for (int i = 0; i < ChildCount; i++)
-            {
-                var child = GetChildAt(i);
-                child.Layout(child.Left, child.Top, child.Right, child.Bottom);
-            }
+            Right = (int)Math.Ceiling(Frame.Width * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Height * Device.Current.DisplayScale);
+            Left = 0;
+            Top = 0;
+
+            base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
         /// <summary>

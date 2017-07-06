@@ -155,25 +155,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
@@ -469,20 +451,19 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            double? width = Parent?.Width;
-            if (width == null)
-            {
-                width = (ObjectRetriever.GetAgnosticObject(this.GetParent<INativeListBox>()) as Visual)?.RenderSize.Width * Device.Current.DisplayScale;
-            }
-
-            ArrangeRequest(Width != width || Height != desiredSize.Height, new Rectangle(0, Top / Device.Current.DisplayScale, (width ?? 0) / Device.Current.DisplayScale, desiredSize.Height));
-
+            double y = Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            double height = Math.Ceiling(desiredSize.Height * Device.Current.DisplayScale);
+            double? width = Parent?.Width ?? (this.GetParent<INativeListBox>()?.Frame.Width * Device.Current.DisplayScale);
+            
+            ArrangeRequest(Width != width || Height != height || Top != y, new Rectangle(0, Top / Device.Current.DisplayScale, (width ?? 0) / Device.Current.DisplayScale, desiredSize.Height));
             parentWidth = width;
-            for (int i = 0; i < ChildCount; i++)
-            {
-                var child = GetChildAt(i);
-                child.Layout(child.Left, child.Top, child.Right, child.Bottom);
-            }
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
         /// <summary>
@@ -492,11 +473,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
         protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
-            double? width = Parent?.Width;
-            if (width == null)
-            {
-                width = (ObjectRetriever.GetAgnosticObject(this.GetParent<INativeListBox>()) as Visual)?.RenderSize.Width * Device.Current.DisplayScale;
-            }
+            double? width = Parent?.Width ?? (this.GetParent<INativeListBox>()?.Frame.Width * Device.Current.DisplayScale);
 
             desiredSize = MeasureRequest(width != parentWidth, new Size((width ?? double.PositiveInfinity) / Device.Current.DisplayScale, double.PositiveInfinity));
             base.OnMeasure(widthMeasureSpec, heightMeasureSpec);

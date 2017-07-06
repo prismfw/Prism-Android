@@ -246,25 +246,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, global::Android.Views.MeasureSpecMode.AtMost),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, global::Android.Views.MeasureSpecMode.AtMost));
-                Layout(Left, Top, Right, Bottom);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the user can interact with the control.
@@ -713,9 +695,25 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            MeasureRequest(false, null);
             ArrangeRequest(false, null);
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
             base.OnLayout(changed, Left, Top, Right, Bottom);
+        }
+
+        /// <summary>
+        /// Measure the view and its content to determine the measured width and the measured height.
+        /// </summary>
+        /// <param name="widthMeasureSpec">Horizontal space requirements as imposed by the parent.</param>
+        /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            MeasureRequest(false, null);
+            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 
         /// <summary>

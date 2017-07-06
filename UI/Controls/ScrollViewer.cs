@@ -204,33 +204,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                var widthSpec = MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Unspecified);
-                var heightSpec = MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Unspecified);
-                Measure(widthSpec, heightSpec);
-                Layout(Left, Top, Right, Bottom);
-
-                var content = horizontalScrollView.GetChildAt(0);
-                if (content != null)
-                {
-                    content.Measure(CanScrollHorizontally ? widthSpec : MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                        CanScrollVertically ? heightSpec : MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                }
-            }
-        }
+        public Rectangle Frame { get; set; }
         
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
@@ -495,18 +469,32 @@ namespace Prism.Android.UI.Controls
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
             ArrangeRequest(false, null);
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            SetMeasuredDimension(Width, Height);
+
             base.OnLayout(changed, Left, Top, Right, Bottom);
+
+            int height = MeasuredHeight;
 
             var content = horizontalScrollView.GetChildAt(0);
             var element = ObjectRetriever.GetAgnosticObject(content) as Element;
-            if (element != null)
+            if (element != null && CanScrollVertically)
             {
-                right = (int)Math.Max(right, (element.DesiredSize.Width * Device.Current.DisplayScale));
-                bottom = (int)Math.Max(bottom, (element.DesiredSize.Height * Device.Current.DisplayScale));
+                height = (int)((element.RenderSize.Height + element.Margin.Top + element.Margin.Bottom) * Device.Current.DisplayScale);
             }
 
-            horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
-            content?.Layout(0, 0, right, bottom);
+            if (horizontalScrollView.MeasuredWidth != MeasuredWidth || horizontalScrollView.MeasuredHeight != height)
+            {
+                horizontalScrollView.Measure(MeasureSpec.MakeMeasureSpec(MeasuredWidth, MeasureSpecMode.Exactly),
+                    MeasureSpec.MakeMeasureSpec(height, MeasureSpecMode.Exactly));
+
+                horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
+            }
 
             ContentSize = new Size(horizontalScrollView.HorizontalScrollRange, ComputeVerticalScrollRange()) / Device.Current.DisplayScale;
         }
@@ -519,26 +507,26 @@ namespace Prism.Android.UI.Controls
         protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
             var desiredSize = MeasureRequest(false, null);
-            
-            int right = Right;
-            int bottom = Bottom;
+
+            SetMeasuredDimension((int)(desiredSize.Width * Device.Current.DisplayScale),
+                (int)(desiredSize.Height * Device.Current.DisplayScale));
+
+            int width = MeasuredWidth;
+            int height = MeasuredHeight;
 
             var content = horizontalScrollView.GetChildAt(0);
             var element = ObjectRetriever.GetAgnosticObject(content) as Element;
             if (element != null)
             {
-                right = (int)(element.DesiredSize.Width * Device.Current.DisplayScale);
-                bottom = (int)(element.DesiredSize.Height * Device.Current.DisplayScale);
+                width = (int)(element.DesiredSize.Width * Device.Current.DisplayScale);
+                height = (int)(element.DesiredSize.Height * Device.Current.DisplayScale);
             }
 
-            horizontalScrollView.Measure(MeasureSpec.MakeMeasureSpec(CanScrollHorizontally ? Width : Math.Max(right, Width), MeasureSpecMode.Exactly),
-                MeasureSpec.MakeMeasureSpec(CanScrollVertically ? Math.Max(bottom, Height) : Height, MeasureSpecMode.Exactly));
+            horizontalScrollView.Measure(MeasureSpec.MakeMeasureSpec(MeasuredWidth, MeasureSpecMode.Exactly),
+                MeasureSpec.MakeMeasureSpec(CanScrollVertically ? Math.Max(height, MeasuredHeight) : MeasuredHeight, MeasureSpecMode.Exactly));
 
-            content?.Measure(MeasureSpec.MakeMeasureSpec(right, MeasureSpecMode.Exactly),
-                MeasureSpec.MakeMeasureSpec(bottom, MeasureSpecMode.Exactly));
-            
-            SetMeasuredDimension((int)(desiredSize.Width * Device.Current.DisplayScale),
-                (int)(desiredSize.Height * Device.Current.DisplayScale));
+            content?.Measure(MeasureSpec.MakeMeasureSpec(width, MeasureSpecMode.Exactly),
+                MeasureSpec.MakeMeasureSpec(height, MeasureSpecMode.Exactly));
         }
 
         /// <summary>

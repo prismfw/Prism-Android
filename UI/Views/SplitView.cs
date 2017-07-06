@@ -114,21 +114,7 @@ namespace Prism.Android.UI
         /// Gets or sets a <see cref="Rectangle"/> that represents
         /// the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
@@ -398,9 +384,14 @@ namespace Prism.Android.UI
         {
             ArrangeRequest(false, null);
 
-            int width = (int)(left + ActualMasterWidth * Device.Current.DisplayScale);
-            MasterLayout.Layout(left, top, width, bottom);
-            DetailLayout.Layout(width, top, right, bottom);
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            int width = (int)(ActualMasterWidth * Device.Current.DisplayScale);
+            MasterLayout.Layout(0, 0, width, Bottom);
+            DetailLayout.Layout(width, 0, Width, Bottom);
         }
 
         /// <summary>

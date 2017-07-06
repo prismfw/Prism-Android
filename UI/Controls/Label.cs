@@ -167,26 +167,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)Math.Ceiling(value.Left * Device.Current.DisplayScale);
-                Top = (int)Math.Ceiling(value.Top * Device.Current.DisplayScale);
-                Right = (int)Math.Ceiling(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)Math.Ceiling(value.Bottom * Device.Current.DisplayScale);
-
-                if (MaxWidth != Width)
-                {
-                    SetMaxWidth(Width);
-                }
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the text contents when the label resides within a highlighted element.
@@ -385,12 +366,6 @@ namespace Prism.Android.UI.Controls
                 return new Size();
             }
 
-            int maxWidth = MaxWidth;
-            if (constraints.Width * Device.Current.DisplayScale > maxWidth)
-            {
-                SetMaxWidth(int.MaxValue);
-            }
-
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
@@ -401,11 +376,6 @@ namespace Prism.Android.UI.Controls
 
             var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
             SetMeasuredDimension(width, height);
-
-            if (constraints.Width * Device.Current.DisplayScale > maxWidth)
-            {
-                SetMaxWidth(maxWidth);
-            }
 
             return new Size(Math.Min(constraints.Width, size.Width), Math.Min(constraints.Height, size.Height));
         }
@@ -477,6 +447,14 @@ namespace Prism.Android.UI.Controls
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
             ArrangeRequest(false, null);
+
+            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
+            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
+            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
+            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+
+            SetMeasuredDimension(Width, Height);
+
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
@@ -488,7 +466,10 @@ namespace Prism.Android.UI.Controls
         protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
             MeasureRequest(false, null);
-            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
+
+            // Actual dimensions will be determined during arrangement.  For now, this needs to be
+            // less than or equal to the eventual size, or else the text may not wrap correctly.
+            SetMeasuredDimension(1, 1);
         }
 
         /// <summary>
