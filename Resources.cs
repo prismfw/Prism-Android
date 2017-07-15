@@ -201,6 +201,7 @@ namespace Prism.Android
                         case SystemResourceKeyId.ActionMenuBackgroundBrush:
                         case SystemResourceKeyId.ButtonBorderBrush:
                         case SystemResourceKeyId.DateTimePickerBorderBrush:
+                        case SystemResourceKeyId.FlyoutBackgroundBrush:
                         case SystemResourceKeyId.GroupedListBoxItemBackgroundBrush:
                         case SystemResourceKeyId.GroupedSectionHeaderBackgroundBrush:
                         case SystemResourceKeyId.ListBoxBackgroundBrush:
@@ -223,6 +224,7 @@ namespace Prism.Android
                         case SystemResourceKeyId.ActionMenuForegroundBrush:
                         case SystemResourceKeyId.ButtonForegroundBrush:
                         case SystemResourceKeyId.DateTimePickerForegroundBrush:
+                        case SystemResourceKeyId.MenuFlyoutForegroundBrush:
                         case SystemResourceKeyId.GroupedSectionHeaderForegroundBrush:
                         case SystemResourceKeyId.LabelForegroundBrush:
                         case SystemResourceKeyId.ListBoxSeparatorBrush:
