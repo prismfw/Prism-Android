@@ -43,6 +43,13 @@ namespace Prism.Android.UI
         /// <returns>The number of children in the parent object's child collection.</returns>
         public int GetChildrenCount(object reference)
         {
+            int count = 0;
+            var vto = reference as IVisualTreeObject;
+            if (vto != null)
+            {
+                count = vto.Children?.Length ?? 0;
+            }
+
             var view = reference as ViewGroup;
             if (view == null)
             {
@@ -55,13 +62,12 @@ namespace Prism.Android.UI
                 var fragment = reference as Fragment;
                 if (fragment != null)
                 {
-                    int count = 1;
-                    while (fragment.ChildFragmentManager.FindFragmentById(count) != null)
+                    int id = 1;
+                    while (fragment.ChildFragmentManager.FindFragmentById(id) != null)
                     {
                         count++;
                     }
 
-                    count--;
                     var viewStack = reference as INativeViewStack;
                     if (viewStack != null)
                     {
@@ -72,13 +78,7 @@ namespace Prism.Android.UI
                 }
             }
 
-            var vsh = reference as Controls.ViewStackHeader;
-            if (vsh != null)
-            {
-                return vsh.ChildCount + (vsh.Menu == null ? 0 : 1);
-            }
-
-            return view == null ? 0 : view.ChildCount;
+            return (view == null ? 0 : view.ChildCount) + count;
         }
 
         /// <summary>
@@ -118,7 +118,14 @@ namespace Prism.Android.UI
                         {
                             int id = childIndex - 1;
                             while (fragment.ChildFragmentManager.FindFragmentById(id) == null && --id > 0) ;
-                            child = viewStack.Views.Where(o => o != viewStack.CurrentView).ElementAtOrDefault(childIndex - (id + 1));
+
+                            childIndex -= (id + 1);
+                            child = viewStack.Views.Where(o => o != viewStack.CurrentView).ElementAtOrDefault(childIndex);
+                            if (child == null)
+                            {
+                                childIndex -= viewStack.Views.Count(o => o != viewStack.CurrentView);
+                                child = (reference as IVisualTreeObject)?.Children?.ElementAtOrDefault(childIndex);
+                            }
                         }
                     }
 
@@ -130,13 +137,18 @@ namespace Prism.Android.UI
                 }
             }
 
-            var vsh = reference as Controls.ViewStackHeader;
-            if (vsh != null)
+            if (view == null)
             {
-                return childIndex == vsh.ChildCount ? (object)vsh.Menu : vsh.GetChildAt(childIndex);
+                return (reference as IVisualTreeObject)?.Children?.ElementAtOrDefault(childIndex);
             }
 
-            return view == null ? null : view.GetChildAt(childIndex);
+            if (childIndex < view.ChildCount)
+            {
+                return view.GetChildAt(childIndex);
+            }
+
+            var vto = reference as IVisualTreeObject;
+            return vto?.Children?.ElementAtOrDefault(childIndex - view.ChildCount);
         }
 
         /// <summary>
@@ -150,6 +162,12 @@ namespace Prism.Android.UI
             if (window != null && window.Content == reference)
             {
                 return window;
+            }
+
+            var vto = reference as IVisualTreeObject;
+            if (vto?.Parent != null)
+            {
+                return vto.Parent;
             }
 
             var view = reference as View;
@@ -194,13 +212,7 @@ namespace Prism.Android.UI
                 }
             }
 
-            var vsc = reference as IViewStackChild;
-            if (vsc?.ViewStack != null)
-            {
-                return vsc.ViewStack;
-            }
-
-            return (reference as Controls.ActionMenu)?.Parent;
+            return (reference as IViewStackChild)?.ViewStack;
         }
     }
 }
