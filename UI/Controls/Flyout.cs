@@ -37,7 +37,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeFlyout))]
-    public class Flyout : PopupWindow, INativeFlyout, PopupWindow.IOnDismissListener
+    public class Flyout : PopupWindow, INativeFlyout, PopupWindow.IOnDismissListener, IVisualTreeObject
     {
         /// <summary>
         /// Occurs when the flyout has been closed.
@@ -233,6 +233,16 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public Theme RequestedTheme { get; set; }
 
+        object[] IVisualTreeObject.Children
+        {
+            get { return ContentView == null ? null : new[] { ContentView }; }
+        }
+
+        object IVisualTreeObject.Parent
+        {
+            get { return null; }
+        }
+
         private global::Android.Views.View anchorView;
 
         /// <summary>
@@ -371,14 +381,24 @@ namespace Prism.Android.UI.Controls
             return new Point(x, y);
         }
 
-        private class FlyoutLayout : FrameLayout
+        private class FlyoutLayout : FrameLayout, IVisualTreeObject
         {
-            private WeakReference flyoutRef;
+            private readonly WeakReference flyoutRef;
 
             public FlyoutLayout(Flyout flyout)
                 : base(Application.MainActivity)
             {
                 flyoutRef = new WeakReference(flyout);
+            }
+
+            object[] IVisualTreeObject.Children
+            {
+                get { return null; }
+            }
+
+            object IVisualTreeObject.Parent
+            {
+                get { return flyoutRef.Target; }
             }
 
             /// <summary>

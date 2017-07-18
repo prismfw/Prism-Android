@@ -43,7 +43,7 @@ namespace Prism.Android.UI.Controls
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeActionMenu))]
-    public class ActionMenu : INativeActionMenu
+    public class ActionMenu : INativeActionMenu, IVisualTreeObject
     {
         /// <summary>
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
@@ -200,7 +200,7 @@ namespace Prism.Android.UI.Controls
                 {
                     int oldValue = maxDisplayItems;
                     maxDisplayItems = value;
-                    if (Parent != null && (oldValue < Items.Count || maxDisplayItems < Items.Count))
+                    if (currentParent != null && (oldValue < Items.Count || maxDisplayItems < Items.Count))
                     {
                         SetButtons();
                     }
@@ -242,11 +242,6 @@ namespace Prism.Android.UI.Controls
             }
         }
         private Uri overflowImageUri;
-        
-        /// <summary>
-        /// Gets the parent object for this instance.
-        /// </summary>
-        public IViewParent Parent { get; private set; }
         
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
@@ -293,6 +288,34 @@ namespace Prism.Android.UI.Controls
         
         internal ImageView OverflowButton { get; }
 
+        object[] IVisualTreeObject.Children
+        {
+            get
+            {
+                var children = new object[Items.Count > maxDisplayItems ? maxDisplayItems + 1 : Items.Count];
+                for (int i = 0; i < children.Length; i++)
+                {
+                    if (i > maxDisplayItems)
+                    {
+                        children[i] = OverflowButton;
+                    }
+                    else
+                    {
+                        children[i] = Items[i];
+                    }
+                }
+
+                return children;
+            }
+        }
+
+        object IVisualTreeObject.Parent
+        {
+            get { return currentParent; }
+        }
+
+        private IViewParent currentParent;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ActionMenu"/> class.
         /// </summary>
@@ -323,7 +346,7 @@ namespace Prism.Android.UI.Controls
                     }
                 }
             
-                if (Parent == null)
+                if (currentParent == null)
                 {
                     return;
                 }
@@ -366,13 +389,13 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public void Attach(IViewParent parent)
         {
-            if (Parent != null && parent != null && Parent != parent)
+            if (currentParent != null && parent != null && currentParent != parent)
             {
                 throw new InvalidOperationException("Menu instance is already assigned to another object.");
             }
         
-            Parent = parent;
-            if (Parent == null)
+            currentParent = parent;
+            if (currentParent == null)
             {
                 Detach();
             }
@@ -392,7 +415,7 @@ namespace Prism.Android.UI.Controls
         public void Detach()
         {
             SetButtons(null);
-            Parent = null;
+            currentParent = null;
             
             OnUnloaded();
         }
@@ -419,7 +442,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="constraints">The width and height that the element is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            var viewGroup = Parent as ViewGroup;
+            var viewGroup = currentParent as ViewGroup;
             if (viewGroup == null)
             {
                 return Size.Empty;
@@ -540,7 +563,7 @@ namespace Prism.Android.UI.Controls
         
         private void SetButtons(View[] buttons)
         {
-            var viewGroup = Parent as ViewGroup;
+            var viewGroup = currentParent as ViewGroup;
             if (viewGroup == null)
             {
                 return;

@@ -39,7 +39,7 @@ namespace Prism.Android.UI.Controls
     /// Represents an Android implementation of an <see cref="INativeViewStackHeader"/>.
     /// </summary>
     [Preserve(AllMembers = true)]
-    public sealed class ViewStackHeader : FrameLayout, INativeViewStackHeader
+    public sealed class ViewStackHeader : FrameLayout, INativeViewStackHeader, IVisualTreeObject
     {
         private const string BackButtonKey = "drawable/abc_ic_ab_back_mtrl_am_alpha";
         private const string BackButtonAltKey = "drawable/abc_ic_ab_back_material";
@@ -295,6 +295,16 @@ namespace Prism.Android.UI.Controls
         private ImageView BackButton { get; }
         
         private TextView TitleView { get; }
+
+        object[] IVisualTreeObject.Children
+        {
+            get { return Menu == null ? null : new[] { Menu }; }
+        }
+
+        object IVisualTreeObject.Parent
+        {
+            get { return null; }
+        }
 
         internal ViewStackHeader(Context context)
             : base(context)
