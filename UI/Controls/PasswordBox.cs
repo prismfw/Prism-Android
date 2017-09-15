@@ -67,16 +67,36 @@ namespace Prism.Android.UI.Controls
             get { return inputType; }
             set
             {
-                var inputTypes = value.GetInputTypes() | (value == InputType.Number ? InputTypes.NumberVariationPassword : InputTypes.TextVariationPassword);
-                if (inputTypes != base.InputType)
+                if (value != inputType)
                 {
                     inputType = value;
-                    base.InputType = inputTypes;
+                    base.InputType = value.GetInputTypes() | InputTypes.TextVariationPassword | InputTypes.NumberVariationPassword;
                     OnPropertyChanged(Prism.UI.Controls.PasswordBox.InputTypeProperty);
                 }
             }
         }
         private InputType inputType;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the password is displayed in plain text.
+        /// </summary>
+        public bool IsPasswordVisible
+        {
+            get { return !(TransformationMethod is PasswordTransformationMethod); }
+            set
+            {
+                if (value != IsPasswordVisible)
+                {
+                    int start = SelectionStart;
+                    int end = SelectionEnd;
+
+                    TransformationMethod = value ? null : new PasswordTransformationMethod();
+
+                    SetSelection(start, end);
+                    OnPropertyChanged(Prism.UI.Controls.PasswordBox.IsPasswordVisibleProperty);
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets the maximum number of characters that are allowed to be entered into the control.
@@ -152,7 +172,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public PasswordBox()
         {
-            base.InputType = InputTypes.TextVariationPassword;
+            base.InputType = InputTypes.ClassText | InputTypes.TextVariationPassword;
             TransformationMethod = new PasswordTransformationMethod();
         }
 
