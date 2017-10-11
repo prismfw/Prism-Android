@@ -372,6 +372,12 @@ namespace Prism.Android.UI.Controls
             Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
             Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
 
+            if (LayoutParameters != null)
+            {
+                LayoutParameters.Width = Right - Left;
+                LayoutParameters.Height = Bottom - Top;
+            }
+
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
