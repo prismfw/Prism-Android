@@ -201,7 +201,6 @@ namespace Prism.Android
                         case SystemResourceKeyId.ActionMenuBackgroundBrush:
                         case SystemResourceKeyId.ButtonBorderBrush:
                         case SystemResourceKeyId.DateTimePickerBorderBrush:
-                        case SystemResourceKeyId.FlyoutBackgroundBrush:
                         case SystemResourceKeyId.GroupedListBoxItemBackgroundBrush:
                         case SystemResourceKeyId.GroupedSectionHeaderBackgroundBrush:
                         case SystemResourceKeyId.ListBoxBackgroundBrush:
@@ -247,12 +246,13 @@ namespace Prism.Android
                         case SystemResourceKeyId.ValueLabelForegroundBrush:
                             resourceId = Resource.Attribute.TextColorSecondary;
                             break;
-                        case SystemResourceKeyId.LoadIndicatorBackgroundBrush:
-                            resourceId = Resource.Attribute.PanelColorBackground;
-                            break;
+                        case SystemResourceKeyId.FlyoutBackgroundBrush:
                         case SystemResourceKeyId.SelectListListBackgroundBrush:
                             value = convert ? (object)new DataBrush(selectListListBackground.GetConstantState().NewDrawable()) : selectListListBackground.GetConstantState().NewDrawable();
                             return true;
+                        case SystemResourceKeyId.LoadIndicatorBackgroundBrush:
+                            resourceId = Resource.Attribute.PanelColorBackground;
+                            break;
                         case SystemResourceKeyId.SliderBackgroundBrush:
                             value = new SolidColorBrush(new Prism.UI.Color(33, 36, 40));
                             return true;
