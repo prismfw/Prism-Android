@@ -148,6 +148,8 @@
     <Compile Include="Media\MediaPlayerStatus.cs" />
     <Compile Include="UI\Controls\MenuFlyout.cs" />
     <Compile Include="UI\VisualTreeObject.cs" />
+    <Compile Include="Input\TapGestureRecognizer.cs" />
+    <Compile Include="Input\HoldingGestureRecognizer.cs" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
