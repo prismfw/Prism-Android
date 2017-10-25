@@ -25,9 +25,7 @@ using Android.Views;
 using Android.Widget;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
-using Prism.UI.Controls;
 
 namespace Prism.Android.UI.Controls
 {
@@ -367,15 +365,15 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             if (LayoutParameters != null)
             {
-                LayoutParameters.Width = Right - Left;
-                LayoutParameters.Height = Bottom - Top;
+                LayoutParameters.Width = Width;
+                LayoutParameters.Height = Height;
             }
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
@@ -388,7 +386,9 @@ namespace Prism.Android.UI.Controls
         /// <param name="heightMeasureSpec">Vertical space requirements as imposed by the parent.</param>
         protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
-            MeasureRequest(false, null);
+            var size = MeasureRequest(false, null);
+            widthMeasureSpec = MeasureSpec.MakeMeasureSpec(size.Width.GetScaledInt(), MeasureSpecMode.Exactly);
+            heightMeasureSpec = MeasureSpec.MakeMeasureSpec(size.Height.GetScaledInt(), MeasureSpecMode.Exactly);
             base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
         }
 

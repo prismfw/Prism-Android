@@ -73,7 +73,7 @@ namespace Prism.Android
             {
                 return null;
             }
-            
+
             var bitmapImage = source as INativeBitmapImage;
             if (bitmapImage == null)
             {
@@ -129,7 +129,7 @@ namespace Prism.Android
                 imageLoadedEventManager.RemoveHandler(source, handler);
             }
         }
-        
+
         /// <summary>
         /// Gets a <see cref="double"/> from a <see cref="float"/>
         /// that is divided by the device's display scale.
@@ -139,7 +139,7 @@ namespace Prism.Android
         {
             return value / Device.Current.DisplayScale;
         }
-        
+
         /// <summary>
         /// Gets a <see cref="float"/> from a <see cref="double"/>
         /// that is multiplied by the device's display scale.
@@ -148,6 +148,16 @@ namespace Prism.Android
         public static float GetScaledFloat(this double value)
         {
             return (float)(value * Device.Current.DisplayScale);
+        }
+
+        /// <summary>
+        /// Gets an <see cref="int"/> from a <see cref="double"/>
+        /// that is multiplied by the device's display scale.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        public static int GetScaledInt(this double value)
+        {
+            return (int)Math.Ceiling(value * Device.Current.DisplayScale);
         }
 
         /// <summary>
@@ -188,7 +198,7 @@ namespace Prism.Android
         {
             return new Prism.UI.Color(color.A, color.R, color.G, color.B);
         }
-        
+
         /// <summary>
         /// Gets a <see cref="DisplayOrientations"/> from an <see cref="Android.Content.Res.Orientation"/>.
         /// </summary>
@@ -215,7 +225,7 @@ namespace Prism.Android
                 }
                 return dataBrush.Data as Drawable;
             }
-            
+
             var solidColor = brush as SolidColorBrush;
             if (solidColor != null)
             {
@@ -390,7 +400,7 @@ namespace Prism.Android
             retVal.SetValues(new[] { (float)matrix.M11, (float)matrix.M21, (float)matrix.OffsetX, (float)matrix.M12, (float)matrix.M22, (float)matrix.OffsetY, 0f, 0f, 1f });
             return retVal;
         }
-        
+
         /// <summary>
         /// Gets a <see cref="Paint.Cap"/> from a <see cref="LineCap"/>.
         /// </summary>
@@ -435,7 +445,7 @@ namespace Prism.Android
             return new PointerEventArgs(source, evt.GetToolType(evt.ActionIndex).GetPointerType(),
                 new Point(evt.GetX() / Device.Current.DisplayScale, evt.GetY() / Device.Current.DisplayScale), evt.Pressure, evt.EventTime);
         }
-        
+
         /// <summary>
         /// Gets a <see cref="PointerType"/> from a <see cref="MotionEventToolType"/>.
         /// </summary>
@@ -456,7 +466,7 @@ namespace Prism.Android
                     return PointerType.Unknown;
             }
         }
-        
+
         /// <summary>
         /// Gets a <see cref="Rectangle"/> from a <see cref="RectF"/>.
         /// </summary>
@@ -485,7 +495,7 @@ namespace Prism.Android
                     return ImageView.ScaleType.Center;
             }
         }
-        
+
         /// <summary>
         /// Gets a <see cref="ScreenOrientation"/> from a <see cref="DisplayOrientations"/>.
         /// </summary>
@@ -496,12 +506,12 @@ namespace Prism.Android
             {
                 return ScreenOrientation.SensorPortrait;
             }
-            
+
             if (orientation.HasFlag(DisplayOrientations.Landscape) && !orientation.HasFlag(DisplayOrientations.Portrait))
             {
                 return ScreenOrientation.SensorLandscape;
             }
-            
+
             return ScreenOrientation.Unspecified;
         }
 
@@ -662,7 +672,7 @@ namespace Prism.Android
                 }
                 return;
             }
-            
+
             var solidColor = brush as SolidColorBrush;
             if (solidColor != null)
             {
