@@ -67,7 +67,7 @@ namespace Prism.Android
 
         internal static void Initialize()
         {
-            if (!HasInitialized)
+            if (!HasInitialized && application != null)
             {
                 var appAssemblies = new List<Assembly>(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetType() != typeof(System.Reflection.Emit.AssemblyBuilder)));
                 var exeAssembly = Assembly.GetExecutingAssembly();
