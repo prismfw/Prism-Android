@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using Android.Content;
 using Android.Graphics;
-using Android.Graphics.Drawables;
 using Android.Util;
 using Android.Views;
 using Android.Views.InputMethods;
@@ -599,10 +598,12 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
+
+            SetMeasuredDimension(Width, Height);
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -615,7 +616,10 @@ namespace Prism.Android.UI.Controls
         protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
             MeasureRequest(false, null);
-            base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
+
+            // Actual dimensions will be determined during arrangement.  For now, this needs to be
+            // less than or equal to the eventual size, or else the text may not wrap correctly.
+            SetMeasuredDimension(1, 1);
         }
 
         /// <summary>
