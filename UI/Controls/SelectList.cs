@@ -33,6 +33,8 @@ using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
 
+using View = Android.Views.View;
+
 namespace Prism.Android.UI.Controls
 {
     /// <summary>
@@ -302,25 +304,7 @@ namespace Prism.Android.UI.Controls
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
-        public Rectangle Frame
-        {
-            get
-            {
-                return new Rectangle(Left / Device.Current.DisplayScale, Top / Device.Current.DisplayScale,
-                    Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale);
-            }
-            set
-            {
-                Left = (int)(value.Left * Device.Current.DisplayScale);
-                Top = (int)(value.Top * Device.Current.DisplayScale);
-                Right = (int)(value.Right * Device.Current.DisplayScale);
-                Bottom = (int)(value.Bottom * Device.Current.DisplayScale);
-
-                Measure(MeasureSpec.MakeMeasureSpec(Right - Left, MeasureSpecMode.Exactly),
-                    MeasureSpec.MakeMeasureSpec(Bottom - Top, MeasureSpecMode.Exactly));
-                Layout(Left, Top, Right, Bottom);
-            }
-        }
+        public Rectangle Frame { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the drop down glyph.
@@ -424,6 +408,8 @@ namespace Prism.Android.UI.Controls
                 {
                     items = value;
                     OnPropertyChanged(Prism.UI.Controls.SelectList.ItemsProperty);
+
+                    currentDisplayItem = null;
                     Adapter = new SelectListAdapter(this);
                 }
             }
@@ -555,7 +541,9 @@ namespace Prism.Android.UI.Controls
 
         private readonly Drawable foregroundDrawable; // this controls the drop down glyph
         private readonly Paint borderPaint = new Paint();
+        private View currentDisplayItem;
         private int currentIndex;
+        private bool itemAdded;
         private bool touchEventHandledByChildren;
 
         /// <summary>
@@ -573,14 +561,27 @@ namespace Prism.Android.UI.Controls
 
             ChildViewAdded += (sender, e) =>
             {
-                e.Child.LayoutParameters.Width = ViewGroup.LayoutParams.MatchParent;
-                e.Child.LayoutParameters.Height = ViewGroup.LayoutParams.MatchParent;
-                Measure(MeasureSpec.MakeMeasureSpec(e.Parent.Width, MeasureSpecMode.Exactly), MeasureSpec.MakeMeasureSpec(e.Parent.Height, MeasureSpecMode.Exactly));
-            };
+                if (!itemAdded && currentDisplayItem == e.Child)
+                {
+                    itemAdded = true;
 
-            ChildViewRemoved += (sender, e) =>
-            {
-                RequestLayout();
+                    // Display item requests don't trigger the necessary measurements, so we have to explicitly trigger them ourselves
+                    var parentCV = this.GetParent<INativeContentView>();
+                    if (parentCV != null)
+                    {
+                        parentCV.MeasureRequest(true, parentCV.Frame.Size);
+                        parentCV.ArrangeRequest(true, null);
+
+                        var parentView = parentCV as View;
+                        if (parentView != null)
+                        {
+                            parentView.Measure(MeasureSpec.MakeMeasureSpec(1, MeasureSpecMode.Unspecified),
+                                MeasureSpec.MakeMeasureSpec(1, MeasureSpecMode.Unspecified));
+
+                            parentView.Layout(parentView.Left, parentView.Top, parentView.Right, parentView.Bottom);
+                        }
+                    }
+                }
             };
         }
 
@@ -655,8 +656,9 @@ namespace Prism.Android.UI.Controls
         /// <param name="view"></param>
         /// <param name="position"></param>
         /// <param name="id"></param>
-        public void OnItemSelected(AdapterView parent, global::Android.Views.View view, int position, long id)
+        public void OnItemSelected(AdapterView parent, View view, int position, long id)
         {
+            currentDisplayItem = null;
             if (currentIndex != position)
             {
                 OnPropertyChanged(Prism.UI.Controls.SelectList.SelectedIndexProperty);
@@ -735,6 +737,8 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public void RefreshDisplayItem()
         {
+            currentDisplayItem = null;
+
             int index = SelectedItemPosition;
             SetSelection(index == 0 ? 1 : 0, false);
             SetSelection(index, false);
@@ -807,7 +811,7 @@ namespace Prism.Android.UI.Controls
         {
             base.OnFocusChanged(gainFocus, direction, previouslyFocusedRect);
 
-            OnPropertyChanged(Prism.UI.Controls.Control.IsFocusedProperty);
+            OnPropertyChanged(Control.IsFocusedProperty);
             if (gainFocus)
             {
                 GotFocus(this, EventArgs.Empty);
@@ -828,16 +832,13 @@ namespace Prism.Android.UI.Controls
         /// <param name="bottom">Bottom position, relative to parent.</param>
         protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
         {
-            // SelectLists have a problem with their parent not rearranging them on item selection, so we're forcing a rearrangement for now
-            var parent = (ObjectRetriever.GetAgnosticObject(this) as Visual)?.Parent as Visual;
-            if (parent != null && (!parent.IsMeasureValid || !parent.IsArrangeValid))
-            {
-                (ObjectRetriever.GetNativeObject(parent) as INativeVisual)?.ArrangeRequest(true, null);
-            }
-            else
-            {
-                ArrangeRequest(false, null);
-            }
+            ArrangeRequest(false, null);
+
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
+
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
 
@@ -921,26 +922,40 @@ namespace Prism.Android.UI.Controls
                 SetDropDownViewResource(global::Android.Resource.Layout.SimpleSpinnerDropDownItem);
             }
 
-            public override global::Android.Views.View GetView(int position, global::Android.Views.View convertView, ViewGroup parent)
+            public override View GetView(int position, View convertView, ViewGroup parent)
             {
                 var sl = selectList.Target as SelectList;
-                var obj = sl?.DisplayItemRequest();
-                return obj as global::Android.Views.View ?? new TextView(Context) { Text = obj?.ToString() };
+                if (sl == null)
+                {
+                    return null;
+                }
+
+                if (sl.currentDisplayItem == null)
+                {
+                    var obj = sl.DisplayItemRequest();
+                    sl.currentDisplayItem = obj as View ?? new TextView(Context) { Text = obj?.ToString() };
+                    return sl.currentDisplayItem;
+                }
+
+                return sl.currentDisplayItem;
             }
 
-            public override global::Android.Views.View GetDropDownView(int position, global::Android.Views.View convertView, ViewGroup parent)
+            public override View GetDropDownView(int position, View convertView, ViewGroup parent)
             {
                 var sl = selectList.Target as SelectList;
                 var obj = sl?.ListItemRequest(sl.Items[position]);
-                var view = obj as global::Android.Views.View ?? new TextView(Context) { Text = obj?.ToString() };
+                var view = obj as View ?? new TextView(Context) { Text = obj?.ToString() };
                 var visual = obj as INativeVisual;
                 if (visual != null)
                 {
                     visual.MeasureRequest(false, null);
                     visual.ArrangeRequest(false, null);
 
-                    view.SetMinimumHeight(view.Height);
-                    view.SetMinimumWidth(view.Width);
+                    var holder = new FrameLayout(Context);
+                    holder.AddView(view);
+                    holder.SetMinimumWidth(visual.Frame.Width.GetScaledInt());
+                    holder.SetMinimumHeight(visual.Frame.Height.GetScaledInt());
+                    view = holder;
                 }
 
                 return view;
