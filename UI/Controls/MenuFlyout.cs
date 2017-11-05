@@ -524,7 +524,7 @@ namespace Prism.Android.UI.Controls
                 view.SetPadding((int)(6 * Device.Current.DisplayScale), (int)(10 * Device.Current.DisplayScale),
                         (int)(6 * Device.Current.DisplayScale), (int)(10 * Device.Current.DisplayScale));
 
-                view.LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent);
+                view.LayoutParameters = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent);
 
                 return view;
             }
