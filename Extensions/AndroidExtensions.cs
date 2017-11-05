@@ -141,6 +141,16 @@ namespace Prism.Android
         }
 
         /// <summary>
+        /// Gets a <see cref="double"/> from an <see cref="int"/>
+        /// that is divided by the device's display scale.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        public static double GetScaledDouble(this int value)
+        {
+            return value / Device.Current.DisplayScale;
+        }
+
+        /// <summary>
         /// Gets a <see cref="float"/> from a <see cref="double"/>
         /// that is multiplied by the device's display scale.
         /// </summary>

@@ -45,6 +45,7 @@ namespace Prism.Android
     public class Resources : INativeResources
     {
         private static readonly Drawable buttonBackground = new global::Android.Widget.Button(Application.MainActivity).Background;
+        private static readonly Drawable selectListDisplayGlyph = new global::Android.Widget.Spinner(Application.MainActivity, global::Android.Widget.SpinnerMode.Dropdown).Background;
         private static readonly Drawable selectListListBackground = new global::Android.Widget.Spinner(Application.MainActivity, global::Android.Widget.SpinnerMode.Dropdown).PopupBackground;
         private static readonly Drawable sliderThumb = new global::Android.Widget.SeekBar(Application.MainActivity).Thumb;
         private static readonly Drawable textBoxBackground = new global::Android.Widget.EditText(Application.MainActivity).Background;
@@ -139,7 +140,7 @@ namespace Prism.Android
                             value = new Size(540, 620);
                             return true;
                         case SystemResourceKeyId.SelectListDisplayItemPadding:
-                            value = new Thickness(3, 4, 20, 4);
+                            value = new Thickness(3, 4, Math.Ceiling(selectListDisplayGlyph.IntrinsicWidth.GetScaledDouble()), 4);
                             return true;
                         case SystemResourceKeyId.SelectListListItemPadding:
                             value = new Thickness(4, 10, 16, 10);

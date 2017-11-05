@@ -23,6 +23,7 @@ using System;
 using System.Collections;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -837,7 +838,7 @@ namespace Prism.Android.UI.Controls
             Left = Frame.Left.GetScaledInt();
             Top = Frame.Top.GetScaledInt();
             Right = Frame.Right.GetScaledInt();
-            Bottom = Frame.Bottom.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt() + (Build.VERSION.SdkInt <= BuildVersionCodes.Kitkat ? 4 : 0);
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
