@@ -128,18 +128,6 @@ namespace Prism.Android.IO
         /// Creates a file at the specified path, overwriting any existing file.
         /// </summary>
         /// <param name="filePath">The path at which to create the file.</param>
-        public Task<Stream> CreateAsync(string filePath)
-        {
-            return Task.Run(() =>
-            {
-                return System.IO.File.Create(filePath) as Stream;
-            });
-        }
-
-        /// <summary>
-        /// Creates a file at the specified path, overwriting any existing file.
-        /// </summary>
-        /// <param name="filePath">The path at which to create the file.</param>
         /// <param name="bufferSize">The number of bytes buffered for reading and writing to the file.</param>
         public Task<Stream> CreateAsync(string filePath, int bufferSize)
         {

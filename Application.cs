@@ -138,15 +138,16 @@ namespace Prism.Android
             try
             {
                 var assetName = assetUri.OriginalString;
-                if (assetName.StartsWith(Prism.IO.Directory.AssetDirectory))
+                if (assetName.StartsWith(Prism.IO.Directory.AssetDirectoryPath))
                 {
-                    assetName = assetName.Remove(0, Prism.IO.Directory.AssetDirectory.Length);
+                    assetName = assetName.Remove(0, Prism.IO.Directory.AssetDirectoryPath.Length);
                 }
 
                 return MainActivity.Assets.OpenFd(assetName);
             }
-            catch
+            catch (Exception e)
             {
+                Prism.Utilities.Logger.Error("Unable to retrieve asset {0} - {1}", assetUri.OriginalString, e);
                 return null;
             }
         }

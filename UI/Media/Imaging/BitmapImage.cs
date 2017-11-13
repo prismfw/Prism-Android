@@ -137,9 +137,9 @@ namespace Prism.Android.UI.Media.Imaging
                             }
                             else if (!SourceUri.IsAbsoluteUri || SourceUri.IsFile)
                             {
-                                if (SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectory, StringComparison.Ordinal))
+                                if (SourceUri.OriginalString.StartsWith(Prism.IO.Directory.AssetDirectoryPath, StringComparison.Ordinal))
                                 {
-                                    string fileName = SourceUri.OriginalString.Remove(0, Prism.IO.Directory.AssetDirectory.Length);
+                                    string fileName = SourceUri.OriginalString.Remove(0, Prism.IO.Directory.AssetDirectoryPath.Length);
                                     int id = Application.MainActivity.Resources.GetIdentifier(System.IO.Path.GetFileNameWithoutExtension(fileName).ToLower(), "drawable", Application.MainActivity.PackageName);
                                     if (id > 0)
                                     {

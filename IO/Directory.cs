@@ -19,11 +19,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-using System;
 using System.IO;
 using System.Threading.Tasks;
+using Android.OS;
 using Android.Runtime;
+using Prism.IO;
 using Prism.Native;
+
+using Environment = Android.OS.Environment;
 
 namespace Prism.Android.IO
 {
@@ -35,19 +38,19 @@ namespace Prism.Android.IO
     public class Directory : INativeDirectory
     {
         /// <summary>
-        /// Gets the directory path to a folder with read-only access that contains the application's bundled assets.
+        /// Gets the directory path to the folder that contains the application's bundled assets.
         /// </summary>
-        public string AssetDirectory
+        public string AssetDirectoryPath
         {
-            get { return "Assets/"; }
+            get { return "assets/"; }
         }
 
         /// <summary>
-        /// Gets the directory path to a folder with read/write access for storing persisted application data.
+        /// Gets the directory path to a folder for storing persisted application data that is specific to the user.
         /// </summary>
-        public string DataDirectory
+        public string DataDirectoryPath
         {
-            get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/"; }
+            get { return System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments) + "/"; }
         }
 
         /// <summary>
@@ -56,14 +59,6 @@ namespace Prism.Android.IO
         public char SeparatorChar
         {
             get { return Path.DirectorySeparatorChar; }
-        }
-
-        /// <summary>
-        /// Gets the directory path to a folder with read/write access for storing temporary application data.
-        /// </summary>
-        public string TempDirectory
-        {
-            get { return Path.GetTempPath(); }
         }
 
         /// <summary>
@@ -83,11 +78,11 @@ namespace Prism.Android.IO
                     System.IO.Directory.CreateDirectory(destinationDirectoryPath);
                 }
 
-                var dirInfo = new DirectoryInfo(sourceDirectoryPath);
+                var dirInfo = new System.IO.DirectoryInfo(sourceDirectoryPath);
 
                 // Get the files in the directory and copy them to the new location.
-                FileInfo[] files = dirInfo.GetFiles();
-                foreach (FileInfo file in files)
+                System.IO.FileInfo[] files = dirInfo.GetFiles();
+                foreach (System.IO.FileInfo file in files)
                 {
                     string tempPath = Path.Combine(destinationDirectoryPath, file.Name);
                     file.CopyTo(tempPath, overwrite);
@@ -138,7 +133,7 @@ namespace Prism.Android.IO
             return Task.Run(() =>
             {
                 return System.IO.Directory.GetDirectories(directoryPath, "*", searchOption == Prism.IO.SearchOption.AllDirectories ?
-                    SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                    System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly);
             });
         }
 
@@ -154,7 +149,91 @@ namespace Prism.Android.IO
             return Task.Run(() =>
             {
                 return System.IO.Directory.GetFiles(directoryPath, "*", searchOption == Prism.IO.SearchOption.AllDirectories ?
-                    SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                    System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly);
+            });
+        }
+
+        /// <summary>
+        /// Gets the number of free bytes that are available on the drive that contains the directory at the specified path.
+        /// </summary>
+        /// <param name="directoryPath">The path of a directory on the drive.  If <c>null</c>, the current drive is used.</param>
+        /// <returns>The free bytes.</returns>
+        public Task<long> GetFreeBytesAsync(string directoryPath)
+        {
+            return Task.Run(() =>
+            {
+                var stats = new StatFs(directoryPath);
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.JellyBeanMr2)
+                {
+                    return stats.AvailableBytes;
+                }
+                else
+                {
+#pragma warning disable 0618 // deprecated calls are for pre-API 18 devices
+                    return stats.AvailableBlocks * stats.BlockSize;
+#pragma warning restore 0618
+                }
+            });
+        }
+
+        /// <summary>
+        /// Gets information about the specified system directory.
+        /// </summary>
+        /// <param name="directory">The system directory whose information is to be retrieved.</param>
+        /// <returns>Information about the system directory.</returns>
+        public async Task<INativeDirectoryInfo> GetSystemDirectoryInfoAsync(SystemDirectory directory)
+        {
+            return await Task.Run(() =>
+            {
+                switch (directory)
+                {
+                    case SystemDirectory.Assets:
+                        return new DirectoryInfo(Path.GetDirectoryName(Application.MainActivity.PackageResourcePath));
+                    case SystemDirectory.Local:
+                        return new DirectoryInfo(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments));
+                    case SystemDirectory.Shared:
+                        return Application.MainActivity.ObbDir == null ? null : new DirectoryInfo(Application.MainActivity.ObbDir.AbsolutePath);
+                    case SystemDirectory.Temp:
+                        return new DirectoryInfo(Path.GetTempPath());
+                    case SystemDirectory.External:
+                        return new DirectoryInfo(Build.VERSION.SdkInt >= BuildVersionCodes.Kitkat ?
+                            Application.MainActivity.GetExternalFilesDirs(null) :
+                            new[] { Application.MainActivity.GetExternalFilesDir(null) });
+                    case SystemDirectory.Music:
+                        return new DirectoryInfo(Environment.GetExternalStoragePublicDirectory(Environment.DirectoryMusic).AbsolutePath);
+                    case SystemDirectory.Photos:
+                        return new DirectoryInfo(Environment.GetExternalStoragePublicDirectory(Environment.DirectoryPictures).AbsolutePath);
+                    case SystemDirectory.Videos:
+                        return new DirectoryInfo(Environment.GetExternalStoragePublicDirectory(Environment.DirectoryMovies).AbsolutePath);
+                    default:
+                        // Extras that are not explicitly identified by the core framework library.
+                        var folder = (System.Environment.SpecialFolder)(directory - System.Enum.GetValues(typeof(SystemDirectory)).Length);
+                        return System.Enum.IsDefined(typeof(System.Environment.SpecialFolder), folder) ?
+                            new DirectoryInfo(System.Environment.GetFolderPath(folder)) : null;
+                }
+            });
+        }
+
+        /// <summary>
+        /// Gets the total number of bytes on the drive that contains the directory at the specified path.
+        /// </summary>
+        /// <param name="directoryPath">The path of a directory on the drive.  If <c>null</c>, the current drive is used.</param>
+        /// <returns>The total bytes.</returns>
+        public Task<long> GetTotalBytesAsync(string directoryPath)
+        {
+            return Task.Run(() =>
+            {
+                var stats = new StatFs(directoryPath);
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.JellyBeanMr2)
+                {
+                    return stats.TotalBytes;
+                }
+                else
+                {
+#pragma warning disable 0618 // deprecated calls are for pre-API 18 devices
+                    return stats.BlockCount * stats.BlockSize;
+#pragma warning restore 0618
+                }
             });
         }
 
@@ -174,11 +253,11 @@ namespace Prism.Android.IO
                     System.IO.Directory.CreateDirectory(destinationDirectoryPath);
                 }
 
-                var dirInfo = new DirectoryInfo(sourceDirectoryPath);
+                var dirInfo = new System.IO.DirectoryInfo(sourceDirectoryPath);
 
                 // Get the files in the directory and copy them to the new location.
-                FileInfo[] files = dirInfo.GetFiles();
-                foreach (FileInfo file in files)
+                System.IO.FileInfo[] files = dirInfo.GetFiles();
+                foreach (System.IO.FileInfo file in files)
                 {
                     string tempPath = Path.Combine(destinationDirectoryPath, file.Name);
                     if (overwrite || !System.IO.File.Exists(tempPath))
