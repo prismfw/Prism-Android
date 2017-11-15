@@ -782,14 +782,28 @@ namespace Prism.Android.UI.Controls
         {
             public Drawable MaximumDrawable
             {
-                get { return maxDrawable; }
+                get
+                {
+                    if (maxDrawable?.Handle == IntPtr.Zero)
+                    {
+                        MaximumDrawable = slider.Background.GetDrawable(null);
+                    }
+                    return maxDrawable;
+                }
                 set { maxDrawable = value ?? new ColorDrawable(global::Android.Graphics.Color.Rgb(33, 36, 40)); }
             }
             private Drawable maxDrawable;
 
             public Drawable MinimumDrawable
             {
-                get { return minDrawable; }
+                get
+                {
+                    if (minDrawable?.Handle == IntPtr.Zero)
+                    {
+                        MinimumDrawable = slider.Foreground.GetDrawable(null);
+                    }
+                    return minDrawable;
+                }
                 set { minDrawable = value ?? new ColorDrawable(global::Android.Graphics.Color.Rgb(38, 169, 216)); }
             }
             private Drawable minDrawable;
@@ -816,23 +830,23 @@ namespace Prism.Android.UI.Controls
                 int vCenter = (slider.Height - (slider.PaddingTop + slider.PaddingBottom)) / 2;
                 int progress = (int)((slider.Progress / (double)slider.Max) * width);
 
-                minDrawable.SetBounds(0, vCenter - height, progress, vCenter + height);
-                minDrawable.Draw(canvas);
+                MinimumDrawable.SetBounds(0, vCenter - height, progress, vCenter + height);
+                MinimumDrawable.Draw(canvas);
 
-                maxDrawable.SetBounds(progress, vCenter - height, width, vCenter + height);
-                maxDrawable.Draw(canvas);
+                MaximumDrawable.SetBounds(progress, vCenter - height, width, vCenter + height);
+                MaximumDrawable.Draw(canvas);
             }
 
             public override void SetAlpha(int alpha)
             {
-                minDrawable.SetAlpha(alpha);
-                maxDrawable.SetAlpha(alpha);
+                MinimumDrawable.SetAlpha(alpha);
+                MaximumDrawable.SetAlpha(alpha);
             }
 
             public override void SetColorFilter(ColorFilter cf)
             {
-                minDrawable.SetColorFilter(cf);
-                maxDrawable.SetColorFilter(cf);
+                MinimumDrawable.SetColorFilter(cf);
+                MaximumDrawable.SetColorFilter(cf);
             }
         }
     }
