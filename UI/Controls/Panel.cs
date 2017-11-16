@@ -28,7 +28,6 @@ using Android.Views;
 using Android.Widget;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
 
@@ -45,12 +44,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -131,7 +130,7 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
         public Rectangle Frame { get; set; }
-        
+
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
         /// </summary>
@@ -179,7 +178,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -192,7 +191,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -251,12 +250,12 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (OnInterceptTouchEvent(e))
             {
                 return true;
             }
-            
+
             IsDispatching = true;
             touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
             IsDispatching = false;
@@ -296,7 +295,7 @@ namespace Prism.Android.UI.Controls
         {
             return !isHitTestVisible;
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -305,26 +304,27 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (!touchEventHandledByChildren)
             {
-                if (e.Action == MotionEventActions.Cancel)
+                if (e.ActionMasked == MotionEventActions.Cancel)
                 {
                     PointerCanceled(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Down)
+                else if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
                 {
                     PointerPressed(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Move)
+                else if (e.ActionMasked == MotionEventActions.Move)
                 {
                     PointerMoved(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Up)
+                else if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
                 {
                     PointerReleased(this, e.GetPointerEventArgs(this));
                 }
             }
+
             return base.OnTouchEvent(e);
         }
 
@@ -358,10 +358,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -456,7 +456,7 @@ namespace Prism.Android.UI.Controls
             }
 
             private readonly ViewGroup parent;
-            
+
             public PanelChildrenList(ViewGroup parent)
             {
                 this.parent = parent;

@@ -171,6 +171,16 @@ namespace Prism.Android
         }
 
         /// <summary>
+        /// Divides the values of a <see cref="Size"/> by the
+        /// device's display scale, then returns the result.
+        /// </summary>
+        /// <param name="value">The value to be scaled.</param>
+        public static Size GetScaledSize(this Size value)
+        {
+            return value / Device.Current.DisplayScale;
+        }
+
+        /// <summary>
         /// Gets an <see cref="ActionKeyType"/> from an <see cref="ImeAction"/>.
         /// </summary>
         /// <param name="action">The action.</param>
@@ -452,8 +462,9 @@ namespace Prism.Android
         /// <param name="source">The source of the event.</param>
         public static PointerEventArgs GetPointerEventArgs(this MotionEvent evt, object source)
         {
-            return new PointerEventArgs(source, evt.GetToolType(evt.ActionIndex).GetPointerType(),
-                new Point(evt.GetX() / Device.Current.DisplayScale, evt.GetY() / Device.Current.DisplayScale), evt.Pressure, evt.EventTime);
+            return new PointerEventArgs(source, evt.GetPointerId(evt.ActionIndex), evt.GetToolType(evt.ActionIndex).GetPointerType(),
+                new Point(evt.GetX(evt.ActionIndex) / Device.Current.DisplayScale, evt.GetY(evt.ActionIndex) / Device.Current.DisplayScale),
+                evt.Pressure, evt.EventTime);
         }
 
         /// <summary>

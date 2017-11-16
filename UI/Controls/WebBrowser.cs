@@ -27,7 +27,6 @@ using Android.Views;
 using Android.Webkit;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.Utilities;
@@ -55,12 +54,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the web browser has begun navigating to a document.
         /// </summary>
         public event EventHandler<WebNavigationStartingEventArgs> NavigationStarting;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -170,7 +169,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -183,7 +182,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -277,7 +276,7 @@ namespace Prism.Android.UI.Controls
         public void InvokeScript(string scriptName)
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Kitkat)
-            { 
+            {
                 EvaluateJavascript(scriptName, this);
             }
             else
@@ -312,7 +311,7 @@ namespace Prism.Android.UI.Controls
         {
             LoadData(html, "text/html", null);
         }
-        
+
         /// <summary></summary>
         /// <param name="value"></param>
         public void OnReceiveValue(Java.Lang.Object value)
@@ -327,7 +326,7 @@ namespace Prism.Android.UI.Controls
         {
             Reload();
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -336,26 +335,26 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
@@ -394,10 +393,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -461,7 +460,7 @@ namespace Prism.Android.UI.Controls
                 Title = base.Title;
                 OnPropertyChanged(Prism.UI.Controls.WebBrowser.TitleProperty);
             }
-            
+
             NavigationCompleted(this, new WebNavigationCompletedEventArgs(Uri));
         }
 

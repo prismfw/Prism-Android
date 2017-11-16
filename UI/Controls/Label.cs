@@ -28,7 +28,6 @@ using Android.Views;
 using Android.Widget;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
 
@@ -45,12 +44,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -122,7 +121,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public double FontSize
         {
-            get { return TextSize / Device.Current.DisplayScale; }
+            get { return TextSize.GetScaledDouble(); }
             set { SetTextSize(ComplexUnitType.Sp, (float)value); }
         }
 
@@ -369,17 +368,17 @@ namespace Prism.Android.UI.Controls
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
-            var widthSpec = (int)Math.Min(int.MaxValue, constraints.Width * Device.Current.DisplayScale);
-            var heightSpec = (int)Math.Min(int.MaxValue, constraints.Height * Device.Current.DisplayScale);
+            var widthSpec = Math.Min(int.MaxValue, constraints.Width.GetScaledInt());
+            var heightSpec = Math.Min(int.MaxValue, constraints.Height.GetScaledInt());
             base.OnMeasure(MeasureSpec.MakeMeasureSpec(widthSpec, MeasureSpecMode.AtMost),
                 MeasureSpec.MakeMeasureSpec(heightSpec, MeasureSpecMode.AtMost));
 
-            var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
+            var size = new Size(MeasuredWidth, MeasuredHeight).GetScaledSize();
             SetMeasuredDimension(width, height);
 
             return new Size(Math.Min(constraints.Width, size.Width), Math.Min(constraints.Height, size.Height));
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -388,20 +387,20 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
             }
@@ -448,10 +447,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             SetMeasuredDimension(Width, Height);
 

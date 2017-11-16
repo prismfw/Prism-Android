@@ -61,12 +61,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the control loses focus.
         /// </summary>
         public event EventHandler LostFocus;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -135,7 +135,7 @@ namespace Prism.Android.UI.Controls
                     {
                         base.Background = (background as DataBrush).GetDrawable(null) ??
                             Android.Resources.GetDrawable(this, SystemResources.ButtonBackgroundBrushKey);
-                        
+
                         var scb = background as SolidColorBrush;
                         if (scb != null)
                         {
@@ -146,7 +146,7 @@ namespace Prism.Android.UI.Controls
                             base.Background.ClearColorFilter();
                         }
                     }
-                    
+
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -234,7 +234,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public double FontSize
         {
-            get { return TextView.TextSize / Device.Current.DisplayScale; }
+            get { return TextView.TextSize.GetScaledDouble(); }
             set
             {
                 if (value * Device.Current.DisplayScale != TextView.TextSize)
@@ -278,7 +278,7 @@ namespace Prism.Android.UI.Controls
                     if (foreground == null)
                     {
                         TextView.Paint.SetShader(null);
-                        TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary)); 
+                        TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
                     }
                     else
                     {
@@ -397,7 +397,7 @@ namespace Prism.Android.UI.Controls
             }
         }
         private Thickness padding;
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -410,7 +410,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -503,7 +503,7 @@ namespace Prism.Android.UI.Controls
 
             layout = new LinearLayout(Application.MainActivity)
             {
-                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)  
+                LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)
             };
 
             AddView(layout, new LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent, GravityFlags.Center));
@@ -547,7 +547,7 @@ namespace Prism.Android.UI.Controls
         {
             if (!IsFocused && !RequestFocus())
             {
-                RequestFocusFromTouch();    
+                RequestFocusFromTouch();
             }
         }
 
@@ -576,12 +576,12 @@ namespace Prism.Android.UI.Controls
             var currentPadding = padding * Device.Current.DisplayScale;
             SetPadding((int)currentPadding.Left, (int)currentPadding.Top, (int)currentPadding.Right, (int)currentPadding.Bottom);
 
-            base.OnMeasure(MeasureSpec.MakeMeasureSpec((int)(constraints.Width * Device.Current.DisplayScale), MeasureSpecMode.AtMost),
-                MeasureSpec.MakeMeasureSpec((int)(constraints.Height * Device.Current.DisplayScale), MeasureSpecMode.AtMost));
-            
-            return new Size(MeasuredWidth / Device.Current.DisplayScale, MeasuredHeight / Device.Current.DisplayScale);
+            base.OnMeasure(MeasureSpec.MakeMeasureSpec(constraints.Width.GetScaledInt(), MeasureSpecMode.AtMost),
+                MeasureSpec.MakeMeasureSpec(constraints.Height.GetScaledInt(), MeasureSpecMode.AtMost));
+
+            return new Size(MeasuredWidth.GetScaledDouble(), MeasuredHeight.GetScaledDouble());
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -590,26 +590,26 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
@@ -654,7 +654,7 @@ namespace Prism.Android.UI.Controls
 
             if (borderBrush != null && borderWidth > 0)
             {
-                borderPaint.StrokeWidth = (float)(borderWidth * Device.Current.DisplayScale);
+                borderPaint.StrokeWidth = borderWidth.GetScaledFloat();
                 canvas.DrawLines(new float[] { 0, Height, 0, 0, 0, 0, Width, 0 }, borderPaint);
 
                 // the right and bottom borders seem to be drawn thinner than the left and top ones
@@ -696,14 +696,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
-
-            //SetMeasuredDimension(Width, Height);
-            //layout.Measure(MeasureSpec.MakeMeasureSpec(Width - PaddingLeft - PaddingRight, MeasureSpecMode.AtMost),
-                //MeasureSpec.MakeMeasureSpec(Height - PaddingTop - PaddingBottom, MeasureSpecMode.AtMost));
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }

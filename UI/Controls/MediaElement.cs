@@ -29,7 +29,6 @@ using Android.Widget;
 using Prism.Android.Media;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 
 namespace Prism.Android.UI.Controls
@@ -622,12 +621,12 @@ namespace Prism.Android.UI.Controls
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
-            var widthSpec = (int)Math.Min(int.MaxValue, constraints.Width * Device.Current.DisplayScale);
-            var heightSpec = (int)Math.Min(int.MaxValue, constraints.Height * Device.Current.DisplayScale);
+            var widthSpec = Math.Min(int.MaxValue, constraints.Width.GetScaledInt());
+            var heightSpec = Math.Min(int.MaxValue, constraints.Height.GetScaledInt());
             base.OnMeasure(MeasureSpec.MakeMeasureSpec(widthSpec, MeasureSpecMode.AtMost),
                 MeasureSpec.MakeMeasureSpec(heightSpec, MeasureSpecMode.AtMost));
 
-            var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
+            var size = new Size(MeasuredWidth, MeasuredHeight).GetScaledSize();
             SetMeasuredDimension(width, height);
 
             return new Size(Math.Min(constraints.Width, size.Width), Math.Min(constraints.Height, size.Height));
@@ -663,11 +662,11 @@ namespace Prism.Android.UI.Controls
                 return false;
             }
 
-            if (e.Action == MotionEventActions.Cancel)
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 if (Controller.Enabled)
                 {
@@ -676,11 +675,11 @@ namespace Prism.Android.UI.Controls
 
                 PointerPressed(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
             }
@@ -796,10 +795,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -872,7 +871,7 @@ namespace Prism.Android.UI.Controls
                         break;
                     case MediaPlayerStatus.Paused:
                     case MediaPlayerStatus.Stopped:
-                    System.Diagnostics.Debug.WriteLine(item.Uri.OriginalString);
+                        System.Diagnostics.Debug.WriteLine(item.Uri.OriginalString);
                         IsPlaying = false;
                         break;
                 }
@@ -966,7 +965,7 @@ namespace Prism.Android.UI.Controls
                 player.PrepareAsync();
             }
 
-            
+
             if (newItem != null)
             {
                 if (newItem.Status > MediaPlayerStatus.Preparing)

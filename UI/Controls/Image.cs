@@ -45,7 +45,7 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -140,7 +140,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -153,7 +153,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -298,7 +298,7 @@ namespace Prism.Android.UI.Controls
 
             return new Size(width * scale, height * scale);
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -307,26 +307,26 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);

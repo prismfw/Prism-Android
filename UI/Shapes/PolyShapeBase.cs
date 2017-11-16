@@ -28,7 +28,6 @@ using Android.Runtime;
 using Android.Views;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
 
@@ -46,12 +45,12 @@ namespace Prism.Android.UI.Shapes
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -110,7 +109,7 @@ namespace Prism.Android.UI.Shapes
                 if (value != fill)
                 {
                     (fill as ImageBrush).ClearImageHandler(OnImageLoaded);
-                    
+
                     fill = value;
                     FillPaint.SetBrush(fill, Width, Height, OnImageLoaded);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.FillProperty);
@@ -119,7 +118,7 @@ namespace Prism.Android.UI.Shapes
             }
         }
         private Brush fill;
-        
+
         /// <summary>
         /// Gets or sets the rule to use for determining the interior fill of the shape.
         /// </summary>
@@ -189,7 +188,7 @@ namespace Prism.Android.UI.Shapes
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets a collection of the points that describe the vertices of the shape.
         /// </summary>
@@ -198,7 +197,7 @@ namespace Prism.Android.UI.Shapes
             get { return points; }
         }
         private readonly ObservableCollection<Point> points;
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -211,7 +210,7 @@ namespace Prism.Android.UI.Shapes
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -244,7 +243,7 @@ namespace Prism.Android.UI.Shapes
                 if (value != stroke)
                 {
                     (stroke as ImageBrush).ClearImageHandler(OnImageLoaded);
-                    
+
                     stroke = value;
                     StrokePaint.SetBrush(stroke, Width, Height, OnImageLoaded);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.StrokeProperty);
@@ -315,10 +314,10 @@ namespace Prism.Android.UI.Shapes
         /// </summary>
         public double StrokeThickness
         {
-            get { return StrokePaint.StrokeWidth / Device.Current.DisplayScale; }
+            get { return StrokePaint.StrokeWidth.GetScaledDouble(); }
             set
             {
-                float thickness = (float)(value * Device.Current.DisplayScale);
+                float thickness = value.GetScaledFloat();
                 if (thickness != StrokePaint.StrokeWidth)
                 {
                     StrokePaint.StrokeWidth = thickness;
@@ -345,7 +344,7 @@ namespace Prism.Android.UI.Shapes
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets the <see cref="Paint"/> object used to render the shape interior.
         /// </summary>
@@ -355,7 +354,7 @@ namespace Prism.Android.UI.Shapes
         /// Gets the <see cref="Paint"/> object used to render the shape outline.
         /// </summary>
         protected Paint StrokePaint { get; } = new Paint();
-        
+
         private readonly bool isClosedShape;
         private readonly APath path;
         private bool isPathClosed;
@@ -369,15 +368,15 @@ namespace Prism.Android.UI.Shapes
         {
             isClosedShape = isPolygon;
             path = new APath();
-            
+
             points = new ObservableCollection<Point>();
             points.CollectionChanged += OnPointsChanged;
-            
+
             SetWillNotDraw(false);
-            
+
             FillPaint.AntiAlias = true;
             FillPaint.SetStyle(Paint.Style.Fill);
-            
+
             StrokePaint.AntiAlias = true;
             StrokePaint.SetStyle(Paint.Style.Stroke);
         }
@@ -419,7 +418,7 @@ namespace Prism.Android.UI.Shapes
         {
             return constraints;
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -428,26 +427,26 @@ namespace Prism.Android.UI.Shapes
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
             }
             return base.OnTouchEvent(e);
         }
-        
+
         /// <summary>
         /// Sets the dash pattern to be used when drawing the outline of the shape.
         /// </summary>
@@ -464,12 +463,12 @@ namespace Prism.Android.UI.Shapes
                 var array = new float[pattern.Length];
                 for (int i = 0; i < pattern.Length; i++)
                 {
-                    array[i] = (float)(pattern[i] * Device.Current.DisplayScale);
+                    array[i] = pattern[i].GetScaledFloat();
                 }
-                
-                StrokePaint.SetPathEffect(new DashPathEffect(array, (float)(offset * Device.Current.DisplayScale)));
+
+                StrokePaint.SetPathEffect(new DashPathEffect(array, offset.GetScaledFloat()));
             }
-            
+
             Invalidate();
         }
 
@@ -498,18 +497,18 @@ namespace Prism.Android.UI.Shapes
         protected override void OnDraw(global::Android.Graphics.Canvas canvas)
         {
             base.OnDraw(canvas);
-            
+
             if (!isPathClosed && isClosedShape)
             {
                 path.Close();
                 isPathClosed = true;
             }
-            
+
             if (fill != null)
             {
                 canvas.DrawPath(path, FillPaint);
             }
-            
+
             canvas.DrawPath(path, StrokePaint);
         }
 
@@ -525,10 +524,10 @@ namespace Prism.Android.UI.Shapes
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -552,7 +551,7 @@ namespace Prism.Android.UI.Shapes
         {
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
-        
+
         /// <summary>
         /// This is called during layout when the size of this view has changed.
         /// </summary>
@@ -590,7 +589,7 @@ namespace Prism.Android.UI.Shapes
                 Unloaded(this, EventArgs.Empty);
             }
         }
-        
+
         private void OnPointsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             switch (e.Action)
@@ -606,30 +605,30 @@ namespace Prism.Android.UI.Shapes
                         {
                             path.Reset();
                         }
-                        
+
                         var point = points[0];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        
+                        path.MoveTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
+
                         for (int i = 1; i < points.Count; i++)
                         {
                             point = points[i];
-                            path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
+                            path.LineTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
                         }
-                        
+
                         break;
                     }
-                    
+
                     int index = 0;
                     if (e.NewStartingIndex == 0)
-                    { 
+                    {
                         var point = (Point)e.NewItems[index++];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
+                        path.MoveTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
                     }
-                    
+
                     for (; index < e.NewItems.Count; index++)
                     {
                         var point = (Point)e.NewItems[index];
-                        path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
+                        path.LineTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
                     }
                     break;
                 case NotifyCollectionChangedAction.Move:
@@ -638,12 +637,12 @@ namespace Prism.Android.UI.Shapes
                     if (points.Count > 0)
                     {
                         var point = points[0];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        
+                        path.MoveTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
+
                         for (int i = 1; i < points.Count; i++)
                         {
                             point = points[i];
-                            path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
+                            path.LineTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
                         }
                     }
                     break;
@@ -652,12 +651,12 @@ namespace Prism.Android.UI.Shapes
                     if (points.Count > 0)
                     {
                         var point = points[0];
-                        path.MoveTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
-                        
+                        path.MoveTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
+
                         for (int i = 1; i < points.Count; i++)
                         {
                             point = points[i];
-                            path.LineTo((float)(point.X * Device.Current.DisplayScale), (float)(point.Y * Device.Current.DisplayScale));
+                            path.LineTo(point.X.GetScaledFloat(), point.Y.GetScaledFloat());
                         }
                     }
                     break;
@@ -665,7 +664,7 @@ namespace Prism.Android.UI.Shapes
                     path.Reset();
                     break;
             }
-            
+
             isPathClosed = false;
             Invalidate();
         }

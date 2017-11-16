@@ -551,12 +551,12 @@ namespace Prism.Android.UI.Controls
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
-            var widthSpec = (int)Math.Min(int.MaxValue, constraints.Width * Device.Current.DisplayScale);
-            var heightSpec = (int)Math.Min(int.MaxValue, constraints.Height * Device.Current.DisplayScale);
+            var widthSpec = Math.Min(int.MaxValue, constraints.Width.GetScaledInt());
+            var heightSpec = Math.Min(int.MaxValue, constraints.Height.GetScaledInt());
             base.OnMeasure(MeasureSpec.MakeMeasureSpec(widthSpec, widthSpec == int.MaxValue ? MeasureSpecMode.AtMost : MeasureSpecMode.Exactly),
                 MeasureSpec.MakeMeasureSpec(heightSpec, heightSpec == int.MaxValue ? MeasureSpecMode.AtMost : MeasureSpecMode.Unspecified));
 
-            var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
+            var size = new Size(MeasuredWidth, MeasuredHeight).GetScaledSize();
             SetMeasuredDimension(width, height);
 
             return new Size(Math.Min(constraints.Width, size.Width), Math.Min(constraints.Height, size.Height));
@@ -582,19 +582,19 @@ namespace Prism.Android.UI.Controls
 
             if (!touchEventHandledByChildren)
             {
-                if (e.Action == MotionEventActions.Cancel)
+                if (e.ActionMasked == MotionEventActions.Cancel)
                 {
                     PointerCanceled(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Down)
+                else if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
                 {
                     PointerPressed(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Move)
+                else if (e.ActionMasked == MotionEventActions.Move)
                 {
                     PointerMoved(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Up)
+                else if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
                 {
                     PointerReleased(this, e.GetPointerEventArgs(this));
                 }
@@ -611,7 +611,8 @@ namespace Prism.Android.UI.Controls
         /// <param name="totalItemCount">the number of items in the list adapter</param>
         public void OnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount)
         {
-            ContentOffset = new Point(ComputeHorizontalScrollOffset() / Device.Current.DisplayScale, ComputeVerticalScrollOffset() / Device.Current.DisplayScale);
+            ContentOffset = new Point(ComputeHorizontalScrollOffset().GetScaledDouble(),
+                ComputeVerticalScrollOffset().GetScaledDouble());
         }
 
         /// <summary>
@@ -673,11 +674,13 @@ namespace Prism.Android.UI.Controls
         {
             if (animate == Prism.UI.Animate.Off || !areAnimationsEnabled)
             {
-                ScrollBy((int)(offset.X * Device.Current.DisplayScale - contentOffset.X), (int)(offset.Y * Device.Current.DisplayScale - contentOffset.Y));
+                ScrollBy((offset.X - contentOffset.X).GetScaledInt(),
+                    (offset.Y - contentOffset.Y).GetScaledInt());
             }
             else
             {
-                SmoothScrollBy((int)(offset.X * Device.Current.DisplayScale - contentOffset.X), (int)(offset.Y * Device.Current.DisplayScale - contentOffset.Y));
+                SmoothScrollBy((offset.X - contentOffset.X).GetScaledInt(),
+                    (offset.Y - contentOffset.Y).GetScaledInt());
             }
         }
 
@@ -744,14 +747,14 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
 
-            ContentSize = new Size(Width, ComputeVerticalScrollRange()) / Device.Current.DisplayScale;
+            ContentSize = new Size(Width, ComputeVerticalScrollRange()).GetScaledSize();
         }
 
         /// <summary>
@@ -1182,7 +1185,7 @@ namespace Prism.Android.UI.Controls
                 for (int i = 0; i < listBox.ChildCount - 1; i++)
                 {
                     int left, top, right, bottom;
-                    int height = (int)Math.Max(1, 0.5 * Device.Current.DisplayScale);
+                    int height = Math.Max(1, (0.5).GetScaledInt());
 
                     var child = listBox.GetChildAt(i);
                     var item = child as INativeListBoxItem;

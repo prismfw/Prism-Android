@@ -26,9 +26,7 @@ using Android.Views;
 using Android.Widget;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
-using Prism.UI.Controls;
 
 namespace Prism.Android.UI.Controls
 {
@@ -43,12 +41,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -205,7 +203,7 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
         public Rectangle Frame { get; set; }
-        
+
         /// <summary>
         /// Gets a value indicating whether this instance is currently dispatching touch events.
         /// </summary>
@@ -253,7 +251,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -266,7 +264,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -327,12 +325,12 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
+
             if (OnInterceptTouchEvent(e))
             {
                 return true;
             }
-            
+
             IsDispatching = true;
             touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
             IsDispatching = false;
@@ -373,13 +371,13 @@ namespace Prism.Android.UI.Controls
         {
             if (animate == Prism.UI.Animate.Off || !areAnimationsEnabled)
             {
-                ScrollTo(0, (int)(offset.Y * Device.Current.DisplayScale));
-                horizontalScrollView.ScrollTo((int)(offset.X * Device.Current.DisplayScale), 0);
+                ScrollTo(0, offset.Y.GetScaledInt());
+                horizontalScrollView.ScrollTo(offset.X.GetScaledInt(), 0);
             }
             else
             {
-                SmoothScrollTo(0, (int)(offset.Y * Device.Current.DisplayScale));
-                horizontalScrollView.SmoothScrollTo((int)(offset.X * Device.Current.DisplayScale), 0);
+                SmoothScrollTo(0, offset.Y.GetScaledInt());
+                horizontalScrollView.SmoothScrollTo(offset.X.GetScaledInt(), 0);
             }
         }
 
@@ -400,8 +398,8 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 if (!touchEventHandledByChildren)
                 {
@@ -410,7 +408,7 @@ namespace Prism.Android.UI.Controls
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 if (!touchEventHandledByChildren)
                 {
@@ -419,7 +417,7 @@ namespace Prism.Android.UI.Controls
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 if (!touchEventHandledByChildren)
                 {
@@ -428,7 +426,7 @@ namespace Prism.Android.UI.Controls
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 if (!touchEventHandledByChildren)
                 {
@@ -470,10 +468,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             SetMeasuredDimension(Width, Height);
 
@@ -485,7 +483,7 @@ namespace Prism.Android.UI.Controls
             var element = ObjectRetriever.GetAgnosticObject(content) as Element;
             if (element != null && CanScrollVertically)
             {
-                height = (int)((element.RenderSize.Height + element.Margin.Top + element.Margin.Bottom) * Device.Current.DisplayScale);
+                height = (element.RenderSize.Height + element.Margin.Top + element.Margin.Bottom).GetScaledInt();
             }
 
             if (horizontalScrollView.MeasuredWidth != MeasuredWidth || horizontalScrollView.MeasuredHeight != height)
@@ -496,7 +494,7 @@ namespace Prism.Android.UI.Controls
                 horizontalScrollView.Layout(0, 0, horizontalScrollView.MeasuredWidth, horizontalScrollView.MeasuredHeight);
             }
 
-            ContentSize = new Size(horizontalScrollView.HorizontalScrollRange, ComputeVerticalScrollRange()) / Device.Current.DisplayScale;
+            ContentSize = new Size(horizontalScrollView.HorizontalScrollRange, ComputeVerticalScrollRange()).GetScaledSize();
         }
 
         /// <summary>
@@ -508,8 +506,7 @@ namespace Prism.Android.UI.Controls
         {
             var desiredSize = MeasureRequest(false, null);
 
-            SetMeasuredDimension((int)(desiredSize.Width * Device.Current.DisplayScale),
-                (int)(desiredSize.Height * Device.Current.DisplayScale));
+            SetMeasuredDimension(desiredSize.Width.GetScaledInt(), desiredSize.Height.GetScaledInt());
 
             int width = MeasuredWidth;
             int height = MeasuredHeight;
@@ -518,8 +515,8 @@ namespace Prism.Android.UI.Controls
             var element = ObjectRetriever.GetAgnosticObject(content) as Element;
             if (element != null)
             {
-                width = (int)(element.DesiredSize.Width * Device.Current.DisplayScale);
-                height = (int)(element.DesiredSize.Height * Device.Current.DisplayScale);
+                width = element.DesiredSize.Width.GetScaledInt();
+                height = element.DesiredSize.Height.GetScaledInt();
             }
 
             horizontalScrollView.Measure(MeasureSpec.MakeMeasureSpec(MeasuredWidth, MeasureSpecMode.Exactly),
@@ -548,7 +545,7 @@ namespace Prism.Android.UI.Controls
         protected override void OnScrollChanged(int l, int t, int oldl, int oldt)
         {
             base.OnScrollChanged(l, t, oldl, oldt);
-            ContentOffset = new Point(contentOffset.X, t / Device.Current.DisplayScale);
+            ContentOffset = new Point(contentOffset.X, t.GetScaledDouble());
             OnScrolled();
         }
 
@@ -561,22 +558,22 @@ namespace Prism.Android.UI.Controls
                 Loaded(this, EventArgs.Empty);
             }
         }
-        
+
         private void OnPointerCanceled(MotionEvent e)
         {
             PointerCanceled(this, e.GetPointerEventArgs(this));
         }
-        
+
         private void OnPointerMoved(MotionEvent e)
         {
             PointerMoved(this, e.GetPointerEventArgs(this));
         }
-        
+
         private void OnPointerPressed(MotionEvent e)
         {
             PointerPressed(this, e.GetPointerEventArgs(this));
         }
-        
+
         private void OnPointerReleased(MotionEvent e)
         {
             PointerReleased(this, e.GetPointerEventArgs(this));
@@ -603,7 +600,7 @@ namespace Prism.Android.UI.Controls
             {
                 get { return ComputeHorizontalScrollRange(); }
             }
-            
+
             public bool IsDispatching { get; private set; }
 
             public int VerticalScrollRange
@@ -629,12 +626,12 @@ namespace Prism.Android.UI.Controls
                 {
                     return false;
                 }
-                
+
                 if (OnInterceptTouchEvent(e))
                 {
                     return true;
                 }
-                
+
                 IsDispatching = true;
                 touchEventHandledByChildren = this.DispatchTouchEventToChildren(e);
                 IsDispatching = false;
@@ -645,29 +642,29 @@ namespace Prism.Android.UI.Controls
             {
                 return !parent.IsHitTestVisible;
             }
-            
+
             public override bool OnTouchEvent(MotionEvent e)
             {
                 if (!parent.isHitTestVisible)
                 {
                     return false;
                 }
-                
+
                 if (!touchEventHandledByChildren)
                 {
-                    if (e.Action == MotionEventActions.Cancel)
+                    if (e.ActionMasked == MotionEventActions.Cancel)
                     {
                         parent.OnPointerCanceled(e);
                     }
-                    else if (e.Action == MotionEventActions.Down)
+                    else if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
                     {
                         parent.OnPointerPressed(e);
                     }
-                    else if (e.Action == MotionEventActions.Move)
+                    else if (e.ActionMasked == MotionEventActions.Move)
                     {
                         parent.OnPointerMoved(e);
                     }
-                    else if (e.Action == MotionEventActions.Up)
+                    else if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
                     {
                         parent.OnPointerReleased(e);
                     }
@@ -678,7 +675,7 @@ namespace Prism.Android.UI.Controls
             protected override void OnScrollChanged(int l, int t, int oldl, int oldt)
             {
                 base.OnScrollChanged(l, t, oldl, oldt);
-                parent.ContentOffset = new Point(l / Device.Current.DisplayScale, parent.contentOffset.Y);
+                parent.ContentOffset = new Point(l.GetScaledDouble(), parent.contentOffset.Y);
                 parent.OnScrolled();
             }
         }

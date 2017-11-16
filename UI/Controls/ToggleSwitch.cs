@@ -29,12 +29,9 @@ using Android.Views;
 using Android.Widget;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
-
-using Color = Android.Graphics.Color;
 
 namespace Prism.Android.UI.Controls
 {
@@ -59,12 +56,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when the control loses focus.
         /// </summary>
         public event EventHandler LostFocus;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -128,7 +125,7 @@ namespace Prism.Android.UI.Controls
                 if (value != background)
                 {
                     background = value;
-                    
+
                     if (background is SolidColorBrush)
                     {
                         SetColorLists();
@@ -137,7 +134,7 @@ namespace Prism.Android.UI.Controls
                     {
                         Prism.Utilities.Logger.Warn("ToggleSwitch.Background on Android only supports instances of SolidColorBrush.");
                     }
-                    
+
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -248,7 +245,7 @@ namespace Prism.Android.UI.Controls
                 if (value != foreground)
                 {
                     foreground = value;
-                    
+
                     if (foreground is SolidColorBrush)
                     {
                         SetColorLists();
@@ -257,7 +254,7 @@ namespace Prism.Android.UI.Controls
                     {
                         Prism.Utilities.Logger.Warn("ToggleSwitch.Foreground on Android only supports instances of SolidColorBrush.");
                     }
-                    
+
                     OnPropertyChanged(Control.ForegroundProperty);
                 }
             }
@@ -327,7 +324,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -340,7 +337,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -373,7 +370,7 @@ namespace Prism.Android.UI.Controls
                 if (value != thumbOffBrush)
                 {
                     thumbOffBrush = value;
-                    
+
                     if (thumbOffBrush is SolidColorBrush)
                     {
                         SetColorLists();
@@ -382,13 +379,13 @@ namespace Prism.Android.UI.Controls
                     {
                         Prism.Utilities.Logger.Warn("ToggleSwitch.ThumbOffBrush on Android only supports instances of SolidColorBrush.");
                     }
-                    
+
                     OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ThumbOffBrushProperty);
                 }
             }
         }
         private Brush thumbOffBrush;
-        
+
         /// <summary>
         /// Gets or sets the <see cref="Brush"/> to apply to the thumb of the control when the control's value is false.
         /// </summary>
@@ -400,7 +397,7 @@ namespace Prism.Android.UI.Controls
                 if (value != thumbOnBrush)
                 {
                     thumbOnBrush = value;
-                    
+
                     if (thumbOffBrush is SolidColorBrush)
                     {
                         SetColorLists();
@@ -409,7 +406,7 @@ namespace Prism.Android.UI.Controls
                     {
                         Prism.Utilities.Logger.Warn("ToggleSwitch.ThumbOnBrush on Android only supports instances of SolidColorBrush.");
                     }
-                    
+
                     OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ThumbOnBrushProperty);
                 }
             }
@@ -459,7 +456,7 @@ namespace Prism.Android.UI.Controls
             Focusable = true;
             Gravity = GravityFlags.Start;
             Typeface = Typeface.Default;
-            
+
             CheckedChange += (sender, e) =>
             {
                 OnPropertyChanged(Prism.UI.Controls.ToggleSwitch.ValueProperty);
@@ -487,7 +484,7 @@ namespace Prism.Android.UI.Controls
         {
             if (!IsFocused && !RequestFocus())
             {
-                RequestFocusFromTouch();    
+                RequestFocusFromTouch();
             }
         }
 
@@ -516,17 +513,17 @@ namespace Prism.Android.UI.Controls
             int width = MeasuredWidth;
             int height = MeasuredHeight;
 
-            var widthSpec = (int)Math.Min(int.MaxValue, constraints.Width * Device.Current.DisplayScale);
-            var heightSpec = (int)Math.Min(int.MaxValue, constraints.Height * Device.Current.DisplayScale);
+            var widthSpec = Math.Min(int.MaxValue, constraints.Width.GetScaledInt());
+            var heightSpec = Math.Min(int.MaxValue, constraints.Height.GetScaledInt());
             base.OnMeasure(MeasureSpec.MakeMeasureSpec(widthSpec, MeasureSpecMode.AtMost),
                 MeasureSpec.MakeMeasureSpec(heightSpec, MeasureSpecMode.AtMost));
 
-            var size = new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
+            var size = new Size(MeasuredWidth, MeasuredHeight).GetScaledSize();
             SetMeasuredDimension(width, height);
 
             return new Size(Math.Min(constraints.Width, size.Width), Math.Min(constraints.Height, size.Height));
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -535,26 +532,26 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
                 return true;
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
@@ -601,7 +598,7 @@ namespace Prism.Android.UI.Controls
             {
                 canvas.Save();
 
-                borderPaint.StrokeWidth = (float)(borderWidth * Device.Current.DisplayScale);
+                borderPaint.StrokeWidth = borderWidth.GetScaledFloat();
                 canvas.DrawLines(new float[] { 0, Height, 0, 0, 0, 0, Width, 0 }, borderPaint);
 
                 // the right and bottom borders seem to be drawn thinner than the left and top ones
@@ -645,10 +642,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -711,7 +708,7 @@ namespace Prism.Android.UI.Controls
                 Unloaded(this, EventArgs.Empty);
             }
         }
-        
+
         private void SetColorLists()
         {
             if (Build.VERSION.SdkInt < BuildVersionCodes.Lollipop)
@@ -719,25 +716,25 @@ namespace Prism.Android.UI.Controls
                 Prism.Utilities.Logger.Warn("Setting ToggleSwitch brushes requires Android 5.0 (Lollipop) or later.");
                 return;
             }
-        
+
             int[] colors =
             {
                 (background as SolidColorBrush)?.Color.GetHashCode() ?? Android.Resources.GetColor(this, Resource.Attribute.TextColorPrimary),
                 (foreground as SolidColorBrush)?.Color.GetHashCode() ?? Android.Resources.GetColor(this, Resource.Attribute.ColorAccent)
             };
-            
+
             int[][] states =
             {
                 new int[] { -Resource.Attribute.StateChecked },
                 new int[] { Resource.Attribute.StateChecked },
             };
-            
+
             ThumbDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, new int[]
             {
                 (thumbOffBrush as SolidColorBrush)?.Color.GetHashCode() ?? colors[0],
                 (thumbOnBrush as SolidColorBrush)?.Color.GetHashCode() ?? colors[1]
             }));
-            
+
             TrackDrawable.SetTintList(new global::Android.Content.Res.ColorStateList(states, colors));
         }
     }

@@ -25,7 +25,6 @@ using Android.Runtime;
 using Android.Views;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
 
@@ -44,12 +43,12 @@ namespace Prism.Android.UI.Shapes
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the system loses track of the pointer for some reason.
         /// </summary>
         public event EventHandler<PointerEventArgs> PointerCanceled;
-        
+
         /// <summary>
         /// Occurs when the pointer has moved while over the element.
         /// </summary>
@@ -108,7 +107,7 @@ namespace Prism.Android.UI.Shapes
                 if (value != fill)
                 {
                     (fill as ImageBrush).ClearImageHandler(OnImageLoaded);
-                    
+
                     fill = value;
                     FillPaint.SetBrush(fill, Width, Height, OnImageLoaded);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.FillProperty);
@@ -117,7 +116,7 @@ namespace Prism.Android.UI.Shapes
             }
         }
         private Brush fill;
-        
+
         /// <summary>
         /// Gets or sets the rule to use for determining the interior fill of the shape.
         /// </summary>
@@ -187,12 +186,12 @@ namespace Prism.Android.UI.Shapes
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets the method to invoke when this instance requests information for the path being drawn.
         /// </summary>
         public PathInfoRequestHandler PathInfoRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -205,7 +204,7 @@ namespace Prism.Android.UI.Shapes
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -238,7 +237,7 @@ namespace Prism.Android.UI.Shapes
                 if (value != stroke)
                 {
                     (stroke as ImageBrush).ClearImageHandler(OnImageLoaded);
-                    
+
                     stroke = value;
                     StrokePaint.SetBrush(stroke, Width, Height, OnImageLoaded);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.StrokeProperty);
@@ -339,7 +338,7 @@ namespace Prism.Android.UI.Shapes
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets the <see cref="Paint"/> object used to render the shape interior.
         /// </summary>
@@ -349,7 +348,7 @@ namespace Prism.Android.UI.Shapes
         /// Gets the <see cref="Paint"/> object used to render the shape outline.
         /// </summary>
         protected Paint StrokePaint { get; } = new Paint();
-        
+
         private readonly APath path = new APath();
 
         /// <summary>
@@ -359,10 +358,10 @@ namespace Prism.Android.UI.Shapes
             : base(Application.MainActivity)
         {
             SetWillNotDraw(false);
-            
+
             FillPaint.AntiAlias = true;
             FillPaint.SetStyle(Paint.Style.Fill);
-            
+
             StrokePaint.AntiAlias = true;
             StrokePaint.SetStyle(Paint.Style.Stroke);
         }
@@ -395,7 +394,7 @@ namespace Prism.Android.UI.Shapes
         {
             RequestLayout();
         }
-        
+
         /// <summary>
         /// Signals that the path needs to be rebuilt before it is drawn again.
         /// </summary>
@@ -413,7 +412,7 @@ namespace Prism.Android.UI.Shapes
         {
             return constraints;
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -422,26 +421,26 @@ namespace Prism.Android.UI.Shapes
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
             }
             return base.OnTouchEvent(e);
         }
-        
+
         /// <summary>
         /// Sets the dash pattern to be used when drawing the outline of the shape.
         /// </summary>
@@ -460,10 +459,10 @@ namespace Prism.Android.UI.Shapes
                 {
                     array[i] = pattern[i].GetScaledFloat();
                 }
-                
+
                 StrokePaint.SetPathEffect(new DashPathEffect(array, offset.GetScaledFloat()));
             }
-            
+
             Invalidate();
         }
 
@@ -492,17 +491,17 @@ namespace Prism.Android.UI.Shapes
         protected override void OnDraw(global::Android.Graphics.Canvas canvas)
         {
             base.OnDraw(canvas);
-            
+
             if (path.IsEmpty)
             {
                 BuildPath();
             }
-            
+
             if (fill != null)
             {
                 canvas.DrawPath(path, FillPaint);
             }
-            
+
             canvas.DrawPath(path, StrokePaint);
         }
 
@@ -518,10 +517,10 @@ namespace Prism.Android.UI.Shapes
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -545,7 +544,7 @@ namespace Prism.Android.UI.Shapes
         {
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
-        
+
         /// <summary>
         /// This is called during layout when the size of this view has changed.
         /// </summary>
@@ -558,7 +557,7 @@ namespace Prism.Android.UI.Shapes
             base.OnSizeChanged(w, h, oldw, oldh);
             StrokePaint.SetBrush(stroke, w, h, null);
         }
-        
+
         private void BuildPath()
         {
             var pathInfos = PathInfoRequest();
@@ -580,20 +579,20 @@ namespace Prism.Android.UI.Shapes
                         subpath.LineTo(line.EndPoint.X.GetScaledFloat(), line.EndPoint.Y.GetScaledFloat());
                         continue;
                     }
-                    
+
                     var arc = segment as ArcSegment;
                     if (arc != null)
                     {
                         var startPoint = j == 0 ? figure.StartPoint : figure.Segments[j - 1].EndPoint;
                         var endPoint = arc.EndPoint;
                         var trueSize = arc.Size;
-                        
+
                         if (trueSize.Width == 0 || trueSize.Height == 0)
                         {
                             subpath.LineTo(endPoint.X.GetScaledFloat(), endPoint.Y.GetScaledFloat());
                             continue;
                         }
-            
+
                         double rise = Math.Round(Math.Abs(endPoint.Y - startPoint.Y), 1);
                         double run = Math.Round(Math.Abs(endPoint.X - startPoint.X), 1);
                         if (rise == 0 && run == 0)
@@ -602,20 +601,20 @@ namespace Prism.Android.UI.Shapes
                         }
 
                         Point center = new Point(double.NaN, double.NaN);
-                        
+
                         double scale = Math.Max(run / (trueSize.Width * 2), rise / (trueSize.Height * 2));
                         if (scale > 1)
                         {
                             center.X = (startPoint.X + endPoint.X) / 2;
                             center.Y = (startPoint.Y + endPoint.Y) / 2;
-            
+
                             double diffX = run / 2;
                             double diffY = rise / 2;
-            
+
                             var angle = Math.Atan2(diffY / trueSize.Height, diffX / trueSize.Width);
                             var cos = Math.Cos(angle) * trueSize.Width;
                             var sin = Math.Sin(angle) * trueSize.Height;
-            
+
                             scale = Math.Sqrt(diffX * diffX + diffY * diffY) / Math.Sqrt(cos * cos + sin * sin);
                             trueSize.Width *= scale;
                             trueSize.Height *= scale;
@@ -632,13 +631,13 @@ namespace Prism.Android.UI.Shapes
                         {
                             var midPoint = new Point((startPoint.X + endPoint.X) / 2, (startPoint.Y + endPoint.Y) / 2);
                             var perpAngle = Math.Atan2(startPoint.Y - endPoint.Y, endPoint.X - startPoint.X);
-                            
+
                             double diffX = startPoint.X - midPoint.X;
                             double diffY = startPoint.Y - midPoint.Y;
                             double distance = Math.Sqrt(diffX * diffX + diffY * diffY);
-    
+
                             distance = Math.Sqrt(1 - distance * distance);
-    
+
                             if ((arc.IsLargeArc && arc.SweepDirection == SweepDirection.Counterclockwise) ||
                                 (!arc.IsLargeArc && arc.SweepDirection == SweepDirection.Clockwise))
                             {
@@ -649,34 +648,34 @@ namespace Prism.Android.UI.Shapes
                                 center = new Point(midPoint.X - Math.Sin(perpAngle) * distance, midPoint.Y - Math.Cos(perpAngle) * distance);
                             }
                         }
-            
+
                         double twoPi = Math.PI * 2;
                         double startAngle = Math.Atan2(startPoint.Y - center.Y, startPoint.X - center.X);
                         if (startAngle < 0)
                         {
                             startAngle += twoPi;
                         }
-            
+
                         double endAngle = Math.Atan2(endPoint.Y - center.Y, endPoint.X - center.X);
                         if (endAngle < 0)
                         {
                             endAngle += twoPi;
                         }
-                        
+
                         double arcAngle = Math.Abs(startAngle - endAngle);
                         if ((arcAngle < Math.PI && arc.IsLargeArc) || (arcAngle > Math.PI && !arc.IsLargeArc))
                         {
                             arcAngle = twoPi - arcAngle;
                         }
-                        
+
                         if (arc.SweepDirection == SweepDirection.Counterclockwise)
                         {
                             arcAngle = -arcAngle;
                         }
-                        
+
                         center.X *= trueSize.Width;
                         center.Y *= trueSize.Height;
-                        
+
                         subpath.ArcTo(new RectF((center.X - trueSize.Width).GetScaledFloat(), (center.Y - trueSize.Height).GetScaledFloat(),
                             (center.X + trueSize.Width).GetScaledFloat(), (center.Y + trueSize.Height).GetScaledFloat()),
                             (float)(startAngle * (180 / Math.PI)), (float)(arcAngle * (180 / Math.PI)));
@@ -701,12 +700,12 @@ namespace Prism.Android.UI.Shapes
                         continue;
                     }
                 }
-                
+
                 if (figure.IsClosed)
                 {
                     subpath.Close();
                 }
-                
+
                 path.AddPath(subpath);
             }
         }

@@ -29,7 +29,6 @@ using Android.Views;
 using Android.Widget;
 using Prism.Input;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
@@ -685,19 +684,19 @@ namespace Prism.Android.UI.Controls
 
             if (!touchEventHandledByChildren)
             {
-                if (e.Action == MotionEventActions.Cancel)
+                if (e.ActionMasked == MotionEventActions.Cancel)
                 {
                     PointerCanceled(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Down)
+                else if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
                 {
                     PointerPressed(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Move)
+                else if (e.ActionMasked == MotionEventActions.Move)
                 {
                     PointerMoved(this, e.GetPointerEventArgs(this));
                 }
-                else if (e.Action == MotionEventActions.Up)
+                else if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
                 {
                     PointerReleased(this, e.GetPointerEventArgs(this));
                 }
@@ -793,7 +792,7 @@ namespace Prism.Android.UI.Controls
 
             if (borderBrush != null && borderWidth > 0)
             {
-                borderPaint.StrokeWidth = (float)(borderWidth * Device.Current.DisplayScale);
+                borderPaint.StrokeWidth = borderWidth.GetScaledFloat();
                 canvas.DrawLines(new float[] { 0, Height, 0, 0, 0, 0, Width, 0 }, borderPaint);
 
                 // the right and bottom borders seem to be drawn thinner than the left and top ones

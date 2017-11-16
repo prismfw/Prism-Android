@@ -161,7 +161,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -174,7 +174,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -221,11 +221,11 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         private Bitmap canvasImage;
-        private Paint canvasImagePaint = new Paint(PaintFlags.AntiAlias);
+        private readonly Paint canvasImagePaint = new Paint(PaintFlags.AntiAlias);
         private Media.Inking.InkStroke currentStroke;
-        private Paint defaultPaint;
+        private readonly Paint defaultPaint;
         private bool dryInk;
         private bool forceDraw;
         private int pointIndex;
@@ -242,9 +242,9 @@ namespace Prism.Android.UI.Controls
                 Color = global::Android.Graphics.Color.Black,
                 StrokeCap = Paint.Cap.Round
             };
-            
+
             points = new PointF[5];
-            
+
             SetBackgroundColor(global::Android.Graphics.Color.Transparent);
             SetWillNotDraw(false);
         }
@@ -281,7 +281,7 @@ namespace Prism.Android.UI.Controls
                     inkStroke.Parent = this;
                 }
             }
-            
+
             Invalidate();
         }
 
@@ -298,7 +298,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
             strokes.Clear();
-            
+
             canvasImage = null;
             Invalidate();
         }
@@ -340,7 +340,7 @@ namespace Prism.Android.UI.Controls
         {
             return constraints;
         }
-        
+
         /// <summary></summary>
         /// <param name="e"></param>
         public override bool OnTouchEvent(MotionEvent e)
@@ -349,22 +349,27 @@ namespace Prism.Android.UI.Controls
             {
                 return false;
             }
-            
-            if (e.Action == MotionEventActions.Cancel)
+
+            if (e.ActionMasked == MotionEventActions.Cancel)
             {
                 PointerCanceled(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
-                
+
                 pointIndex = 0;
                 currentStroke = null;
-                
+
                 return true;
             }
-            if (e.Action == MotionEventActions.Down)
+            if (e.ActionMasked == MotionEventActions.Down || e.ActionMasked == MotionEventActions.PointerDown)
             {
                 PointerPressed(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
-                
+
+                if (e.ActionMasked == MotionEventActions.PointerDown)
+                {
+                    return true;
+                }
+
                 if (inputMode == InkInputMode.Erasing)
                 {
                     var point = new PointF(e.GetX(), e.GetY());
@@ -373,7 +378,7 @@ namespace Prism.Android.UI.Controls
                         if (StrokeContainsPoint(strokes[i], point))
                         {
                             strokes.RemoveAt(i);
-                            
+
                             canvasImage = null;
                             forceDraw = true;
                             Invalidate();
@@ -384,24 +389,29 @@ namespace Prism.Android.UI.Controls
                 {
                     pointIndex = 0;
                     points[0] = new PointF(e.GetX(), e.GetY());
-                    
+
                     currentStroke = new Media.Inking.InkStroke();
                     currentStroke.Parent = this;
                     currentStroke.Paint.Color = defaultPaint.Color;
                     currentStroke.Paint.StrokeCap = defaultPaint.StrokeCap;
                     currentStroke.Paint.StrokeWidth = defaultPaint.StrokeWidth;
                     strokes.Add(currentStroke);
-                    
+
                     Invalidate();
                 }
-                
+
                 return true;
             }
-            if (e.Action == MotionEventActions.Move)
+            if (e.ActionMasked == MotionEventActions.Move)
             {
                 PointerMoved(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
-                
+
+                if (e.GetPointerId(e.ActionIndex) != 0)
+                {
+                    return true;
+                }
+
                 if (inputMode == InkInputMode.Erasing)
                 {
                     var point = new PointF(e.GetX(), e.GetY());
@@ -410,7 +420,7 @@ namespace Prism.Android.UI.Controls
                         if (StrokeContainsPoint(strokes[i], point))
                         {
                             strokes.RemoveAt(i);
-                            
+
                             canvasImage = null;
                             forceDraw = true;
                             Invalidate();
@@ -427,36 +437,41 @@ namespace Prism.Android.UI.Controls
                         var endPoint = new PointF((point1.X + point2.X) / 2, (point1.Y + point2.Y) / 2);
                         var startPoint = points[0];
                         var cp1 = points[1];
-                        
+
                         currentStroke.MoveTo(startPoint.X, startPoint.Y);
                         currentStroke.CubicTo(cp1.X, cp1.Y, point1.X, point1.Y, endPoint.X, endPoint.Y);
-                        
+
                         points[0] = endPoint;
                         points[1] = point2;
                         pointIndex = 1;
-                        
+
                         Invalidate();
                     }
                 }
-                
+
                 return true;
             }
-            if (e.Action == MotionEventActions.Up)
+            if (e.ActionMasked == MotionEventActions.Up || e.ActionMasked == MotionEventActions.PointerUp)
             {
                 PointerReleased(this, e.GetPointerEventArgs(this));
                 base.OnTouchEvent(e);
-                
+
+                if (e.ActionMasked == MotionEventActions.PointerUp)
+                {
+                    return true;
+                }
+
                 dryInk = true;
                 pointIndex = 0;
                 currentStroke = null;
-                
+
                 Invalidate();
-                
+
                 return true;
             }
             return base.OnTouchEvent(e);
         }
-        
+
         /// <summary>
         /// Updates the drawing attributes to apply to new ink strokes on the canvas.
         /// </summary>
@@ -465,7 +480,7 @@ namespace Prism.Android.UI.Controls
         {
             defaultPaint.Color = attributes.Color.GetColor();
             defaultPaint.StrokeCap = attributes.PenTip == PenTipShape.Circle ? Paint.Cap.Round : Paint.Cap.Butt;
-            defaultPaint.StrokeWidth = (float)(attributes.Size * Device.Current.DisplayScale);
+            defaultPaint.StrokeWidth = attributes.Size.GetScaledFloat();
         }
 
         /// <summary>
@@ -493,17 +508,17 @@ namespace Prism.Android.UI.Controls
         protected override void OnDraw(global::Android.Graphics.Canvas canvas)
         {
             base.OnDraw(canvas);
-            
+
             if (dryInk || forceDraw)
             {
                 var bitmap = Bitmap.CreateBitmap(canvas.Width, canvas.Height, Bitmap.Config.Argb8888);
                 var bitmapCanvas = new global::Android.Graphics.Canvas(bitmap);
-                
+
                 if (canvasImage != null)
                 {
                     bitmapCanvas.DrawBitmap(canvasImage, 0, 0, canvasImagePaint);
                 }
-                
+
                 for (int i = 0; i < strokes.Count; i++)
                 {
                     var stroke = strokes[i];
@@ -513,10 +528,10 @@ namespace Prism.Android.UI.Controls
                         stroke.NeedsDrawing = false;
                     }
                 }
-                
+
                 canvasImage = bitmap;
                 canvas.DrawBitmap(canvasImage, 0, 0, canvasImagePaint);
-                
+
                 dryInk = false;
                 forceDraw = false;
             }
@@ -526,7 +541,7 @@ namespace Prism.Android.UI.Controls
                 {
                     canvas.DrawBitmap(canvasImage, 0, 0, canvasImagePaint);
                 }
-                
+
                 for (int i = 0; i < strokes.Count; i++)
                 {
                     var stroke = strokes[i];
@@ -550,10 +565,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
         }
@@ -597,7 +612,7 @@ namespace Prism.Android.UI.Controls
                 Unloaded(this, EventArgs.Empty);
             }
         }
-        
+
         private bool StrokeContainsPoint(Media.Inking.InkStroke stroke, PointF point)
         {
             var pointEnumerator = stroke.Points.GetEnumerator();
@@ -607,20 +622,20 @@ namespace Prism.Android.UI.Controls
                 {
                     var point1 = new Point(pointEnumerator.Current.X * Device.Current.DisplayScale,
                         pointEnumerator.Current.Y * Device.Current.DisplayScale);
-                    
+
                     if (!pointEnumerator.MoveNext())
                     {
                         break;
                     }
-                    
+
                     var point2 = new Point(pointEnumerator.Current.X * Device.Current.DisplayScale,
                         pointEnumerator.Current.Y * Device.Current.DisplayScale);
-                    
+
                     double width = stroke.Paint.StrokeWidth / 2;
                     double slope = -Math.Atan(1 / ((point2.Y - point1.Y) / (point2.X - point1.X)));
                     double cos = width * Math.Cos(slope);
                     double sin = width * Math.Sin(slope);
-                    
+
                     var corners = new Point[]
                     {
                         new Point(point1.X + cos, point1.Y + sin),
@@ -628,7 +643,7 @@ namespace Prism.Android.UI.Controls
                         new Point(point2.X - cos, point2.Y - sin),
                         new Point(point1.X - cos, point1.Y - sin)
                     };
-                    
+
                     bool retVal = false;
                     for (int i = 0, j = corners.Length - 1; i < corners.Length; j = i++)
                     {
@@ -640,14 +655,14 @@ namespace Prism.Android.UI.Controls
                             }
                         }
                     }
-                    
+
                     if (retVal)
                     {
                         return retVal;
                     }
                 }
             }
-            
+
             return false;
         }
     }
