@@ -72,6 +72,7 @@
     <Compile Include="IO\FileInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.cs" />
+    <Compile Include="Systems\Sensors\Accelerometer.cs" />
     <Compile Include="UI\Controls\ActivityIndicator.cs" />
     <Compile Include="UI\Controls\Flyout.cs" />
     <Compile Include="UI\Shapes\Path.cs" />
