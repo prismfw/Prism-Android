@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -25,7 +25,6 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
 
@@ -42,12 +41,12 @@ namespace Prism.Android.UI.Controls
         /// Occurs when this instance has been attached to the visual tree and is ready to be rendered.
         /// </summary>
         public event EventHandler Loaded;
-        
+
         /// <summary>
         /// Occurs when the value of a property is changed.
         /// </summary>
         public event EventHandler<FrameworkPropertyChangedEventArgs> PropertyChanged;
-        
+
         /// <summary>
         /// Occurs when this instance has been detached from the visual tree.
         /// </summary>
@@ -74,7 +73,7 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets the method to invoke when this instance requests an arrangement of its children.
         /// </summary>
         public ArrangeRequestHandler ArrangeRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the background of the indicator.
         /// </summary>
@@ -90,13 +89,13 @@ namespace Prism.Android.UI.Controls
                     background = value;
                     base.Background = (background.GetDrawable(OnBackgroundImageLoaded) ??
                         Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background));
-                    
+
                     OnPropertyChanged(Prism.UI.Controls.LoadIndicator.BackgroundProperty);
                 }
             }
         }
         private Brush background;
-        
+
         /// <summary>
         /// Gets or sets the content for the indicator.
         /// </summary>
@@ -117,7 +116,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets or sets a <see cref="Rectangle"/> that represents the size and position of the element relative to its parent container.
         /// </summary>
@@ -125,7 +124,7 @@ namespace Prism.Android.UI.Controls
         // We might change this in the future, but for now it's intentional.
         // Apps that need to change the size can set the WindowSize property through SetValue.
         public Rectangle Frame { get; set; }
-        
+
         /// <summary>
         /// Gets or sets a value indicating whether this instance can be considered a valid result for hit testing.
         /// </summary>
@@ -144,7 +143,7 @@ namespace Prism.Android.UI.Controls
                     {
                         dialog.Window.SetFlags(WindowManagerFlags.NotTouchable, WindowManagerFlags.NotTouchable);
                     }
-                    
+
                     OnPropertyChanged(Visual.IsHitTestVisibleProperty);
                 }
             }
@@ -159,7 +158,7 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets the method to invoke when this instance requests a measurement of itself and its children.
         /// </summary>
         public MeasureRequestHandler MeasureRequest { get; set; }
-        
+
         /// <summary>
         /// Gets or sets transformation information that affects the rendering position of this instance.
         /// </summary>
@@ -172,7 +171,7 @@ namespace Prism.Android.UI.Controls
                 {
                     (renderTransform as Media.Transform)?.RemoveView(this);
                     renderTransform = value;
-                    
+
                     var transform = renderTransform as Media.Transform;
                     if (transform == null)
                     {
@@ -193,17 +192,13 @@ namespace Prism.Android.UI.Controls
         /// Gets or sets the visual theme that should be used by this instance.
         /// </summary>
         public Theme RequestedTheme { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the size of the window in which the indicator is presented.
         /// </summary>
         public Size WindowSize
         {
-            get
-            {
-                return new Size(dialog.Window.DecorView.Width / Device.Current.DisplayScale,
-                    dialog.Window.DecorView.Height / Device.Current.DisplayScale);
-            }
+            get { return new Size(dialog.Window.DecorView.Width, dialog.Window.DecorView.Height).GetScaledSize(); }
             set
             {
                 // This only seems to work after the first time the indicator is shown.
@@ -231,7 +226,7 @@ namespace Prism.Android.UI.Controls
         {
             dialog.Dismiss();
         }
-        
+
         /// <summary>
         /// Invalidates the arrangement of this instance's children.
         /// </summary>
@@ -255,7 +250,7 @@ namespace Prism.Android.UI.Controls
         public Size Measure(Size constraints)
         {
             var parentView = Parent as global::Android.Views.View ?? dialog.Window.DecorView;
-            return new Size(parentView.Width / Device.Current.DisplayScale, parentView.Height / Device.Current.DisplayScale);
+            return new Size(parentView.Width.GetScaledDouble(), parentView.Height.GetScaledDouble());
         }
 
         /// <summary>
@@ -267,7 +262,7 @@ namespace Prism.Android.UI.Controls
             dialog.SetCancelable(false);
             dialog.SetContentView(this);
         }
-        
+
         /// <summary>
         /// This is called when the view is attached to a window.
         /// </summary>
@@ -285,7 +280,7 @@ namespace Prism.Android.UI.Controls
             base.OnDetachedFromWindow();
             OnUnloaded();
         }
-        
+
         /// <summary>
         /// Called from layout when this view should assign a size and position to each of its children.
         /// </summary>
@@ -299,8 +294,8 @@ namespace Prism.Android.UI.Controls
             MeasureRequest(false, null);
             ArrangeRequest(false, null);
 
-            Right = (int)Math.Ceiling(Frame.Width * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Height * Device.Current.DisplayScale);
+            Right = Frame.Width.GetScaledInt();
+            Bottom = Frame.Height.GetScaledInt();
             Left = 0;
             Top = 0;
 
@@ -321,7 +316,7 @@ namespace Prism.Android.UI.Controls
             base.Background = (background.GetDrawable(null) ??
                 Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background));
         }
-        
+
         private void OnLoaded()
         {
             if (!IsLoaded)

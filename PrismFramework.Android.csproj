@@ -14,7 +14,7 @@
     <DeployExternal>false</DeployExternal>
     <AndroidSupportedAbis>armeabi,armeabi-v7a,x86</AndroidSupportedAbis>
     <MandroidI18n>West</MandroidI18n>
-    <TargetFrameworkVersion>v7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v7.0</TargetFrameworkVersion>
     <AndroidStoreUncompressedFileExtensions />
     <JavaOptions />
     <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
@@ -77,7 +77,9 @@
     <Compile Include="UI\Controls\Flyout.cs" />
     <Compile Include="UI\Shapes\Path.cs" />
     <Compile Include="UI\Views\ViewStackChild.cs" />
-    <Compile Include="Utilities\Timer.cs" />
+    <Compile Include="Utilities\Timer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Extensions\AndroidExtensions.cs" />
     <Compile Include="UI\Media\Transform.cs" />
     <Compile Include="UI\Views\ContentView.cs" />

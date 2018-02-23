@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -22,12 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
@@ -268,7 +266,7 @@ namespace Prism.Android.UI.Controls
         /// <param name="constraints">The width and height that the object is not allowed to exceed.</param>
         public Size Measure(Size constraints)
         {
-            return ListView == null ? Size.Empty : new Size(ListView.Width, ListView.Height) / Device.Current.DisplayScale;
+            return ListView == null ? Size.Empty : new Size(ListView.Width, ListView.Height).GetScaledSize();
         }
 
         /// <summary></summary>
@@ -516,13 +514,13 @@ namespace Prism.Android.UI.Controls
                     {
                         view = new View(Application.MainActivity);
                         view.Background = (separator.Foreground ?? flyout.Foreground).GetDrawable(null);
-                        view.SetMinimumHeight((int)(1 * Device.Current.DisplayScale));
+                        view.SetMinimumHeight((1.0).GetScaledInt());
                         view.SetMinimumWidth(parent.Width);
                     }
                 }
 
-                view.SetPadding((int)(6 * Device.Current.DisplayScale), (int)(10 * Device.Current.DisplayScale),
-                        (int)(6 * Device.Current.DisplayScale), (int)(10 * Device.Current.DisplayScale));
+                view.SetPadding((6.0).GetScaledInt(), (10.0).GetScaledInt(),
+                        (6.0).GetScaledInt(), (10.0).GetScaledInt());
 
                 view.LayoutParameters = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent);
 

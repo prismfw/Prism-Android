@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -24,7 +24,6 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI.Media;
 using Prism.UI.Media.Imaging;
 
@@ -58,7 +57,7 @@ namespace Prism.Android.UI.Controls
                 if (value != foreground)
                 {
                     (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
-                
+
                     foreground = value;
                     SetForeground(foreground ?? enabledForeground, true);
                     OnPropertyChanged(Prism.UI.Controls.MenuItem.ForegroundProperty);
@@ -66,7 +65,7 @@ namespace Prism.Android.UI.Controls
             }
         }
         private Brush foreground;
-        
+
         /// <summary>
         /// Gets or sets the <see cref="Uri"/> of the image to display within the button.
         /// </summary>
@@ -87,11 +86,11 @@ namespace Prism.Android.UI.Controls
                     {
                         TextView.Visibility = ViewStates.Gone;
                         ImageView.Visibility = ViewStates.Visible;
-                        
+
                         var source = (INativeImageSource)ObjectRetriever.GetNativeObject(new BitmapImage(imageUri));
                         ImageView.SetImageBitmap(source.BeginLoadingImage(OnImageLoaded));
                     }
-                    
+
                     OnPropertyChanged(Prism.UI.Controls.MenuButton.ImageUriProperty);
                 }
             }
@@ -111,7 +110,7 @@ namespace Prism.Android.UI.Controls
                     Enabled = value;
                     ImageView.Enabled = value;
                     TextView.Enabled = value;
-                    
+
                     if (Enabled)
                     {
                         SetForeground(enabledForeground, false);
@@ -122,7 +121,7 @@ namespace Prism.Android.UI.Controls
                         TextView.SetTextColor(new global::Android.Graphics.Color(110, 110, 110));
                         TextView.Paint.SetShader(null);
                     }
-                    
+
                     OnPropertyChanged(Prism.UI.Controls.MenuButton.IsEnabledProperty);
                 }
             }
@@ -143,7 +142,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets the view that displays the image in the button.
         /// </summary>
@@ -153,7 +152,7 @@ namespace Prism.Android.UI.Controls
         /// Gets the view that displays the text in the button.
         /// </summary>
         protected TextView TextView { get; }
-        
+
         private Brush enabledForeground;
 
         /// <summary>
@@ -162,15 +161,15 @@ namespace Prism.Android.UI.Controls
         public MenuButton()
             : base(Application.MainActivity)
         {
-            SetMinimumWidth((int)(40 * Device.Current.DisplayScale));
+            SetMinimumWidth((40.0).GetScaledInt());
             SetMinimumHeight(MinimumWidth);
-            
+
             ImageView = new ImageView(Context);
             AddView(ImageView, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent, GravityFlags.CenterVertical | GravityFlags.CenterHorizontal));
-            
+
             TextView = new TextView(Context);
             AddView(TextView, new LayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent, GravityFlags.CenterVertical | GravityFlags.CenterHorizontal));
-        
+
             Click += (o, e) => Action();
         }
 
@@ -182,7 +181,7 @@ namespace Prism.Android.UI.Controls
         {
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
-        
+
         internal void SetForeground(Brush foreground, bool listen)
         {
             enabledForeground = foreground;
@@ -190,29 +189,29 @@ namespace Prism.Android.UI.Controls
             {
                 return;
             }
-            
+
             if (foreground == null)
             {
                 TextView.Paint.SetShader(null);
-                TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary)); 
+                TextView.SetTextColor(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
                 ImageView.SetColorFilter(Android.Resources.GetColor(this, global::Android.Resource.Attribute.TextColorPrimary));
             }
             else
             {
                 TextView.Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (TextView.Paint.FontSpacing + 0.5f),
                     listen ? OnForegroundImageLoaded : (EventHandler)null);
-                
+
                 TextView.SetTextColor(TextView.Paint.Color);
                 ImageView.SetColorFilter(TextView.Paint.Color);
             }
         }
-        
+
         private void OnForegroundImageLoaded(object sender, EventArgs e)
         {
             TextView.Paint.SetShader(foreground.GetShader(Width, Height, null));
             TextView.Invalidate();
         }
-        
+
         private void OnImageLoaded(object sender, EventArgs e)
         {
             var source = sender as INativeBitmapImage;

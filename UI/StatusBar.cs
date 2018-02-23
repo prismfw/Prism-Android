@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -24,7 +24,6 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.Utilities;
 
@@ -65,7 +64,7 @@ namespace Prism.Android.UI
             {
                 var frame = new global::Android.Graphics.Rect();
                 Application.MainActivity.Window.DecorView.GetWindowVisibleDisplayFrame(frame);
-                return new Rectangle(0, 0, frame.Right / Device.Current.DisplayScale, frame.Top / Device.Current.DisplayScale);
+                return new Rectangle(0, 0, frame.Right.GetScaledDouble(), frame.Top.GetScaledDouble());
             }
         }
 

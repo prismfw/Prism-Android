@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -141,7 +141,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public double FontSize
         {
-            get { return TextView.TextSize / Device.Current.DisplayScale; }
+            get { return TextView.TextSize.GetScaledDouble(); }
             set
             {
                 if (value * Device.Current.DisplayScale != TextView.TextSize)
@@ -356,7 +356,7 @@ namespace Prism.Android.UI.Controls
             Orientation = global::Android.Widget.Orientation.Vertical;
             SetMinimumWidth(160);
 
-            AddView(ImageView, new LayoutParams((int)(32 * Device.Current.DisplayScale), (int)(32 * Device.Current.DisplayScale))
+            AddView(ImageView, new LayoutParams((32.0).GetScaledInt(), (32.0).GetScaledInt())
             {
                 Gravity = GravityFlags.CenterHorizontal,
                 TopMargin = 4,
@@ -396,7 +396,7 @@ namespace Prism.Android.UI.Controls
             base.OnMeasure(MeasureSpec.MakeMeasureSpec(1, MeasureSpecMode.Unspecified),
                 MeasureSpec.MakeMeasureSpec(1, MeasureSpecMode.Unspecified));
 
-            return new Size(MeasuredWidth, MeasuredHeight) / Device.Current.DisplayScale;
+            return new Size(MeasuredWidth, MeasuredHeight).GetScaledSize();
         }
 
         /// <summary></summary>

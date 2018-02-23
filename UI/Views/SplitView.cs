@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -24,7 +24,6 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 
 namespace Prism.Android.UI
@@ -384,12 +383,12 @@ namespace Prism.Android.UI
         {
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
-            int width = (int)(ActualMasterWidth * Device.Current.DisplayScale);
+            int width = ActualMasterWidth.GetScaledInt();
             MasterLayout.Layout(0, 0, width, Bottom);
             DetailLayout.Layout(width, 0, Width, Bottom);
         }
@@ -449,14 +448,14 @@ namespace Prism.Android.UI
 
         private void SetMasterWidth()
         {
-            var width = (int)Math.Max(minMasterWidth, Math.Min(maxMasterWidth, (Width / Device.Current.DisplayScale) * preferredMasterWidthRatio));
+            var width = (int)Math.Max(minMasterWidth, Math.Min(maxMasterWidth, Width.GetScaledDouble() * preferredMasterWidthRatio));
             if (width != ActualMasterWidth)
             {
                 ActualMasterWidth = width;
                 OnPropertyChanged(Prism.UI.SplitView.ActualMasterWidthProperty);
             }
 
-            var detailWidth = Math.Max(0, (Width / Device.Current.DisplayScale) - width);
+            var detailWidth = Math.Max(0, Width.GetScaledDouble() - width);
             if (detailWidth != ActualDetailWidth)
             {
                 ActualDetailWidth = detailWidth;
@@ -468,7 +467,7 @@ namespace Prism.Android.UI
                 }
             }
 
-            MasterLayout.Right = (int)(width * Device.Current.DisplayScale);
+            MasterLayout.Right = width.GetScaledInt();
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -25,7 +25,6 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Controls;
 using Prism.UI.Media;
@@ -137,11 +136,11 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public Rectangle Frame
         {
-            get { return new Rectangle(0, 0, Width / Device.Current.DisplayScale, Height / Device.Current.DisplayScale); }
+            get { return new Rectangle(0, 0, Width.GetScaledDouble(), Height.GetScaledDouble()); }
             set
             {
-                int width = (int)Math.Ceiling(value.Width * Device.Current.DisplayScale);
-                int height = (int)Math.Ceiling(value.Height * Device.Current.DisplayScale);
+                int width = value.Width.GetScaledInt();
+                int height = value.Height.GetScaledInt();
 
                 if (Width != width || Height != height)
                 {

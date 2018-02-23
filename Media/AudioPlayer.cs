@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -144,7 +144,7 @@ namespace Prism.Android.Media
             }
         }
         private double volume;
-        
+
         private bool isPrepared;
         private bool playAfterPrepare;
 
@@ -158,7 +158,7 @@ namespace Prism.Android.Media
             SetOnInfoListener(this);
             SetOnPreparedListener(this);
         }
-        
+
         /// <summary></summary>
         /// <param name="mp"></param>
         public void OnCompletion(MediaPlayer mp)
@@ -168,7 +168,7 @@ namespace Prism.Android.Media
                 PlaybackEnded(this, EventArgs.Empty);
             }
         }
-        
+
         /// <summary></summary>
         /// <param name="mp"></param>
         /// <param name="what"></param>
@@ -178,12 +178,12 @@ namespace Prism.Android.Media
             AudioFailed(this, new Prism.ErrorEventArgs(new Exception(what.ToString())));
             return true;
         }
-        
+
         /// <summary></summary>
         /// <param name="mp"></param>
         /// <param name="what"></param>
         /// <param name="extra"></param>
-        public bool OnInfo (MediaPlayer mp, MediaInfo what, int extra)
+        public bool OnInfo(MediaPlayer mp, MediaInfo what, int extra)
         {
             if (what == MediaInfo.BufferingStart)
             {
@@ -193,10 +193,10 @@ namespace Prism.Android.Media
             {
                 BufferingEnded(this, EventArgs.Empty);
             }
-            
+
             return true;
         }
-        
+
         /// <summary></summary>
         /// <param name="mp"></param>
         public void OnPrepared(MediaPlayer mp)
@@ -222,7 +222,7 @@ namespace Prism.Android.Media
             isPrepared = false;
             playAfterPrepare = false;
             base.Reset();
-            
+
             try
             {
                 var fd = Application.GetAsset(source);
@@ -235,7 +235,7 @@ namespace Prism.Android.Media
                     await base.SetDataSourceAsync(fd.FileDescriptor);
                     fd.Close();
                 }
-                
+
                 base.PrepareAsync();
             }
             catch (Java.IO.IOException e)

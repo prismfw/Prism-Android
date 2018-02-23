@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -36,7 +36,7 @@ namespace Prism.Android
     public class AppActivity : Activity
     {
         private readonly Dictionary<int, IPermissionRequestCallback> pendingPermissionRequests = new Dictionary<int, IPermissionRequestCallback>();
-        
+
         /// <summary>
         /// Called when permissions have been requested of the user.
         /// </summary>
@@ -46,16 +46,16 @@ namespace Prism.Android
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
         {
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-            
+
             IPermissionRequestCallback callback;
             if (pendingPermissionRequests.TryGetValue(requestCode, out callback))
             {
                 pendingPermissionRequests.Remove(requestCode);
             }
-            
+
             callback?.OnPermissionRequestCompleted(permissions, grantResults);
         }
-        
+
         /// <summary>
         /// Requests from the user the specified permissions.
         /// </summary>
@@ -67,16 +67,16 @@ namespace Prism.Android
             {
                 throw new ArgumentNullException(nameof(permissions));
             }
-        
+
             int requestCode = 0;
             foreach (var permission in permissions)
             {
                 requestCode ^= permission.GetHashCode();
             }
-        
+
             RequestPermissions(permissions, Math.Abs(requestCode), callback);
         }
-        
+
         /// <summary>
         /// Requests from the user the specified permissions.
         /// </summary>
@@ -89,11 +89,11 @@ namespace Prism.Android
             {
                 throw new ArgumentNullException(nameof(permissions));
             }
-        
+
             pendingPermissionRequests[requestCode] = callback;
             RequestPermissions(permissions, requestCode);
         }
-        
+
         /// <summary>
         /// Sets the activity content to an explicit view.
         /// </summary>
@@ -106,7 +106,7 @@ namespace Prism.Android
                 view.Background = Android.Resources.GetDrawable(null, global::Android.Resource.Attribute.WindowBackground);
             }
         }
-        
+
         /// <summary>
         /// Called on creation of the activity.
         /// </summary>
@@ -114,11 +114,11 @@ namespace Prism.Android
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            
+
             Android.Application.MainActivity = this;
             AndroidInitializer.Initialize();
         }
-        
+
         /// <summary>
         /// Called by the system when the device configuration changes while your activity is running.
         /// </summary>

@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -25,7 +25,6 @@ using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI.Media.Inking;
 
 namespace Prism.Android.UI.Media.Inking
@@ -90,7 +89,7 @@ namespace Prism.Android.UI.Media.Inking
             var array = points.ToArray();
             if (array.Length > 0)
             {
-                base.MoveTo((float)(array[0].X * Device.Current.DisplayScale), (float)(array[0].Y * Device.Current.DisplayScale));
+                base.MoveTo(array[0].X.GetScaledFloat(), array[0].Y.GetScaledFloat());
                 this.points.Add(array[0]);
                 
                 for (int i = 1; i < array.Length - 2;)
@@ -103,11 +102,11 @@ namespace Prism.Android.UI.Media.Inking
                     this.points.Add(point2);
                     this.points.Add(point3);
                     
-                    base.CubicTo((float)(point1.X * Device.Current.DisplayScale), (float)(point1.Y * Device.Current.DisplayScale),
-                        (float)(point2.X * Device.Current.DisplayScale), (float)(point2.Y * Device.Current.DisplayScale),
-                        (float)(point3.X * Device.Current.DisplayScale), (float)(point3.Y * Device.Current.DisplayScale));
+                    base.CubicTo(point1.X.GetScaledFloat(), point1.Y.GetScaledFloat(),
+                        point2.X.GetScaledFloat(), point2.Y.GetScaledFloat(),
+                        point3.X.GetScaledFloat(), point3.Y.GetScaledFloat());
                         
-                    base.MoveTo((float)(point3.X * Device.Current.DisplayScale), (float)(point3.Y * Device.Current.DisplayScale));
+                    base.MoveTo(point3.X.GetScaledFloat(), point3.Y.GetScaledFloat());
                 }
             }
         }
@@ -132,7 +131,7 @@ namespace Prism.Android.UI.Media.Inking
             return new InkDrawingAttributes
             {
                 Color = Paint.Color.GetColor(),
-                Size = Paint.StrokeWidth / Device.Current.DisplayScale,
+                Size = Paint.StrokeWidth.GetScaledDouble(),
                 PenTip = Paint.StrokeCap == Paint.Cap.Round ? PenTipShape.Circle : PenTipShape.Square
             };
         }
@@ -147,9 +146,9 @@ namespace Prism.Android.UI.Media.Inking
         public override void CubicTo(float x1, float y1, float x2, float y2, float x3, float y3)
         {
             base.CubicTo(x1, y1, x2, y2, x3, y3);
-            points.Add(new Point(x1 / Device.Current.DisplayScale, y1 / Device.Current.DisplayScale));
-            points.Add(new Point(x2 / Device.Current.DisplayScale, y2 / Device.Current.DisplayScale));
-            points.Add(new Point(x3 / Device.Current.DisplayScale, y3 / Device.Current.DisplayScale));
+            points.Add(new Point(x1.GetScaledDouble(), y1.GetScaledDouble()));
+            points.Add(new Point(x2.GetScaledDouble(), y2.GetScaledDouble()));
+            points.Add(new Point(x3.GetScaledDouble(), y3.GetScaledDouble()));
         }
         
         /// <summary>
@@ -161,7 +160,7 @@ namespace Prism.Android.UI.Media.Inking
         {
             base.MoveTo(x, y);
             
-            var point = new Point(x / Device.Current.DisplayScale, y / Device.Current.DisplayScale);
+            var point = new Point(x.GetScaledDouble(), y.GetScaledDouble());
             if (points.Count == 0 || points.Last() != point)
             {
                 points.Add(point);
@@ -175,7 +174,7 @@ namespace Prism.Android.UI.Media.Inking
         public void UpdateDrawingAttributes(InkDrawingAttributes attributes)
         {
             Paint.Color = attributes.Color.GetColor();
-            Paint.StrokeWidth = (float)(attributes.Size * Device.Current.DisplayScale);
+            Paint.StrokeWidth = attributes.Size.GetScaledFloat();
             Paint.StrokeCap = attributes.PenTip == PenTipShape.Square ? Paint.Cap.Butt : Paint.Cap.Round;
             
             NeedsDrawing = true;

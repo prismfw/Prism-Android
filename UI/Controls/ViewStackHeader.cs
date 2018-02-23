@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -125,7 +125,7 @@ namespace Prism.Android.UI.Controls
         /// </summary>
         public double FontSize
         {
-            get { return TitleView.TextSize / Device.Current.DisplayScale; }
+            get { return TitleView.TextSize.GetScaledDouble(); }
             set
             {
                 if (value * Device.Current.DisplayScale != TitleView.TextSize)
@@ -421,10 +421,10 @@ namespace Prism.Android.UI.Controls
         {
             ArrangeRequest(changed, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             base.OnLayout(changed, Left, Top, Right, Bottom);
 

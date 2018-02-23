@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -29,7 +29,7 @@ using Prism.Systems.Sensors;
 namespace Prism.Android.Systems.Sensors
 {
     /// <summary>
-    /// Represents a Windows implementation for an <see cref="INativeAccelerometer"/>.
+    /// Represents an Android implementation for an <see cref="INativeAccelerometer"/>.
     /// </summary>
     [Register(typeof(INativeAccelerometer), IsSingleton = true)]
     public class Accelerometer : Java.Lang.Object, INativeAccelerometer, ISensorEventListener

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -26,7 +26,6 @@ using Android.Views;
 using Android.Widget;
 using Prism.Android.UI.Controls;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 using Prism.UI.Media;
 
@@ -215,10 +214,8 @@ namespace Prism.Android.UI
         {
             get
             {
-                return new Rectangle(TabLayout.Left / Device.Current.DisplayScale,
-                    TabLayout.Top / Device.Current.DisplayScale,
-                    TabLayout.Width / Device.Current.DisplayScale,
-                    TabLayout.Height / Device.Current.DisplayScale);
+                return new Rectangle(TabLayout.Left.GetScaledDouble(), TabLayout.Top.GetScaledDouble(),
+                    TabLayout.Width.GetScaledDouble(), TabLayout.Height.GetScaledDouble());
             }
         }
 
@@ -348,10 +345,10 @@ namespace Prism.Android.UI
 
             ArrangeRequest(false, null);
 
-            Left = (int)Math.Ceiling(Frame.Left * Device.Current.DisplayScale);
-            Top = (int)Math.Ceiling(Frame.Top * Device.Current.DisplayScale);
-            Right = (int)Math.Ceiling(Frame.Right * Device.Current.DisplayScale);
-            Bottom = (int)Math.Ceiling(Frame.Bottom * Device.Current.DisplayScale);
+            Left = Frame.Left.GetScaledInt();
+            Top = Frame.Top.GetScaledInt();
+            Right = Frame.Right.GetScaledInt();
+            Bottom = Frame.Bottom.GetScaledInt();
 
             FrameLayout.Layout(0, TabLayout.Bottom, Width, Height);
         }

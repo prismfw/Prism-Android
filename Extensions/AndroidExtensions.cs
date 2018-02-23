@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -166,6 +166,16 @@ namespace Prism.Android
         /// </summary>
         /// <param name="value">The value to convert.</param>
         public static int GetScaledInt(this double value)
+        {
+            return (int)Math.Ceiling(value * Device.Current.DisplayScale);
+        }
+
+        /// <summary>
+        /// Gets an <see cref="int"/> from an <see cref="int"/>
+        /// that is multiplied by the device's display scale.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        public static int GetScaledInt(this int value)
         {
             return (int)Math.Ceiling(value * Device.Current.DisplayScale);
         }

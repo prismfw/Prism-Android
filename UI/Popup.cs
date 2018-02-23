@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -27,7 +27,6 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI;
 
 namespace Prism.Android.UI
@@ -412,8 +411,8 @@ namespace Prism.Android.UI
             {
                 Popup.ArrangeRequest(false, null);
 
-                Right = (int)Math.Ceiling(Popup.Frame.Width * Device.Current.DisplayScale);
-                Bottom = (int)Math.Ceiling(Popup.Frame.Height * Device.Current.DisplayScale);
+                Right = Popup.Frame.Width.GetScaledInt();
+                Bottom = Popup.Frame.Height.GetScaledInt();
                 Left = 0;
                 Top = 0;
 

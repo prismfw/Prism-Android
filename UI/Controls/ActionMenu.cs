@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -24,7 +24,6 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Runtime;
 using Android.Text;
@@ -32,7 +31,6 @@ using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
 using Prism.Native;
-using Prism.Systems;
 using Prism.UI.Media;
 using Prism.UI.Media.Imaging;
 
@@ -462,7 +460,7 @@ namespace Prism.Android.UI.Controls
                 }
             }
 
-            return size / Device.Current.DisplayScale;
+            return size.GetScaledSize();
         }
 
         /// <summary>

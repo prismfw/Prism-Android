@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -101,8 +101,8 @@ namespace Prism.Android.UI.Media.Imaging
         /// <param name="height">The height of the snapshot.</param>
         public Task RenderAsync(INativeVisual target, int width, int height)
         {
-            width = (int)(width * Device.Current.DisplayScale);
-            height = (int)(height * Device.Current.DisplayScale);
+            width = width.GetScaledInt();
+            height = height.GetScaledInt();
         
             var view = target as View ?? (target as Fragment)?.View ?? Application.MainActivity.Window.DecorView;
             view.Layout(view.Left, view.Top, view.Right, view.Bottom);
@@ -118,7 +118,7 @@ namespace Prism.Android.UI.Media.Imaging
         /// Saves the image data to a file at the specified path using the specified file format.
         /// </summary>
         /// <param name="filePath">The path to the file in which to save the image data.</param>
-        /// <param name="fileFormat">The file format to with which to save the image data.</param>
+        /// <param name="fileFormat">The file format in which to save the image data.</param>
         public async Task SaveAsync(string filePath, ImageFileFormat fileFormat)
         {
             using (var stream = new MemoryStream())

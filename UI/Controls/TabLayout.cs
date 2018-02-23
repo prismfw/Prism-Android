@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -24,7 +24,6 @@ using Android.Content;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
-using Prism.Systems;
 using Prism.UI.Media;
 
 namespace Prism.Android.UI.Controls
@@ -43,7 +42,9 @@ namespace Prism.Android.UI.Controls
                     (selectionBrush as ImageBrush).ClearImageHandler(OnSelectionBrushLoaded);
 
                     selectionBrush = value;
-                    selectionPaint.SetBrush(selectionBrush, innerLayout.GetChildAt(SelectedTabIndex)?.Width ?? 0, selectionBarHeight, OnSelectionBrushLoaded);
+                    selectionPaint.SetBrush(selectionBrush, innerLayout.GetChildAt(SelectedTabIndex)?.Width ?? 0,
+                        selectionBarHeight, OnSelectionBrushLoaded);
+
                     Invalidate();
                 }
             }
@@ -131,7 +132,7 @@ namespace Prism.Android.UI.Controls
             isSelecting = false;
 
             var selectedTab = innerLayout.GetChildAt(SelectedTabIndex);
-            var rect = new Rect(selectedTab.Left, (int)Math.Ceiling(selectedTab.Bottom - selectionBarHeight * Device.Current.DisplayScale),
+            var rect = new Rect(selectedTab.Left, (selectedTab.Bottom - selectionBarHeight).GetScaledInt(),
                 selectedTab.Right, selectedTab.Bottom);
 
             OffsetDescendantRectToMyCoords(innerLayout, rect);

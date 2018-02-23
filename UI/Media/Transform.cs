@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2017  Prism Framework Team
+Copyright (C) 2018  Prism Framework Team
 
 This file is part of the Prism Framework.
 
@@ -46,7 +46,7 @@ namespace Prism.Android.UI.Media
             set
             {
                 matrix = value;
-                
+
                 for (int i = 0; i < views.Count; i++)
                 {
                     var view = views[i].Target as View;
@@ -64,9 +64,9 @@ namespace Prism.Android.UI.Media
             }
         }
         private Matrix matrix;
-        
+
         private readonly List<WeakReference> views = new List<WeakReference>();
-        
+
         /// <summary>
         /// Adds a view to the transformation listener.
         /// </summary>
@@ -98,54 +98,57 @@ namespace Prism.Android.UI.Media
                             newSet.AddAnimation(anim);
                         }
                     }
-                    
+
                     view.Animation = newSet.Animations.Count > 0 ? newSet : null;
                 }
-                
+
                 view.RequestLayout();
                 view.Invalidate();
             }
         }
-        
+
         private void SetAnimation(View view)
         {
-            var newSet = new AnimationSet(true);
             var currentSet = view.Animation as AnimationSet;
             if (currentSet != null)
             {
                 foreach (var anim in currentSet.Animations)
                 {
-                    if (!(anim is TransformAnimation))
+                    var transform = anim as TransformAnimation;
+                    if (transform != null)
                     {
-                        newSet.AddAnimation(anim);
+                        transform.Matrix = matrix;
+                        return;
                     }
                 }
             }
-            else if (view.Animation != null)
+
+            var newSet = new AnimationSet(true);
+            if (view.Animation != null)
             {
                 newSet.AddAnimation(view.Animation);
             }
-            
+
             newSet.AddAnimation(new TransformAnimation(view, matrix));
             view.Animation = newSet;
         }
     }
-    
+
     /// <summary>
     /// Represents an animation that performs a render transformation on a view.
     /// </summary>
-    public class TransformAnimation : Animation
+    public class TransformAnimation : global::Android.Views.Animations.Animation
     {
         /// <summary>
         /// Gets the transformation matrix.
         /// </summary>
-        public Matrix Matrix { get; }
-        
+        public Matrix Matrix { get; internal set; }
+
         /// <summary>
         /// Gets the view that is being transformed.
         /// </summary>
         public View View { get; }
-    
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TransformAnimation"/> class.
         /// </summary>
@@ -160,7 +163,7 @@ namespace Prism.Android.UI.Media
             RepeatCount = Infinite;
             RepeatMode = RepeatMode.Restart;
         }
-    
+
         /// <summary></summary>
         /// <param name="interpolatedTime"></param>
         /// <param name="t"></param>
@@ -168,17 +171,16 @@ namespace Prism.Android.UI.Media
         {
             base.ApplyTransformation(interpolatedTime, t);
             t.TransformationType = TransformationTypes.Matrix;
-            t.Matrix.Reset();
-            
+
             var width = (float)View.Width / 2;
             var height = (float)View.Height / 2;
-            
+
             // I pulled this code from some dark pit of the interwebs, and in all likelihood it doesn't work in a number of scenarios.
             // It does, however, seem to work in my limited tests, so it's staying here until someone replaces it with better code.
             var matrix = Matrix;
             matrix.OffsetX = (matrix.OffsetX * Device.Current.DisplayScale) - matrix.M11 * width - matrix.M21 * height + width;
             matrix.OffsetY = (matrix.OffsetY * Device.Current.DisplayScale) - matrix.M12 * width - matrix.M11 * height + height;
-            t.Matrix.Set(matrix.GetMatrix());
+            t.Matrix.SetValues(new[] { (float)matrix.M11, (float)matrix.M21, (float)matrix.OffsetX, (float)matrix.M12, (float)matrix.M22, (float)matrix.OffsetY, 0f, 0f, 1f });
         }
     }
 }
