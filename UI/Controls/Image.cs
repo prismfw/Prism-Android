@@ -185,17 +185,14 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != source)
                 {
-                    source.ClearImageHandler(OnImageLoaded);
+                    source.ClearImageHandler(OnImageChanged);
 
                     source = value;
-                    if (source != null && ((source as INativeBitmapImage)?.IsLoaded ?? true))
+                    if (source.BeginLoadingImage(OnImageChanged) != null)
                     {
-                        OnImageLoaded(null, null);
+                        OnImageChanged(null, null);
                     }
-                    else
-                    {
-                        SetImageBitmap(source.BeginLoadingImage(OnImageLoaded));
-                    }
+
                     OnPropertyChanged(Prism.UI.Controls.Image.SourceProperty);
                 }
             }
@@ -401,11 +398,11 @@ namespace Prism.Android.UI.Controls
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnImageLoaded(object sender, EventArgs e)
+        private void OnImageChanged(object sender, EventArgs e)
         {
             SetImageBitmap(source.GetImageSource());
-            Right = Left + (int)(source.PixelWidth / source.Scale);
-            Bottom = Top + (int)(source.PixelHeight / source.Scale);
+            Right = Left + (source.PixelWidth / source.Scale).GetScaledInt();
+            Bottom = Top + (source.PixelHeight / source.Scale).GetScaledInt();
 
             source.GetImageSource().PrepareToDraw();
             Invalidate();

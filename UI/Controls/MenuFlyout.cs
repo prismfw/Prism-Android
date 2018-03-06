@@ -97,10 +97,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
-                    SetBackgroundDrawable(background.GetDrawable(OnBackgroundImageLoaded));
+                    SetBackgroundDrawable(background.GetDrawable(OnBackgroundImageChanged));
                     OnPropertyChanged(FlyoutBase.BackgroundProperty);
                 }
             }
@@ -385,7 +385,7 @@ namespace Prism.Android.UI.Controls
             PropertyChanged.Invoke(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             SetBackgroundDrawable(background.GetDrawable(null));
         }

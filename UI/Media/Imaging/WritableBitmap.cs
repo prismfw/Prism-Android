@@ -22,10 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Android.App;
 using Android.Graphics;
 using Android.Runtime;
-using Android.Views;
 using Prism.Native;
 using Prism.Systems;
 using Prism.UI.Media.Imaging;
@@ -33,11 +31,11 @@ using Prism.UI.Media.Imaging;
 namespace Prism.Android.UI.Media.Imaging
 {
     /// <summary>
-    /// Represents an Android implementation of an <see cref="INativeRenderTargetBitmap"/>.
+    /// Represents an Android implementation of an <see cref="INativeWritableBitmap"/>.
     /// </summary>
     [Preserve(AllMembers = true)]
-    [Register(typeof(INativeRenderTargetBitmap))]
-    public class RenderTargetBitmap : INativeRenderTargetBitmap, IImageSource
+    [Register(typeof(INativeWritableBitmap))]
+    public class WritableBitmap : INativeWritableBitmap, IImageSource
     {
         /// <summary>
         /// Occurs when the underlying image data has changed.
@@ -49,7 +47,7 @@ namespace Prism.Android.UI.Media.Imaging
         /// </summary>
         public int PixelHeight
         {
-            get { return Source?.Height ?? 0; }
+            get { return Source.Height; }
         }
 
         /// <summary>
@@ -57,7 +55,7 @@ namespace Prism.Android.UI.Media.Imaging
         /// </summary>
         public int PixelWidth
         {
-            get { return Source?.Width ?? 0; }
+            get { return Source.Width; }
         }
         
         /// <summary>
@@ -65,19 +63,22 @@ namespace Prism.Android.UI.Media.Imaging
         /// </summary>
         public double Scale
         {
-            get { return Device.Current.DisplayScale; }
+            get { return 1; }
         }
         
         /// <summary>
         /// Gets the image source instance.
         /// </summary>
-        public Bitmap Source { get; private set; }
+        public Bitmap Source { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RenderTargetBitmap"/> class.
+        /// Initializes a new instance of the <see cref="WritableBitmap"/> class.
         /// </summary>
-        public RenderTargetBitmap()
+        /// <param name="pixelWidth">The number of pixels along the image's X-axis.</param>
+        /// <param name="pixelHeight">The number of pixels along the image's Y-axis.</param>
+        public WritableBitmap(int pixelWidth, int pixelHeight)
         {
+            Source = Bitmap.CreateBitmap(pixelWidth, pixelHeight, Bitmap.Config.Argb8888);
         }
         
         /// <summary>
@@ -88,11 +89,6 @@ namespace Prism.Android.UI.Media.Imaging
         {
             return Task.Run(() =>
             {
-                if (Source == null)
-                {
-                    return new byte[0];
-                }
-
                 var retVal = new byte[Source.Width * Source.Height * 4];
                 var pixels = new int[Source.Width * Source.Height];
                 Source.GetPixels(pixels, 0, Source.Width, 0, 0, Source.Width, Source.Height);
@@ -110,31 +106,6 @@ namespace Prism.Android.UI.Media.Imaging
         }
 
         /// <summary>
-        /// Renders a snapshot of the specified visual object.
-        /// </summary>
-        /// <param name="target">The visual object to render.    This value can be <c>null</c> to render the entire visual tree.</param>
-        /// <param name="width">The width of the snapshot.</param>
-        /// <param name="height">The height of the snapshot.</param>
-        public Task RenderAsync(INativeVisual target, int width, int height)
-        {
-            width = width.GetScaledInt();
-            height = height.GetScaledInt();
-        
-            var view = target as View ?? (target as Fragment)?.View ?? Application.MainActivity.Window.DecorView;
-            view.Layout(view.Left, view.Top, view.Right, view.Bottom);
-
-            var oldSource = Source;
-            Source = Bitmap.CreateBitmap(view.Width, view.Height, Bitmap.Config.Argb8888);
-            view.Draw(new Canvas(Source));
-            
-            Source = Bitmap.CreateScaledBitmap(Source, width, height, true);
-            SourceChanged?.Invoke(this, EventArgs.Empty);
-
-            oldSource?.Recycle();
-            return Task.CompletedTask;
-        }
-
-        /// <summary>
         /// Saves the image data to a file at the specified path using the specified file format.
         /// </summary>
         /// <param name="filePath">The path to the file in which to save the image data.</param>
@@ -145,16 +116,36 @@ namespace Prism.Android.UI.Media.Imaging
             {
                 if (fileFormat == ImageFileFormat.Jpeg)
                 {
-                    await Source?.CompressAsync(Bitmap.CompressFormat.Jpeg, 100, stream);
+                    await Source.CompressAsync(Bitmap.CompressFormat.Jpeg, 100, stream);
                 }
                 else
                 {
-                    await Source?.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
+                    await Source.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
                 }
 
                 stream.Position = 0;
                 await Prism.IO.File.WriteAllBytesAsync(filePath, stream.GetBuffer());
             }
+        }
+
+        /// <summary>
+        /// Sets the pixel data of the bitmap to the specified byte array.
+        /// </summary>
+        /// <param name="pixelData">The byte array containing the pixel data.</param>
+        public async Task SetPixelsAsync(byte[] pixelData)
+        {
+            await Task.Run(() =>
+            {
+                var colors = new int[pixelData.Length / 4];
+                for (int i = 0; i < pixelData.Length; i += 4)
+                {
+                    colors[i / 4] = (pixelData[i] << 24 | pixelData[i + 1] << 16 | pixelData[i + 2] << 8 | pixelData[i + 3]);
+                }
+
+                Source.SetPixels(colors, 0, Source.Width, 0, 0, Source.Width, Source.Height);
+            });
+
+            SourceChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

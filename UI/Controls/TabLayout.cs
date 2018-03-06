@@ -39,11 +39,11 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != selectionBrush)
                 {
-                    (selectionBrush as ImageBrush).ClearImageHandler(OnSelectionBrushLoaded);
+                    (selectionBrush as ImageBrush).ClearImageHandler(OnSelectionBrushChanged);
 
                     selectionBrush = value;
                     selectionPaint.SetBrush(selectionBrush, innerLayout.GetChildAt(SelectedTabIndex)?.Width ?? 0,
-                        selectionBarHeight, OnSelectionBrushLoaded);
+                        selectionBarHeight, OnSelectionBrushChanged);
 
                     Invalidate();
                 }
@@ -169,7 +169,7 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private void OnSelectionBrushLoaded(object sender, EventArgs e)
+        private void OnSelectionBrushChanged(object sender, EventArgs e)
         {
             var tab = innerLayout.GetChildAt(SelectedTabIndex);
             selectionPaint.SetBrush(selectionBrush, tab?.Width ?? 0, selectionBarHeight, null);

@@ -123,10 +123,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
-                    trackDrawable.MaximumDrawable = background.GetDrawable(OnBackgroundImageLoaded);
+                    trackDrawable.MaximumDrawable = background.GetDrawable(OnBackgroundImageChanged);
                     OnPropertyChanged(Control.BackgroundProperty);
                 }
             }
@@ -143,10 +143,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != borderBrush)
                 {
-                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageLoaded);
+                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageChanged);
 
                     borderBrush = value;
-                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageLoaded);
+                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageChanged);
                     OnPropertyChanged(Control.BorderBrushProperty);
                     Invalidate();
                 }
@@ -233,10 +233,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
-                    trackDrawable.MinimumDrawable = foreground.GetDrawable(OnForegroundImageLoaded);
+                    trackDrawable.MinimumDrawable = foreground.GetDrawable(OnForegroundImageChanged);
                     OnPropertyChanged(Control.ForegroundProperty);
                 }
             }
@@ -433,14 +433,14 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != thumbBrush)
                 {
-                    (thumbBrush as ImageBrush).ClearImageHandler(OnThumbImageLoaded);
+                    (thumbBrush as ImageBrush).ClearImageHandler(OnThumbImageChanged);
 
                     thumbBrush = value;
 
                     var scb = thumbBrush as SolidColorBrush;
                     if (scb == null)
                     {
-                        SetThumb(thumbBrush.GetDrawable(OnThumbImageLoaded) ?? Android.Resources.GetDrawable(this, SystemResources.SliderThumbBrushKey));
+                        SetThumb(thumbBrush.GetDrawable(OnThumbImageChanged) ?? Android.Resources.GetDrawable(this, SystemResources.SliderThumbBrushKey));
                         Thumb.ClearColorFilter();
                     }
                     else
@@ -738,22 +738,22 @@ namespace Prism.Android.UI.Controls
             borderPaint.SetBrush(borderBrush, w, h, null);
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             trackDrawable.MaximumDrawable = background.GetDrawable(null);
         }
 
-        private void OnBorderImageLoaded(object sender, EventArgs e)
+        private void OnBorderImageChanged(object sender, EventArgs e)
         {
             Invalidate();
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             trackDrawable.MinimumDrawable = foreground.GetDrawable(null);
         }
 
-        private void OnThumbImageLoaded(object sender, EventArgs e)
+        private void OnThumbImageChanged(object sender, EventArgs e)
         {
             SetThumb(thumbBrush.GetDrawable(null) ?? Android.Resources.GetDrawable(this, SystemResources.SliderThumbBrushKey));
         }

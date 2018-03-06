@@ -48,6 +48,11 @@ namespace Prism.Android.UI.Media.Imaging
         public event EventHandler ImageLoaded;
 
         /// <summary>
+        /// Occurs when the underlying image data has changed.
+        /// </summary>
+        public event EventHandler SourceChanged;
+
+        /// <summary>
         /// Gets a value indicating whether the image has encountered an error during loading.
         /// </summary>
         public bool IsFaulted { get; private set; }
@@ -184,9 +189,11 @@ namespace Prism.Android.UI.Media.Imaging
                             context.Post((obj) => OnImageFailed(null), null);
                             return;
                         }
+
+                        context.Post((obj) => SourceChanged?.Invoke(this, EventArgs.Empty), null);
                     }
 
-                    if (!IsLoaded)
+                    if (!IsLoaded && !IsFaulted && Source != null)
                     {
                         if (PixelWidth == 0 && PixelHeight == 0)
                         {

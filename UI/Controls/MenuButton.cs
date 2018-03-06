@@ -56,7 +56,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
                     SetForeground(foreground ?? enabledForeground, true);
@@ -88,7 +88,7 @@ namespace Prism.Android.UI.Controls
                         ImageView.Visibility = ViewStates.Visible;
 
                         var source = (INativeImageSource)ObjectRetriever.GetNativeObject(new BitmapImage(imageUri));
-                        ImageView.SetImageBitmap(source.BeginLoadingImage(OnImageLoaded));
+                        ImageView.SetImageBitmap(source.BeginLoadingImage(OnImageChanged));
                     }
 
                     OnPropertyChanged(Prism.UI.Controls.MenuButton.ImageUriProperty);
@@ -199,20 +199,20 @@ namespace Prism.Android.UI.Controls
             else
             {
                 TextView.Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (TextView.Paint.FontSpacing + 0.5f),
-                    listen ? OnForegroundImageLoaded : (EventHandler)null);
+                    listen ? OnForegroundImageChanged : (EventHandler)null);
 
                 TextView.SetTextColor(TextView.Paint.Color);
                 ImageView.SetColorFilter(TextView.Paint.Color);
             }
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             TextView.Paint.SetShader(foreground.GetShader(Width, Height, null));
             TextView.Invalidate();
         }
 
-        private void OnImageLoaded(object sender, EventArgs e)
+        private void OnImageChanged(object sender, EventArgs e)
         {
             var source = sender as INativeBitmapImage;
             if (source != null && source.SourceUri == imageUri)

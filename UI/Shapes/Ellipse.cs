@@ -104,10 +104,10 @@ namespace Prism.Android.UI.Shapes
             {
                 if (value != fill)
                 {
-                    (fill as ImageBrush).ClearImageHandler(OnImageLoaded);
+                    (fill as ImageBrush).ClearImageHandler(OnImageChanged);
 
                     fill = value;
-                    FillPaint.SetBrush(fill, Width, Height, OnImageLoaded);
+                    FillPaint.SetBrush(fill, Width, Height, OnImageChanged);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.FillProperty);
                     Invalidate();
                 }
@@ -207,10 +207,10 @@ namespace Prism.Android.UI.Shapes
             {
                 if (value != stroke)
                 {
-                    (stroke as ImageBrush).ClearImageHandler(OnImageLoaded);
+                    (stroke as ImageBrush).ClearImageHandler(OnImageChanged);
 
                     stroke = value;
-                    StrokePaint.SetBrush(stroke, Width, Height, OnImageLoaded);
+                    StrokePaint.SetBrush(stroke, Width, Height, OnImageChanged);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.StrokeProperty);
                     Invalidate();
                 }
@@ -516,7 +516,7 @@ namespace Prism.Android.UI.Shapes
             StrokePaint.SetBrush(stroke, w, h, null);
         }
 
-        private void OnImageLoaded(object sender, EventArgs e)
+        private void OnImageChanged(object sender, EventArgs e)
         {
             Invalidate();
         }

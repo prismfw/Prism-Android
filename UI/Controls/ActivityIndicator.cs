@@ -105,7 +105,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
 
@@ -119,7 +119,7 @@ namespace Prism.Android.UI.Controls
                         var scb = foreground as SolidColorBrush;
                         if (scb == null)
                         {
-                            IndeterminateDrawable = foreground.GetDrawable(OnForegroundImageLoaded);
+                            IndeterminateDrawable = foreground.GetDrawable(OnForegroundImageChanged);
                         }
                         else
                         {
@@ -381,7 +381,7 @@ namespace Prism.Android.UI.Controls
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             IndeterminateDrawable = foreground.GetDrawable(null);
 

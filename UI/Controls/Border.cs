@@ -106,10 +106,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
+                    base.Background = background.GetDrawable(OnBackgroundImageChanged);
                     OnPropertyChanged(Prism.UI.Controls.Border.BackgroundProperty);
                 }
             }
@@ -126,10 +126,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != borderBrush)
                 {
-                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageLoaded);
+                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageChanged);
 
                     borderBrush = value;
-                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageLoaded);
+                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageChanged);
                     OnPropertyChanged(Prism.UI.Controls.Border.BorderBrushProperty);
                     Invalidate();
                 }
@@ -503,12 +503,12 @@ namespace Prism.Android.UI.Controls
             borderPaint.SetBrush(borderBrush, w, h, null);
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             base.Background = background.GetDrawable(null);
         }
 
-        private void OnBorderImageLoaded(object sender, EventArgs e)
+        private void OnBorderImageChanged(object sender, EventArgs e)
         {
             Invalidate();
         }

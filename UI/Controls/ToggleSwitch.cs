@@ -151,10 +151,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != borderBrush)
                 {
-                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageLoaded);
+                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageChanged);
 
                     borderBrush = value;
-                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageLoaded);
+                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageChanged);
                     OnPropertyChanged(Control.BorderBrushProperty);
                     Invalidate();
                 }
@@ -684,7 +684,7 @@ namespace Prism.Android.UI.Controls
             Paint.SetBrush(foreground, w, h, null);
         }
 
-        private void OnBorderImageLoaded(object sender, EventArgs e)
+        private void OnBorderImageChanged(object sender, EventArgs e)
         {
             Invalidate();
         }

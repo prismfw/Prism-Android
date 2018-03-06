@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
+using System;
 using Android.Graphics;
 
 namespace Prism.Android.UI.Media.Imaging
@@ -28,6 +29,11 @@ namespace Prism.Android.UI.Media.Imaging
     /// </summary>
     public interface IImageSource
     {
+        /// <summary>
+        /// Occurs when the underlying image data has changed.
+        /// </summary>
+        event EventHandler SourceChanged;
+
         /// <summary>
         /// Gets the image source instance.
         /// </summary>

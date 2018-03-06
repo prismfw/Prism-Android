@@ -127,10 +127,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
+                    base.Background = background.GetDrawable(OnBackgroundImageChanged);
                     OnPropertyChanged(Prism.UI.Controls.ListBox.BackgroundProperty);
                 }
             }
@@ -417,10 +417,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != separatorBrush)
                 {
-                    (separatorBrush as ImageBrush).ClearImageHandler(OnSeparatorImageLoaded);
+                    (separatorBrush as ImageBrush).ClearImageHandler(OnSeparatorImageChanged);
 
                     separatorBrush = value;
-                    separatorDrawable = separatorBrush.GetDrawable(OnSeparatorImageLoaded) ??
+                    separatorDrawable = separatorBrush.GetDrawable(OnSeparatorImageChanged) ??
                         Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.TextColorPrimary);
 
                     OnPropertyChanged(Prism.UI.Controls.ListBox.SeparatorBrushProperty);
@@ -831,12 +831,12 @@ namespace Prism.Android.UI.Controls
             AccessoryClicked(this, new AccessoryClickedEventArgs(items?[index]));
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             base.Background = background.GetDrawable(null);
         }
 
-        private void OnSeparatorImageLoaded(object sender, EventArgs e)
+        private void OnSeparatorImageChanged(object sender, EventArgs e)
         {
             separatorDrawable = separatorBrush.GetDrawable(null);
             DividerHeight = 1;

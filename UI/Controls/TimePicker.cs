@@ -125,12 +125,12 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
                     if (background is ImageBrush || background is LinearGradientBrush)
                     {
-                        base.Background = background.GetDrawable(OnBackgroundImageLoaded);
+                        base.Background = background.GetDrawable(OnBackgroundImageChanged);
                     }
                     else
                     {
@@ -164,10 +164,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != borderBrush)
                 {
-                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageLoaded);
+                    (borderBrush as ImageBrush).ClearImageHandler(OnBorderImageChanged);
 
                     borderBrush = value;
-                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageLoaded);
+                    borderPaint.SetBrush(borderBrush, Width, Height, OnBorderImageChanged);
                     OnPropertyChanged(Control.BorderBrushProperty);
                     Invalidate();
                 }
@@ -255,7 +255,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
                     if (foreground == null)
@@ -265,7 +265,7 @@ namespace Prism.Android.UI.Controls
                     }
                     else
                     {
-                        Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (Paint.FontSpacing + 0.5f), OnForegroundImageLoaded);
+                        Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (Paint.FontSpacing + 0.5f), OnForegroundImageChanged);
                         SetTextColor(Paint.Color);
                     }
 
@@ -695,17 +695,17 @@ namespace Prism.Android.UI.Controls
             Paint.SetBrush(foreground, w, (foreground is ImageBrush) ? h : Paint.FontSpacing + 0.5f, null);
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             base.Background = background.GetDrawable(null) ?? Android.Resources.GetDrawable(this, SystemResources.DateTimePickerBackgroundBrushKey);
         }
 
-        private void OnBorderImageLoaded(object sender, EventArgs e)
+        private void OnBorderImageChanged(object sender, EventArgs e)
         {
             Invalidate();
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             Paint.SetShader(foreground.GetShader(Width, Height, null));
             Invalidate();

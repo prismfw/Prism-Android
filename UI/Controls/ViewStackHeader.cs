@@ -91,10 +91,10 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
+                    base.Background = background.GetDrawable(OnBackgroundImageChanged);
                     OnPropertyChanged(Prism.UI.Controls.ViewStackHeader.BackgroundProperty);
                 }
             }
@@ -163,7 +163,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
                     if (foreground == null)
@@ -174,7 +174,7 @@ namespace Prism.Android.UI.Controls
                     }
                     else
                     {
-                        TitleView.Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (TitleView.Paint.FontSpacing + 0.5f), OnForegroundImageLoaded);
+                        TitleView.Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (TitleView.Paint.FontSpacing + 0.5f), OnForegroundImageChanged);
                         TitleView.SetTextColor(TitleView.Paint.Color);
                         BackButton.SetColorFilter(TitleView.Paint.Color);
                     }
@@ -453,12 +453,12 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             base.Background = background.GetDrawable(null);
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             TitleView.Paint.SetShader(foreground.GetShader(Width, Height, null));
             TitleView.Invalidate();

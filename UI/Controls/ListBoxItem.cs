@@ -124,7 +124,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
 
@@ -280,7 +280,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != selectedBackground)
                 {
-                    (selectedBackground as ImageBrush).ClearImageHandler(OnSelectedBackgroundImageLoaded);
+                    (selectedBackground as ImageBrush).ClearImageHandler(OnSelectedBackgroundImageChanged);
 
                     selectedBackground = value;
 
@@ -490,7 +490,7 @@ namespace Prism.Android.UI.Controls
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             if (!isSelected && background != null)
             {
@@ -508,7 +508,7 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private void OnSelectedBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnSelectedBackgroundImageChanged(object sender, EventArgs e)
         {
             if (isSelected && selectedBackground != null)
             {
@@ -530,11 +530,11 @@ namespace Prism.Android.UI.Controls
         {
             if (isSelected && selectedBackground != null)
             {
-                base.Background = selectedBackground.GetDrawable(OnSelectedBackgroundImageLoaded);
+                base.Background = selectedBackground.GetDrawable(OnSelectedBackgroundImageChanged);
             }
             else if (background != null)
             {
-                base.Background = background.GetDrawable(OnBackgroundImageLoaded);
+                base.Background = background.GetDrawable(OnBackgroundImageChanged);
             }
             else
             {

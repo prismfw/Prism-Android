@@ -90,10 +90,10 @@ namespace Prism.Android.UI
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
-                    TabLayout.Background = background.GetDrawable(OnBackgroundImageLoaded) ??
+                    TabLayout.Background = background.GetDrawable(OnBackgroundImageChanged) ??
                         Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);
 
                     OnPropertyChanged(Prism.UI.TabView.BackgroundProperty);
@@ -373,7 +373,7 @@ namespace Prism.Android.UI
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             TabLayout.Background = background.GetDrawable(null) ??
                 Android.Resources.GetDrawable(this, global::Android.Resource.Attribute.Background);

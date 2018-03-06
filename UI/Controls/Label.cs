@@ -152,7 +152,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
 
@@ -178,7 +178,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != highlightBrush)
                 {
-                    (highlightBrush as ImageBrush).ClearImageHandler(OnHighlightBrushImageLoaded);
+                    (highlightBrush as ImageBrush).ClearImageHandler(OnHighlightBrushImageChanged);
 
                     highlightBrush = value;
 
@@ -498,7 +498,7 @@ namespace Prism.Android.UI.Controls
             var item = parent as ListBoxItem ?? this.GetParent<ListBoxItem>();
             if (item != null && item.IsSelected && highlightBrush != null)
             {
-                Paint.SetBrush(highlightBrush, Width, (highlightBrush is ImageBrush) ? Height : (Paint.FontSpacing + 0.5f), OnHighlightBrushImageLoaded);
+                Paint.SetBrush(highlightBrush, Width, (highlightBrush is ImageBrush) ? Height : (Paint.FontSpacing + 0.5f), OnHighlightBrushImageChanged);
                 SetTextColor(Paint.Color);
             }
             else if (foreground == null)
@@ -508,12 +508,12 @@ namespace Prism.Android.UI.Controls
             }
             else
             {
-                Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (Paint.FontSpacing + 0.5f), OnForegroundImageLoaded);
+                Paint.SetBrush(foreground, Width, (foreground is ImageBrush) ? Height : (Paint.FontSpacing + 0.5f), OnForegroundImageChanged);
                 SetTextColor(Paint.Color);
             }
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             var parent = this.GetParent<ListBoxItem>();
             if (parent == null || !parent.IsSelected || highlightBrush == null)
@@ -523,7 +523,7 @@ namespace Prism.Android.UI.Controls
             }
         }
 
-        private void OnHighlightBrushImageLoaded(object sender, EventArgs e)
+        private void OnHighlightBrushImageChanged(object sender, EventArgs e)
         {
             var parent = this.GetParent<ListBoxItem>();
             if (parent != null && parent.IsSelected && highlightBrush != null)

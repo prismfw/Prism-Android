@@ -203,10 +203,10 @@ namespace Prism.Android.UI.Shapes
             {
                 if (value != stroke)
                 {
-                    (stroke as ImageBrush).ClearImageHandler(OnImageLoaded);
+                    (stroke as ImageBrush).ClearImageHandler(OnImageChanged);
 
                     stroke = value;
-                    StrokePaint.SetBrush(stroke, Width, Height, OnImageLoaded);
+                    StrokePaint.SetBrush(stroke, Width, Height, OnImageChanged);
                     OnPropertyChanged(Prism.UI.Shapes.Shape.StrokeProperty);
                     Invalidate();
                 }
@@ -579,7 +579,7 @@ namespace Prism.Android.UI.Shapes
             StrokePaint.SetBrush(stroke, w, h, null);
         }
 
-        private void OnImageLoaded(object sender, EventArgs e)
+        private void OnImageChanged(object sender, EventArgs e)
         {
             Invalidate();
         }

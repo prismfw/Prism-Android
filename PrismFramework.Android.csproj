@@ -75,6 +75,7 @@
     <Compile Include="Systems\Sensors\Accelerometer.cs" />
     <Compile Include="UI\Controls\ActivityIndicator.cs" />
     <Compile Include="UI\Controls\Flyout.cs" />
+    <Compile Include="UI\Media\Imaging\WritableBitmap.cs" />
     <Compile Include="UI\Shapes\Path.cs" />
     <Compile Include="UI\Views\ViewStackChild.cs" />
     <Compile Include="Utilities\Timer.cs">

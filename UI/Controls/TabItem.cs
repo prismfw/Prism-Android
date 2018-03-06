@@ -179,7 +179,7 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != foreground)
                 {
-                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageLoaded);
+                    (foreground as ImageBrush).ClearImageHandler(OnForegroundImageChanged);
 
                     foreground = value;
                     if (foreground == null)
@@ -190,7 +190,7 @@ namespace Prism.Android.UI.Controls
                     else
                     {
                         TextView.Paint.SetBrush(foreground, TextView.Width, (foreground is ImageBrush) ? TextView.Height :
-                            (TextView.Paint.FontSpacing + 0.5f), OnForegroundImageLoaded);
+                            (TextView.Paint.FontSpacing + 0.5f), OnForegroundImageChanged);
                         TextView.SetTextColor(TextView.Paint.Color);
                     }
 
@@ -215,17 +215,14 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != image)
                 {
-                    image.ClearImageHandler(OnImageLoaded);
+                    image.ClearImageHandler(OnImageChanged);
 
                     image = value;
-                    if (image != null && ((image as INativeBitmapImage)?.IsLoaded ?? true))
+                    if (image.BeginLoadingImage(OnImageChanged) != null)
                     {
-                        OnImageLoaded(null, null);
+                        OnImageChanged(null, null);
                     }
-                    else
-                    {
-                        ImageView.SetImageBitmap(image.BeginLoadingImage(OnImageLoaded));
-                    }
+
                     OnPropertyChanged(Prism.UI.Controls.TabItem.ImageProperty);
                 }
             }
@@ -463,13 +460,13 @@ namespace Prism.Android.UI.Controls
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnForegroundImageLoaded(object sender, EventArgs e)
+        private void OnForegroundImageChanged(object sender, EventArgs e)
         {
             TextView.Paint.SetShader(foreground.GetShader(TextView.Width, TextView.Height, null));
             TextView.Invalidate();
         }
 
-        private void OnImageLoaded(object sender, EventArgs e)
+        private void OnImageChanged(object sender, EventArgs e)
         {
             ImageView.SetImageBitmap(image.GetImageSource());
             image.GetImageSource().PrepareToDraw();

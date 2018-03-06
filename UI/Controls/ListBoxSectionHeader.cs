@@ -105,11 +105,11 @@ namespace Prism.Android.UI.Controls
             {
                 if (value != background)
                 {
-                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageLoaded);
+                    (background as ImageBrush).ClearImageHandler(OnBackgroundImageChanged);
 
                     background = value;
 
-                    base.Background = background.GetDrawable(OnBackgroundImageLoaded);
+                    base.Background = background.GetDrawable(OnBackgroundImageChanged);
                     OnPropertyChanged(Prism.UI.Controls.ListBoxSectionHeader.BackgroundProperty);
                 }
             }
@@ -407,7 +407,7 @@ namespace Prism.Android.UI.Controls
             PropertyChanged(this, new FrameworkPropertyChangedEventArgs(pd));
         }
 
-        private void OnBackgroundImageLoaded(object sender, EventArgs e)
+        private void OnBackgroundImageChanged(object sender, EventArgs e)
         {
             base.Background = background.GetDrawable(null);
         }
