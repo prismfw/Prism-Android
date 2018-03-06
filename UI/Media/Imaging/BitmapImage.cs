@@ -20,13 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Android.Graphics;
 using Android.Runtime;
 using Prism.Native;
-using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Media.Imaging
 {
@@ -35,7 +33,7 @@ namespace Prism.Android.UI.Media.Imaging
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeBitmapImage))]
-    public class BitmapImage : INativeBitmapImage, IImageSource, ILazyLoader
+    public class BitmapImage : ImageSource, INativeBitmapImage, IAsyncLoader
     {
         /// <summary>
         /// Occurs when the image fails to load.
@@ -46,11 +44,6 @@ namespace Prism.Android.UI.Media.Imaging
         /// Occurs when the image has been loaded into memory.
         /// </summary>
         public event EventHandler ImageLoaded;
-
-        /// <summary>
-        /// Occurs when the underlying image data has changed.
-        /// </summary>
-        public event EventHandler SourceChanged;
 
         /// <summary>
         /// Gets a value indicating whether the image has encountered an error during loading.
@@ -65,25 +58,28 @@ namespace Prism.Android.UI.Media.Imaging
         /// <summary>
         /// Gets the number of pixels along the image's Y-axis.
         /// </summary>
-        public int PixelHeight { get; private set; }
+        public override int PixelHeight
+        {
+            get { return pixelHeight; }
+        }
+        private int pixelHeight;
 
         /// <summary>
         /// Gets the number of pixels along the image's X-axis.
         /// </summary>
-        public int PixelWidth { get; private set; }
-        
+        public override int PixelWidth
+        {
+            get { return pixelWidth; }
+        }
+        private int pixelWidth;
+
         /// <summary>
         /// Gets the scaling factor of the image.
         /// </summary>
-        public double Scale
+        public override double Scale
         {
             get { return Source == null ? 1 : (PixelWidth / (double)Source.Width); }
         }
-        
-        /// <summary>
-        /// Gets the image source instance.
-        /// </summary>
-        public Bitmap Source { get; private set; }
 
         /// <summary>
         /// Gets the URI of the source file containing the image data.
@@ -104,7 +100,7 @@ namespace Prism.Android.UI.Media.Imaging
             var cached = cachedImage as BitmapImage;
             if (cached != null)
             {
-                Source = cached.Source;
+                SetSource(cached.Source, false);
                 IsLoaded = cached.IsLoaded;
             }
         }
@@ -119,17 +115,38 @@ namespace Prism.Android.UI.Media.Imaging
         }
 
         /// <summary>
-        /// Loads the contents of the object in a background thread.
+        /// Creates a writable bitmap instance with a copy of the image data.
         /// </summary>
-        public void LoadInBackground()
+        /// <returns>The newly created <see cref="INativeWritableBitmap"/> instance.</returns>
+        public async Task<INativeWritableBitmap> CreateWritableCopyAsync()
+        {
+            if (!IsLoaded)
+            {
+                await LoadAsync();
+            }
+
+            if (Source != null)
+            {
+                var bitmap = new WritableBitmap(PixelWidth, PixelHeight);
+                await bitmap.SetPixelsAsync(await GetPixelsAsync());
+                return bitmap;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Asynchronously loads the contents of the object.
+        /// </summary>
+        public Task LoadAsync()
         {
             var context = SynchronizationContext.Current ?? new SynchronizationContext();
-            ThreadPool.QueueUserWorkItem((o) =>
+            return Task.Run(() =>
             {
                 lock (this)
                 {
-                    PixelWidth = 0;
-                    PixelHeight = 0;
+                    pixelWidth = 0;
+                    pixelHeight = 0;
                     
                     if (Source == null && !IsFaulted && (imageBytes != null || SourceUri != null))
                     {
@@ -137,7 +154,7 @@ namespace Prism.Android.UI.Media.Imaging
                         {
                             if (imageBytes != null)
                             {
-                                Source = BitmapFactory.DecodeByteArray(imageBytes, 0, imageBytes.Length);
+                                SetSource(BitmapFactory.DecodeByteArray(imageBytes, 0, imageBytes.Length), false);
                                 imageBytes = null;
                             }
                             else if (!SourceUri.IsAbsoluteUri || SourceUri.IsFile)
@@ -151,22 +168,22 @@ namespace Prism.Android.UI.Media.Imaging
                                         var options = new BitmapFactory.Options();
                                         options.InJustDecodeBounds = true;
                                         BitmapFactory.DecodeResource(Application.MainActivity.Resources, id, options);
-                                        Source = BitmapFactory.DecodeResource(Application.MainActivity.Resources, id);
+                                        SetSource(BitmapFactory.DecodeResource(Application.MainActivity.Resources, id), false);
                                         
-                                        PixelWidth = options.OutWidth;
-                                        PixelHeight = options.OutHeight;
+                                        pixelWidth = options.OutWidth;
+                                        pixelHeight = options.OutHeight;
                                     }
                                     else
                                     {
                                         using (var stream = Application.MainActivity.Assets.Open(fileName))
                                         {
-                                            Source = BitmapFactory.DecodeStream(stream);
+                                            SetSource(BitmapFactory.DecodeStream(stream), false);
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    Source = BitmapFactory.DecodeFile(SourceUri.OriginalString);
+                                    SetSource(BitmapFactory.DecodeFile(SourceUri.OriginalString), false);
                                 }
                             }
                             else
@@ -174,7 +191,7 @@ namespace Prism.Android.UI.Media.Imaging
                                 var url = new Java.Net.URL(SourceUri.OriginalString);
                                 using (var stream = url.OpenStream())
                                 {
-                                    Source = BitmapFactory.DecodeStream(stream);
+                                    SetSource(BitmapFactory.DecodeStream(stream), false);
                                 }
                             }
                         }
@@ -190,44 +207,21 @@ namespace Prism.Android.UI.Media.Imaging
                             return;
                         }
 
-                        context.Post((obj) => SourceChanged?.Invoke(this, EventArgs.Empty), null);
+                        context.Post((obj) => OnSourceChanged(), null);
                     }
 
                     if (!IsLoaded && !IsFaulted && Source != null)
                     {
                         if (PixelWidth == 0 && PixelHeight == 0)
                         {
-                            PixelWidth = Source.Width;
-                            PixelHeight = Source.Height;
+                            pixelWidth = Source.Width;
+                            pixelHeight = Source.Height;
                         }
                         
                         context.Post((obj) => OnImageLoaded(), null);
                     }
                 }
-            }, this);
-        }
-
-        /// <summary>
-        /// Saves the image data to a file at the specified path using the specified file format.
-        /// </summary>
-        /// <param name="filePath">The path to the file in which to save the image data.</param>
-        /// <param name="fileFormat">The file format in which to save the image data.</param>
-        public async Task SaveAsync(string filePath, ImageFileFormat fileFormat)
-        {
-            using (var stream = new MemoryStream())
-            {
-                if (fileFormat == ImageFileFormat.Jpeg)
-                {
-                    await Source?.CompressAsync(Bitmap.CompressFormat.Jpeg, 100, stream);
-                }
-                else
-                {
-                    await Source?.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
-                }
-
-                stream.Position = 0;
-                await Prism.IO.File.WriteAllBytesAsync(filePath, stream.GetBuffer());
-            }
+            });
         }
 
         /// <summary>

@@ -78,9 +78,7 @@
     <Compile Include="UI\Media\Imaging\WritableBitmap.cs" />
     <Compile Include="UI\Shapes\Path.cs" />
     <Compile Include="UI\Views\ViewStackChild.cs" />
-    <Compile Include="Utilities\Timer.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Utilities\Timer.cs" />
     <Compile Include="Extensions\AndroidExtensions.cs" />
     <Compile Include="UI\Media\Transform.cs" />
     <Compile Include="UI\Views\ContentView.cs" />
@@ -89,7 +87,7 @@
     <Compile Include="UI\Controls\Panel.cs" />
     <Compile Include="UI\Controls\Label.cs" />
     <Compile Include="UI\Controls\Button.cs" />
-    <Compile Include="LazyLoader.cs" />
+    <Compile Include="AsyncLoader.cs" />
     <Compile Include="Application.cs" />
     <Compile Include="AndroidInitializer.cs" />
     <Compile Include="AppActivity.cs" />

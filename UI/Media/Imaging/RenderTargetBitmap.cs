@@ -19,8 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Graphics;
@@ -28,7 +26,6 @@ using Android.Runtime;
 using Android.Views;
 using Prism.Native;
 using Prism.Systems;
-using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Media.Imaging
 {
@@ -37,76 +34,21 @@ namespace Prism.Android.UI.Media.Imaging
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeRenderTargetBitmap))]
-    public class RenderTargetBitmap : INativeRenderTargetBitmap, IImageSource
+    public class RenderTargetBitmap : ImageSource, INativeRenderTargetBitmap
     {
-        /// <summary>
-        /// Occurs when the underlying image data has changed.
-        /// </summary>
-        public event EventHandler SourceChanged;
-
-        /// <summary>
-        /// Gets the number of pixels along the image's Y-axis.
-        /// </summary>
-        public int PixelHeight
-        {
-            get { return Source?.Height ?? 0; }
-        }
-
-        /// <summary>
-        /// Gets the number of pixels along the image's X-axis.
-        /// </summary>
-        public int PixelWidth
-        {
-            get { return Source?.Width ?? 0; }
-        }
-        
         /// <summary>
         /// Gets the scaling factor of the image.
         /// </summary>
-        public double Scale
+        public override double Scale
         {
             get { return Device.Current.DisplayScale; }
         }
-        
-        /// <summary>
-        /// Gets the image source instance.
-        /// </summary>
-        public Bitmap Source { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RenderTargetBitmap"/> class.
         /// </summary>
         public RenderTargetBitmap()
         {
-        }
-        
-        /// <summary>
-        /// Gets the data for the captured image as a byte array.
-        /// </summary>
-        /// <returns>The image data as an <see cref="Array"/> of bytes.</returns>
-        public Task<byte[]> GetPixelsAsync()
-        {
-            return Task.Run(() =>
-            {
-                if (Source == null)
-                {
-                    return new byte[0];
-                }
-
-                var retVal = new byte[Source.Width * Source.Height * 4];
-                var pixels = new int[Source.Width * Source.Height];
-                Source.GetPixels(pixels, 0, Source.Width, 0, 0, Source.Width, Source.Height);
-                for (int i = 0; i < retVal.Length; i += 4)
-                {
-                    int argb = pixels[i / 4];
-                    retVal[i] = (byte)(argb >> 24 & 0xFF);
-                    retVal[i + 1] = (byte)(argb >> 16 & 0xFF);
-                    retVal[i + 2] = (byte)(argb >> 8 & 0xFF);
-                    retVal[i + 3] = (byte)(argb & 0xFF);
-                }
-
-                return retVal;
-            });
         }
 
         /// <summary>
@@ -124,37 +66,13 @@ namespace Prism.Android.UI.Media.Imaging
             view.Layout(view.Left, view.Top, view.Right, view.Bottom);
 
             var oldSource = Source;
-            Source = Bitmap.CreateBitmap(view.Width, view.Height, Bitmap.Config.Argb8888);
-            view.Draw(new Canvas(Source));
+            var newSource = Bitmap.CreateBitmap(view.Width, view.Height, Bitmap.Config.Argb8888);
+            view.Draw(new Canvas(newSource));
             
-            Source = Bitmap.CreateScaledBitmap(Source, width, height, true);
-            SourceChanged?.Invoke(this, EventArgs.Empty);
+            SetSource(Bitmap.CreateScaledBitmap(newSource, width, height, true), true);
 
             oldSource?.Recycle();
             return Task.CompletedTask;
-        }
-
-        /// <summary>
-        /// Saves the image data to a file at the specified path using the specified file format.
-        /// </summary>
-        /// <param name="filePath">The path to the file in which to save the image data.</param>
-        /// <param name="fileFormat">The file format in which to save the image data.</param>
-        public async Task SaveAsync(string filePath, ImageFileFormat fileFormat)
-        {
-            using (var stream = new MemoryStream())
-            {
-                if (fileFormat == ImageFileFormat.Jpeg)
-                {
-                    await Source?.CompressAsync(Bitmap.CompressFormat.Jpeg, 100, stream);
-                }
-                else
-                {
-                    await Source?.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
-                }
-
-                stream.Position = 0;
-                await Prism.IO.File.WriteAllBytesAsync(filePath, stream.GetBuffer());
-            }
         }
     }
 }

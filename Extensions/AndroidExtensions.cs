@@ -46,7 +46,7 @@ namespace Prism.Android
     /// </summary>
     public static class AndroidExtensions
     {
-        private static readonly WeakEventManager imageChangedEventManager = new WeakEventManager("SourceChanged", typeof(IImageSource));
+        private static readonly WeakEventManager imageChangedEventManager = new WeakEventManager("SourceChanged", typeof(ImageSource));
 
         /// <summary>
         /// Checks the state of the image brush's image.  If the image is not loaded, loading is initiated.
@@ -72,7 +72,7 @@ namespace Prism.Android
                 return null;
             }
 
-            if (handler != null && source is IImageSource)
+            if (handler != null && source is ImageSource)
             {
                 imageChangedEventManager.RemoveHandler(source, handler);
                 imageChangedEventManager.AddHandler(source, handler);
@@ -89,7 +89,7 @@ namespace Prism.Android
             }
             else
             {
-                (bitmapImage as ILazyLoader)?.LoadInBackground();
+                (bitmapImage as IAsyncLoader)?.LoadAsync();
             }
 
             return null;
@@ -102,7 +102,7 @@ namespace Prism.Android
         /// <param name="handler">The handler to be removed.</param>
         public static void ClearImageHandler(this ImageBrush brush, EventHandler handler)
         {
-            var image = ObjectRetriever.GetNativeObject(brush?.Image) as IImageSource;
+            var image = ObjectRetriever.GetNativeObject(brush?.Image) as ImageSource;
             if (image != null)
             {
                 imageChangedEventManager.RemoveHandler(image, handler);
@@ -116,7 +116,7 @@ namespace Prism.Android
         /// <param name="handler">The handler to be removed.</param>
         public static void ClearImageHandler(this INativeImageSource source, EventHandler handler)
         {
-            if (source is IImageSource)
+            if (source is ImageSource)
             {
                 imageChangedEventManager.RemoveHandler(source, handler);
             }
@@ -311,7 +311,7 @@ namespace Prism.Android
         /// <param name="source">The image.</param>
         public static Bitmap GetImageSource(this INativeImageSource source)
         {
-            var image = source as IImageSource;
+            var image = source as ImageSource;
             return image == null ? (object)source as Bitmap : image.Source;
         }
 

@@ -19,14 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using Android.Graphics;
 using Android.Runtime;
 using Prism.Native;
-using Prism.Systems;
-using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Media.Imaging
 {
@@ -35,42 +31,8 @@ namespace Prism.Android.UI.Media.Imaging
     /// </summary>
     [Preserve(AllMembers = true)]
     [Register(typeof(INativeWritableBitmap))]
-    public class WritableBitmap : INativeWritableBitmap, IImageSource
+    public class WritableBitmap : ImageSource, INativeWritableBitmap
     {
-        /// <summary>
-        /// Occurs when the underlying image data has changed.
-        /// </summary>
-        public event EventHandler SourceChanged;
-
-        /// <summary>
-        /// Gets the number of pixels along the image's Y-axis.
-        /// </summary>
-        public int PixelHeight
-        {
-            get { return Source.Height; }
-        }
-
-        /// <summary>
-        /// Gets the number of pixels along the image's X-axis.
-        /// </summary>
-        public int PixelWidth
-        {
-            get { return Source.Width; }
-        }
-        
-        /// <summary>
-        /// Gets the scaling factor of the image.
-        /// </summary>
-        public double Scale
-        {
-            get { return 1; }
-        }
-        
-        /// <summary>
-        /// Gets the image source instance.
-        /// </summary>
-        public Bitmap Source { get; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="WritableBitmap"/> class.
         /// </summary>
@@ -78,54 +40,7 @@ namespace Prism.Android.UI.Media.Imaging
         /// <param name="pixelHeight">The number of pixels along the image's Y-axis.</param>
         public WritableBitmap(int pixelWidth, int pixelHeight)
         {
-            Source = Bitmap.CreateBitmap(pixelWidth, pixelHeight, Bitmap.Config.Argb8888);
-        }
-        
-        /// <summary>
-        /// Gets the data for the captured image as a byte array.
-        /// </summary>
-        /// <returns>The image data as an <see cref="Array"/> of bytes.</returns>
-        public Task<byte[]> GetPixelsAsync()
-        {
-            return Task.Run(() =>
-            {
-                var retVal = new byte[Source.Width * Source.Height * 4];
-                var pixels = new int[Source.Width * Source.Height];
-                Source.GetPixels(pixels, 0, Source.Width, 0, 0, Source.Width, Source.Height);
-                for (int i = 0; i < retVal.Length; i += 4)
-                {
-                    int argb = pixels[i / 4];
-                    retVal[i] = (byte)(argb >> 24 & 0xFF);
-                    retVal[i + 1] = (byte)(argb >> 16 & 0xFF);
-                    retVal[i + 2] = (byte)(argb >> 8 & 0xFF);
-                    retVal[i + 3] = (byte)(argb & 0xFF);
-                }
-
-                return retVal;
-            });
-        }
-
-        /// <summary>
-        /// Saves the image data to a file at the specified path using the specified file format.
-        /// </summary>
-        /// <param name="filePath">The path to the file in which to save the image data.</param>
-        /// <param name="fileFormat">The file format in which to save the image data.</param>
-        public async Task SaveAsync(string filePath, ImageFileFormat fileFormat)
-        {
-            using (var stream = new MemoryStream())
-            {
-                if (fileFormat == ImageFileFormat.Jpeg)
-                {
-                    await Source.CompressAsync(Bitmap.CompressFormat.Jpeg, 100, stream);
-                }
-                else
-                {
-                    await Source.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
-                }
-
-                stream.Position = 0;
-                await Prism.IO.File.WriteAllBytesAsync(filePath, stream.GetBuffer());
-            }
+            SetSource(Bitmap.CreateBitmap(pixelWidth, pixelHeight, Bitmap.Config.Argb8888), false);
         }
 
         /// <summary>
@@ -145,7 +60,7 @@ namespace Prism.Android.UI.Media.Imaging
                 Source.SetPixels(colors, 0, Source.Width, 0, 0, Source.Width, Source.Height);
             });
 
-            SourceChanged?.Invoke(this, EventArgs.Empty);
+            OnSourceChanged();
         }
     }
 }

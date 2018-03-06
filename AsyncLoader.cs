@@ -19,17 +19,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
+using System.Threading.Tasks;
+
 namespace Prism.Android
 {
     /// <summary>
-    /// Defines an object that lazily loads its contents.
+    /// Defines an object that loads its contents asynchronously.
     /// </summary>
-    public interface ILazyLoader
+    public interface IAsyncLoader
     {
         /// <summary>
-        /// Loads the contents of the object in a background thread.
+        /// Asynchronously loads the contents of the object.
         /// </summary>
-        void LoadInBackground();
+        Task LoadAsync();
     }
 }
 

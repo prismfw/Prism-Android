@@ -20,24 +20,128 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 using System;
+using System.IO;
+using System.Threading.Tasks;
 using Android.Graphics;
+using Prism.UI.Media.Imaging;
 
 namespace Prism.Android.UI.Media.Imaging
 {
     /// <summary>
-    /// Defines a source for image controls and brushes.
+    /// Represents the base class for image sources.  This class is abstract.
     /// </summary>
-    public interface IImageSource
+    public class ImageSource
     {
         /// <summary>
         /// Occurs when the underlying image data has changed.
         /// </summary>
-        event EventHandler SourceChanged;
+        public event EventHandler SourceChanged;
+
+        /// <summary>
+        /// Gets the number of pixels along the image's Y-axis.
+        /// </summary>
+        public virtual int PixelHeight
+        {
+            get { return Source?.Height ?? 0; }
+        }
+
+        /// <summary>
+        /// Gets the number of pixels along the image's X-axis.
+        /// </summary>
+        public virtual int PixelWidth
+        {
+            get { return Source?.Width ?? 0; }
+        }
+
+        /// <summary>
+        /// Gets the scaling factor of the image.
+        /// </summary>
+        public virtual double Scale
+        {
+            get { return 1; }
+        }
 
         /// <summary>
         /// Gets the image source instance.
         /// </summary>
-        Bitmap Source { get; }
+        public Bitmap Source { get; private set; }
+
+        /// <summary>
+        /// Gets the data for the image source as a byte array.
+        /// </summary>
+        /// <returns>The image data as an <see cref="Array"/> of bytes.</returns>
+        public Task<byte[]> GetPixelsAsync()
+        {
+            return Task.Run(() =>
+            {
+                if (Source == null)
+                {
+                    return new byte[0];
+                }
+
+                var retVal = new byte[Source.Width * Source.Height * 4];
+                var pixels = new int[Source.Width * Source.Height];
+                Source.GetPixels(pixels, 0, Source.Width, 0, 0, Source.Width, Source.Height);
+                for (int i = 0; i < retVal.Length; i += 4)
+                {
+                    int argb = pixels[i / 4];
+                    retVal[i] = (byte)(argb >> 24 & 0xFF);
+                    retVal[i + 1] = (byte)(argb >> 16 & 0xFF);
+                    retVal[i + 2] = (byte)(argb >> 8 & 0xFF);
+                    retVal[i + 3] = (byte)(argb & 0xFF);
+                }
+
+                return retVal;
+            });
+        }
+
+        /// <summary>
+        /// Saves the image data to a file at the specified path using the specified file format.
+        /// </summary>
+        /// <param name="filePath">The path to the file in which to save the image data.</param>
+        /// <param name="fileFormat">The file format in which to save the image data.</param>
+        public async Task SaveAsync(string filePath, ImageFileFormat fileFormat)
+        {
+            using (var stream = new MemoryStream())
+            {
+                if (fileFormat == ImageFileFormat.Jpeg)
+                {
+                    await Source?.CompressAsync(Bitmap.CompressFormat.Jpeg, 100, stream);
+                }
+                else
+                {
+                    await Source?.CompressAsync(Bitmap.CompressFormat.Png, 100, stream);
+                }
+
+                stream.Position = 0;
+                await Prism.IO.File.WriteAllBytesAsync(filePath, stream.GetBuffer());
+            }
+        }
+
+        /// <summary>
+        /// Called when the image source changes significantly.
+        /// </summary>
+        protected void OnSourceChanged()
+        {
+            SourceChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Sets the image source.
+        /// </summary>
+        /// <param name="source">The new image source.</param>
+        /// <param name="notify">A value indicating whether to trigger the SourceChanged event.</param>
+        protected void SetSource(Bitmap source, bool notify)
+        {
+            if (Source != source)
+            {
+                Source = source;
+                if (notify)
+                {
+                    OnSourceChanged();
+                }
+            }
+        }
     }
 }
 
